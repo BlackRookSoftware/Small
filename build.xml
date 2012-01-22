@@ -159,7 +159,7 @@
 		<delete file="${zip.dir}/${zip.jar.filename}" />
 		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.jar.filename}"></zip>
 		<zip basedir="docs" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
-		<zip basedir="xml" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
+		<zip basedir="assets" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
 	</target>
 
 	<target name="zip.docs">
@@ -171,7 +171,7 @@
 		<delete file="${zip.dir}/${zip.src.filename}" />
 		<zip basedir="${src.dir}" destfile="${zip.dir}/${zip.src.filename}" compress="true"></zip>
 		<zip basedir="docs" destfile="${zip.dir}/${zip.src.filename}" update="true"></zip>
-		<zip basedir="xml" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
+		<zip basedir="assets" destfile="${zip.dir}/${zip.src.filename}" update="true"></zip>
 	</target>
 	
 	<target name="release" depends="compile, javadoc, jar, init.zip, zip.jar, zip.docs, zip.src">
