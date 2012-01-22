@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     Doom Struct Build File    
+     Matt Tropiano                                                                
+     ====================================================================== -->
+<project name="project" default="compile">
+
+	<description>Black Rook Simple J2EE Framework</description>
+
+	<property file="build.properties" />
+
+	<!-- Class Dependencies -->
+	<property name="dev.base" value=".." />
+	<property name="commons.lib" value="${dev.base}/Commons/bin"/>
+	<property name="commons.io.lib" value="${dev.base}/CommonsIO/bin"/>
+	<property name="commons.lang.lib" value="${dev.base}/CommonsLang/bin"/>
+	<property name="commons.sync.lib" value="${dev.base}/CommonsSync/bin" />
+	<property name="db.lib" value="${dev.base}/DB/bin"/>
+	<property name="apache.commons.io.lib" value="E:/JavaLibraries/Jakarta Commons IO/jar/commons-io-1.4.jar" />	
+	<property name="apache.commons.fileupload.lib" value="E:/JavaLibraries/Jakarta Commons FileUpload/jar/commons-fileupload-1.2.1.jar" />	
+
+	<property name="j2ee.libdir" value="E:/JavaLibraries/Tomcat 6 Libraries" />
+	<property name="j2ee.servlet.lib" value="${j2ee.libdir}/servlet-api.jar" />
+	
+	<!-- Project Info -->
+	<tstamp>
+		<format property="project.build.date" pattern="yyyy.MM.dd" locale="en,US"/>
+	</tstamp>
+	<property name="project.appendix" value="" />
+	<property name="project.versionnumber" value="" />
+	<property name="project.version" value="${project.build.date}-${project.versionnumber}${project.appendix}" />
+	<property name="project.archive" value="blackrook-j2ee" />
+	
+	<!-- Folders and File Names -->
+	<property name="S" value="${path.separator}" />
+
+	<property name="src.dir" value="src" />
+	<property name="bin.dir" value="bin" />
+
+	<property name="jar.dir" value="build/jar" />
+	<property name="docs.dir" value="build/docs" />
+	<property name="zip.dir" value="build/zip" />
+
+	<property name="jar.filename" value="${project.archive}-${project.version}.jar" />
+
+	<property name="zip.jar.filename" value="${project.archive}-bin-${project.version}.zip" />
+	<property name="zip.src.filename" value="${project.archive}-src-${project.version}.zip" />
+	<property name="zip.docs.filename" value="${project.archive}-javadocs-${project.version}.zip" />
+	
+	<property file="build.properties" />
+
+	<target name="clean.compile">
+		<delete dir="${bin.dir}" includeemptydirs="true" casesensitive="false"/>
+	</target>
+
+	<target name="clean" depends="clean.compile">
+	</target>
+
+	<target name="clean.jar">
+		<delete dir="${jar.dir}" includeemptydirs="true" casesensitive="false"/>
+	</target>
+	
+	<target name="clean.docs">
+		<delete dir="${docs.dir}" includeemptydirs="true" casesensitive="false" /> 
+	</target>
+
+	<target name="clean.zip">
+		<delete dir="${zip.dir}" includeemptydirs="true" casesensitive="false" /> 
+	</target>
+
+	<target name="clean.all" depends="clean.jar, clean.docs, clean.zip">
+	</target>
+	
+	<target name="init.compile" depends="clean.compile">
+		<mkdir dir="${bin.dir}" />
+	</target>
+
+	<target name="init.docs" depends="clean.docs">
+		<mkdir dir="${docs.dir}" />
+	</target>
+
+	<target name="init.jar" depends="clean.jar">
+		<mkdir dir="${jar.dir}" />
+	</target>
+
+	<target name="init.zip" depends="clean.zip">
+		<mkdir dir="${zip.dir}" />
+	</target>
+
+	<target name="compile" depends="init.compile">
+		<javac 
+			source="1.6"
+			srcdir="${src.dir}" 
+			destdir="${bin.dir}"
+			classpath="
+				${commons.lib}${S}
+				${commons.io.lib}${S}
+				${commons.lang.lib}${S}
+				${commons.sync.lib}${S}
+				${db.lib}${S}
+				${j2ee.servlet.lib}${S}
+				${apache.commons.io.lib}${S}
+				${apache.commons.fileupload.lib}
+			"
+            includeAntRuntime="false"
+			debug="off" 
+			/>
+	</target>
+
+    <target name="javadoc">
+        <javadoc access="protected" additionalparam="-J-Xmx512m  " author="true" 
+			classpath="
+				${commons.lib}${S}
+				${commons.io.lib}${S}
+				${commons.lang.lib}${S}
+				${commons.sync.lib}${S}
+				${db.lib}${S}
+				${j2ee.servlet.lib}${S}
+				${apache.commons.io.lib}${S}
+				${apache.commons.fileupload.lib}${S}
+				${bin.dir}
+			"
+        	destdir="${docs.dir}" 
+        	doctitle="Black Rook Simple J2EE Framework" 
+        	nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" 
+        	packagenames="
+        		com.blackrook.framework,
+    			com.blackrook.framework.tasks
+    			"
+        	source="1.6" 
+        	sourcepath="${src.dir}" 
+        	splitindex="true" 
+        	stylesheetfile="docres/blackrooksheet.css" 
+        	use="true" 
+        	version="true"
+        	>
+            <link href="http://blackrooksoftware.com/docs/common/" />
+            <link href="http://blackrooksoftware.com/docs/commonio/" />
+            <link href="http://blackrooksoftware.com/docs/commonlang/" />
+            <link href="http://blackrooksoftware.com/docs/commonsync/" />
+            <link href="http://blackrooksoftware.com/docs/db/" />
+            <link href="http://download.oracle.com/javase/6/docs/api/" />
+        	<link href="http://download.oracle.com/javaee/5/api/" />
+        	<link href="http://commons.apache.org/fileupload/apidocs/" />
+        	<link href="http://commons.apache.org/io/apidocs/" />
+        </javadoc>
+		<copy overwrite="true" todir="${docs.dir}">
+			<fileset casesensitive="false" dir="docres" />
+		</copy>
+    </target>
+
+	<target name="jar" depends="init.jar" description="Jars up the compiled files.">
+		<jar destfile="${jar.dir}/${jar.filename}">
+			<fileset dir="${bin.dir}" excludes="**/test*" />
+		</jar>
+	</target>
+
+	<target name="zip.jar">
+		<delete file="${zip.dir}/${zip.jar.filename}" />
+		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.jar.filename}"></zip>
+		<zip basedir="docs" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
+		<zip basedir="xml" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
+	</target>
+
+	<target name="zip.docs">
+		<delete file="${zip.dir}/${zip.docs.filename}" />
+		<zip basedir="${docs.dir}" destfile="${zip.dir}/${zip.docs.filename}" compress="true"></zip>
+	</target>
+	
+	<target name="zip.src">
+		<delete file="${zip.dir}/${zip.src.filename}" />
+		<zip basedir="${src.dir}" destfile="${zip.dir}/${zip.src.filename}" compress="true"></zip>
+		<zip basedir="docs" destfile="${zip.dir}/${zip.src.filename}" update="true"></zip>
+		<zip basedir="xml" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
+	</target>
+	
+	<target name="release" depends="compile, javadoc, jar, init.zip, zip.jar, zip.docs, zip.src">
+	</target>
+	
+</project>

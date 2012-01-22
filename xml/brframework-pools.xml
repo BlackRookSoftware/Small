@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<pools>
+
+<!-- 
+	Black Rook Servlet Framework Pool Definition File
+	================================================= 
+
+	All Pool definitions go in this file.
+	
+	The two types of pools that can be defined in this file are Database 
+	Connection Pools and Thread Pools for asynchronously executed tasks.
+	
+-->
+
+<!--
+
+	Database Connection Pools are defined in "connectionpool" tags, and have
+	the following attributes:
+	
+	name			The name of the pool. This is the key used to identify this 
+					pool in the framework. All uses of this pool is through 
+					this key. Default is "default".
+	
+	type			The type of database that the framework will be interfacing
+					with. So far, the only valid value for this attribute is 
+					"mysql".
+	
+	connections		The number of connections to open to the database.
+					Default is 10.
+
+	If the database type is "mysql", the following attributes are accepted:
+	
+	user			The username to use for the pooled connections.
+					Default is "root".
+	
+	password		The password to use for the pooled connections.
+					Default is blank.
+	
+	host			The address of the database to connect to.
+					Default is "localhost".
+
+	port			The port by which to connect to the database with.
+					Default is the default MySQL port (3306).
+	
+	database		The database to use for all query requests.
+					Default is the same value as the user attribute.
+	
+-->
+	<connectionpool 
+		name="default" 
+		type="mysql"
+		connections="10" 
+		user="root" 
+		password="" 
+		host="localhost"
+		port="3306"
+		database="root" 
+	/>
+
+<!--
+
+	Thread Pools are defined in "threadpool" tags, and have
+	the following attributes:
+	
+	name			The name of the pool. This is the key used to identify this 
+					pool in the framework. All uses of this pool are through 
+					this key. Default is "default".
+	
+	size			The number of worker threads to spawn to the database.
+					Default is 10.
+
+-->
+
+	<threadpool 
+		name="default" 
+		size="10" 
+	/>
+	
+</pools>
