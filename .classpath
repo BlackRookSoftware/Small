@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Tomcat Libraries"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Commons"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CommonsIO"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CommonsLang"/>
@@ -10,6 +11,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Jakarta Commons FileUpload"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Jakarta Commons IO"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MySQLConnector"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Tomcat Libraries"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
