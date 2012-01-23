@@ -467,6 +467,15 @@ public abstract class BRRootServlet extends HttpServlet
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns true if it exists, false otherwise.
+	 */
+	public boolean getParameterExist(HttpServletRequest request, String paramName)
+	{
+		return request.getParameter(paramName) != null;
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and returns the empty string if it doesn't exist.
 	 */
 	public String getParameterString(HttpServletRequest request, String paramName)
