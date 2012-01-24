@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +31,7 @@ import com.blackrook.framework.tasks.BRQueryTask;
 public abstract class BRRootServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 7057939105164581326L;
+	private static final Random LAG_SIM_RANDOM = new Random();
 
 	/**
 	 * Gets the current connection's session id.
@@ -134,6 +136,15 @@ public abstract class BRRootServlet extends HttpServlet
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
 			}
+		}
+	
+	/**
+	 * Simulates latency on a response, for testing.
+	 * Just calls {@link Common.sleep(long)} and varies the input value.
+	 */
+	public void simulateLag(int millis)
+	{
+		Common.sleep(LAG_SIM_RANDOM.nextInt(millis));
 		}
 	
 	/**
