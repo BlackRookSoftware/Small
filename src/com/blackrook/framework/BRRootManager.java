@@ -72,6 +72,9 @@ public final class BRRootManager {
 	/** Application context path. */
 	private static String REAL_APP_PATH = null;
 	
+	/** MIME Type Map. */
+	private static BRMIMETypes MIME_TYPES = new BRMIMETypes();
+	
 	/**
 	 * Initializes the server from the first request using the XML files.
 	 */
@@ -308,6 +311,19 @@ public final class BRRootManager {
 		return JSP_MAP.get(key);
 		}
 
+	/**
+	 * Gets the MIME type of a file (uses a database that is more complete than javax.activation).
+	 * @param filename the file name to use to figure out a MIME type.
+	 * @return the MIME type, or <code>application/octet-stream</code>.
+	 */
+	static String getMIMEType(String filename)
+	{
+		int extindex = filename.lastIndexOf(".");
+		if (extindex >= 0)
+			return MIME_TYPES.getType(filename.substring(extindex+1));
+		return "application/octet-stream";
+		}
+	
 	/**
 	 * Attempts to grab an available connection from the pool and performs a query.
 	 * @param poolname the SQL connection pool name to use.

@@ -125,6 +125,21 @@ public abstract class BRRootServlet extends HttpServlet
 	public abstract void doMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String,String> paramMap);
 
 	/**
+	 * Sends request to the error page with a status code.
+	 * @param response servlet response object.
+	 * @param statusCode the status code to use.
+	 * @param message the status message.
+	 */
+	public final void sendError(HttpServletResponse response, int statusCode, String message)
+	{
+		try{
+			response.sendError(statusCode, message);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
+		}
+
+	/**
 	 * Forwards the client abruptly to another document or servlet (new client request). 
 	 * @param response	servlet response object.
 	 * @param url		target URL.
@@ -136,6 +151,16 @@ public abstract class BRRootServlet extends HttpServlet
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
 			}
+		}
+	
+	/**
+	 * Gets the MIME type of a file (uses a database that is more complete than javax.activation).
+	 * @param filename the file name to use to figure out a MIME type.
+	 * @return the MIME type, or <code>application/octet-stream</code>.
+	 */
+	public final String getMIMEType(String filename)
+	{
+		return BRRootManager.getMIMEType(filename);
 		}
 	
 	/**
