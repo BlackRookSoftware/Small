@@ -27,7 +27,7 @@ public class BRFrameworkException extends RuntimeException
 	/**
 	 * Creates a new exception.
 	 */
-	public BRFrameworkException(Exception exception)
+	public BRFrameworkException(Throwable exception)
 	{
 		super(exception);
 		}
@@ -35,7 +35,7 @@ public class BRFrameworkException extends RuntimeException
 	/**
 	 * Creates a new exception with a message.
 	 */
-	public BRFrameworkException(String message, Exception exception)
+	public BRFrameworkException(String message, Throwable exception)
 	{
 		super(message, exception);
 		}

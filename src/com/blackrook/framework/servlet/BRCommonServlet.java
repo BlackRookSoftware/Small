@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.framework.servlet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -6,14 +6,21 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
 
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.framework.BRFrameworkTask;
+import com.blackrook.framework.BRQueryResult;
+import com.blackrook.framework.BRRootServlet;
 import com.blackrook.framework.tasks.BRQueryTask;
 
 /**
  * Base servlet for all entry points into Black Rook framework servlets.
- * It is recommended that all servlets that use the framework extend this one.
+ * All servlets that use the framework should extend this one.
+ * The methods {@link #doServiceGet(HttpServletRequest, HttpServletResponse)}, 
+ * {@link #doServicePost(HttpServletRequest, HttpServletResponse)}, and
+ * {@link #doMultiformPost(HttpServletRequest, HttpServletResponse, FileItem[], HashMap)}
+ * all send HTTP 405 status codes by default.
  * @author Matthew Tropiano
  */
-public class BRFrameworkServlet extends BRRootServlet
+public abstract class BRCommonServlet extends BRRootServlet
 {
 	private static final long serialVersionUID = -5794345293732460631L;
 
@@ -23,19 +30,18 @@ public class BRFrameworkServlet extends BRRootServlet
 	private String servletDefaultThreadPool;
 	
 	/**
-	 * Base constructor. Sets defaults.
+	 * Base constructor. Sets default pools to default names.
+	 * @see {@link BRRootServlet#DEFAULT_POOL_NAME}
 	 */
-	protected BRFrameworkServlet()
+	protected BRCommonServlet()
 	{
-		super();
-		servletDefaultSQLPool = "default";
-		servletDefaultThreadPool = "default";
+		this(DEFAULT_POOL_NAME, DEFAULT_POOL_NAME);
 		}
 
 	/**
 	 * Other constructor. Sets default pools.
 	 */
-	protected BRFrameworkServlet(String defaultSQLPoolName, String defaultThreadPoolName)
+	protected BRCommonServlet(String defaultSQLPoolName, String defaultThreadPoolName)
 	{
 		super();
 		servletDefaultSQLPool = defaultSQLPoolName;
@@ -77,16 +83,19 @@ public class BRFrameworkServlet extends BRRootServlet
 	@Override
 	public void doServiceGet(HttpServletRequest request, HttpServletResponse response)
 	{
+		sendError(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void doServicePost(HttpServletRequest request, HttpServletResponse response)
 	{
+		sendError(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void doMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String, String> paramMap)
 	{
+		sendError(response, 405, "Servlet does not support this method.");
 		}
 
 	/**

@@ -30,7 +30,11 @@ import com.blackrook.framework.tasks.BRQueryTask;
  */
 public abstract class BRRootServlet extends HttpServlet
 {
+	/** Name for all default pools. */
+	public static final String DEFAULT_POOL_NAME = "default";
+
 	private static final long serialVersionUID = 7057939105164581326L;
+
 	private static final Random LAG_SIM_RANDOM = new Random();
 
 	/**
@@ -102,6 +106,7 @@ public abstract class BRRootServlet extends HttpServlet
 	
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a GET request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 */
@@ -109,6 +114,7 @@ public abstract class BRRootServlet extends HttpServlet
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a POST request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 */
@@ -117,6 +123,7 @@ public abstract class BRRootServlet extends HttpServlet
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a POST request call 
 	 * and it contains a multiform request.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 * @param fileItems	the list of file items parsed in the multiform packet.
@@ -130,13 +137,24 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param statusCode the status code to use.
 	 * @param message the status message.
 	 */
-	public final void sendError(HttpServletResponse response, int statusCode, String message)
+	protected final void sendError(HttpServletResponse response, int statusCode, String message)
 	{
 		try{
 			response.sendError(statusCode, message);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throwException(e);
 			}
+		}
+
+	/**
+	 * Forces an exception to propagate up to the dispatcher.
+	 * Basically encloses the provided throwable in a {@link BRFrameworkException},
+	 * which is a {@link RuntimeException}.
+	 * @param t the {@link Throwable} to encapsulate and throw.
+	 */
+	protected final void throwException(Throwable t)
+	{
+		throw new BRFrameworkException(t);
 		}
 
 	/**
@@ -144,12 +162,12 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param response	servlet response object.
 	 * @param url		target URL.
 	 */
-	public final void sendRedirect(HttpServletResponse response, String url)
+	protected final void sendRedirect(HttpServletResponse response, String url)
 	{
 		try{
 			response.sendRedirect(url);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throwException(e);
 			}
 		}
 	
@@ -197,7 +215,7 @@ public abstract class BRRootServlet extends HttpServlet
 		try{
 			request.getRequestDispatcher(path).include(request, response);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throwException(e);
 			}
 		}
 
@@ -226,7 +244,7 @@ public abstract class BRRootServlet extends HttpServlet
 		try{
 			request.getRequestDispatcher(path).forward(request, response);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throwException(e);
 			}
 		}
 	
@@ -394,8 +412,7 @@ public abstract class BRRootServlet extends HttpServlet
 		try {
 			out = getRequestBean(request, name, clazz, false);
 		} catch (Exception e) {
-			// propagate any and all exceptions up the stack - shouldn't throw any serious ones.
-			throw new BRFrameworkException(e);
+			throwException(e);
 			} 
 		return out;
 		}
@@ -418,8 +435,7 @@ public abstract class BRRootServlet extends HttpServlet
 				obj = create ? clazz.newInstance() : null;
 				request.setAttribute(name, obj);
 			} catch (Exception e) {
-				// propagate any and all exceptions up the stack - shouldn't throw any serious ones.
-				throw new BRFrameworkException(e);
+				throwException(e);
 				}
 			}
 	
@@ -441,8 +457,7 @@ public abstract class BRRootServlet extends HttpServlet
 		try {
 			out = getSessionBean(request, name, clazz, false);
 		} catch (Exception e) {
-			// propagate any and all exceptions up the stack - shouldn't throw any serious ones.
-			throw new BRFrameworkException(e);
+			throwException(e);
 			} 
 		return out;
 		}
@@ -469,8 +484,7 @@ public abstract class BRRootServlet extends HttpServlet
 				obj = create ? clazz.newInstance() : null;
 				session.setAttribute(name, obj);
 			} catch (Exception e) {
-				// propagate any and all exceptions up the stack - shouldn't throw any serious ones.
-				throw new BRFrameworkException(e);
+				throwException(e);
 				}
 			}
 	
@@ -510,6 +524,30 @@ public abstract class BRRootServlet extends HttpServlet
 		return request.getParameter(paramName) != null;
 		}
 
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns true or false.
+	 * This flavor of <code>getParameterBoolean</code> assumes that the parameter
+	 * received is a string that is either "true" or not "true".
+	 * @see {@link Common#parseBoolean(String)}
+	 */
+	public boolean getParameterBoolean(HttpServletRequest request, String paramName)
+	{
+		return Common.parseBoolean(request.getParameter(paramName));
+		}
+	
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns true or false, if the string found in the request evaluates
+	 * to <code>trueValue</code>. The value of <code>trueValue</code> can be <code>null</code>,
+	 * meaning that the parameter was not received.
+	 */
+	public boolean getParameterBoolean(HttpServletRequest request, String paramName, String trueValue)
+	{
+		String out = request.getParameter(paramName);
+		return out != null && out.equalsIgnoreCase(trueValue);
+		}
+	
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and returns the empty string if it doesn't exist.
