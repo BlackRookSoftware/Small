@@ -13,6 +13,7 @@ import java.sql.SQLException;
 
 import javax.servlet.ServletContext;
 
+import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DatabaseUtils;
@@ -91,78 +92,77 @@ public final class BRRootManager {
 	{
 		// threads will immediately give up the lock around here if one
 		// thread finishes the initializing.
-		if (!INITIALIZED)
-		{
-			JSP_MAP = new CaseInsensitiveHashMap<String>();
-			QUERY_MAP = new CaseInsensitiveHashMap<String>(25);
-			QUERY_CACHE = new CaseInsensitiveHashMap<String>(25);
-			CONNECTION_POOL = new CaseInsensitiveHashMap<DBConnectionPool>();
-			THREAD_POOL = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
-			REAL_APP_PATH = context.getRealPath(".");
+		if (INITIALIZED) return;
 			
-			XMLStruct xml = null;
-			InputStream in = null;
-			
-			try {
-				in = getResourceAsStream(MAPPING_XML_POOLS);
-				if (in == null)
-					throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_POOLS);
-				xml = XMLStructFactory.readXML(in);
-				for (XMLStruct root : xml)
+		JSP_MAP = new CaseInsensitiveHashMap<String>();
+		QUERY_MAP = new CaseInsensitiveHashMap<String>(25);
+		QUERY_CACHE = new CaseInsensitiveHashMap<String>(25);
+		CONNECTION_POOL = new CaseInsensitiveHashMap<DBConnectionPool>();
+		THREAD_POOL = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
+		REAL_APP_PATH = context.getRealPath(".");
+		
+		XMLStruct xml = null;
+		InputStream in = null;
+		
+		try {
+			in = getResourceAsStream(MAPPING_XML_POOLS);
+			if (in == null)
+				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_POOLS);
+			xml = XMLStructFactory.readXML(in);
+			for (XMLStruct root : xml)
+			{
+				if (root.getName().equalsIgnoreCase("pools")) for (XMLStruct struct : root)
 				{
-					if (root.getName().equalsIgnoreCase("pools")) for (XMLStruct struct : root)
-					{
-						if (struct.getName().equalsIgnoreCase(XML_SQL))
-							initializeSQL(struct);
-						if (struct.getName().equalsIgnoreCase(XML_THREADS))
-							initializeThreadPool(struct);
-						}
+					if (struct.getName().equalsIgnoreCase(XML_SQL))
+						initializeSQL(struct);
+					else if (struct.getName().equalsIgnoreCase(XML_THREADS))
+						initializeThreadPool(struct);
 					}
-			} catch (Exception e) {
-				throw new BRFrameworkException(e);
-			} finally {
-				try {in.close();} catch (IOException e) {}
 				}
-	
-			try {
-				in = getResourceAsStream(MAPPING_XML_VIEWS);
-				if (in == null)
-					throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_VIEWS);
-				xml = XMLStructFactory.readXML(in);
-				for (XMLStruct root : xml)
-				{
-					if (root.getName().equalsIgnoreCase("views")) for (XMLStruct struct : root)
-					{
-						if (struct.getName().equalsIgnoreCase(XML_VIEW))
-							initializeView(struct);
-						}
-					}
-			} catch (Exception e) {
-				throw new BRFrameworkException(e);
-			} finally {
-				try {in.close();} catch (IOException e) {}
-				}
-	
-			try {
-				in = getResourceAsStream(MAPPING_XML_QUERIES);
-				if (in == null)
-					throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_QUERIES);
-				xml = XMLStructFactory.readXML(in);
-				for (XMLStruct root : xml)
-				{
-					if (root.getName().equalsIgnoreCase("queries")) for (XMLStruct struct : root)
-					{
-						if (struct.getName().equalsIgnoreCase(XML_QUERY))
-							initializeQuery(struct);
-						}
-					}
-			} catch (Exception e) {
-				throw new BRFrameworkException(e);
-			} finally {
-				try {in.close();} catch (IOException e) {}
-				}
-			INITIALIZED = true;
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+		} finally {
+			Common.close(in);
 			}
+
+		try {
+			in = getResourceAsStream(MAPPING_XML_VIEWS);
+			if (in == null)
+				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_VIEWS);
+			xml = XMLStructFactory.readXML(in);
+			for (XMLStruct root : xml)
+			{
+				if (root.getName().equalsIgnoreCase("views")) for (XMLStruct struct : root)
+				{
+					if (struct.getName().equalsIgnoreCase(XML_VIEW))
+						initializeView(struct);
+					}
+				}
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+		} finally {
+			Common.close(in);
+			}
+
+		try {
+			in = getResourceAsStream(MAPPING_XML_QUERIES);
+			if (in == null)
+				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_QUERIES);
+			xml = XMLStructFactory.readXML(in);
+			for (XMLStruct root : xml)
+			{
+				if (root.getName().equalsIgnoreCase("queries")) for (XMLStruct struct : root)
+				{
+					if (struct.getName().equalsIgnoreCase(XML_QUERY))
+						initializeQuery(struct);
+					}
+				}
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+		} finally {
+			Common.close(in);
+			}
+		INITIALIZED = true;
 		}
 
 	/**
