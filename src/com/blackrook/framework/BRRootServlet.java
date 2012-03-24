@@ -101,17 +101,17 @@ public abstract class BRRootServlet extends HttpServlet
 					FileItem[] fileItems = new FileItem[fitems.size()];
 					fitems.toArray(fileItems);
 					fitems = null;
-					doMultiformPost(request, response, fileItems, paramTable);
+					onMultiformPost(request, response, fileItems, paramTable);
 				} catch (FileUploadException e) {
 					e.printStackTrace(System.err);
-					doServicePost(request,response);
+					onPost(request,response);
 					}
 				}
 			else
-				doServicePost(request,response);
+				onPost(request,response);
 			}
 		else
-			doServiceGet(request,response);
+			onGet(request,response);
 		}
 	
 	/**
@@ -120,7 +120,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 */
-	public abstract void doServiceGet(HttpServletRequest request, HttpServletResponse response);
+	public abstract void onGet(HttpServletRequest request, HttpServletResponse response);
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a POST request call.
@@ -128,7 +128,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 */
-	public abstract void doServicePost(HttpServletRequest request, HttpServletResponse response);
+	public abstract void onPost(HttpServletRequest request, HttpServletResponse response);
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a POST request call 
@@ -139,7 +139,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param fileItems	the list of file items parsed in the multiform packet.
 	 * @param paramMap the table of the parameters passed found in the multiform packet (THEY WILL NOT BE IN THE REQUEST).
 	 */
-	public abstract void doMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String,String> paramMap);
+	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String,String> paramMap);
 
 	/**
 	 * Sends request to the error page with a status code.

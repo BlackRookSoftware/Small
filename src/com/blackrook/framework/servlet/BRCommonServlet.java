@@ -24,9 +24,9 @@ import com.blackrook.framework.tasks.BRQueryTask;
 /**
  * Base servlet for all entry points into Black Rook framework servlets.
  * All servlets that use the framework should extend this one.
- * The methods {@link #doServiceGet(HttpServletRequest, HttpServletResponse)}, 
- * {@link #doServicePost(HttpServletRequest, HttpServletResponse)}, and
- * {@link #doMultiformPost(HttpServletRequest, HttpServletResponse, FileItem[], HashMap)}
+ * The methods {@link #onGet(HttpServletRequest, HttpServletResponse)}, 
+ * {@link #onPost(HttpServletRequest, HttpServletResponse)}, and
+ * {@link #onMultiformPost(HttpServletRequest, HttpServletResponse, FileItem[], HashMap)}
  * all send HTTP 405 status codes by default.
  * @author Matthew Tropiano
  */
@@ -91,19 +91,19 @@ public abstract class BRCommonServlet extends BRRootServlet
 		}
 
 	@Override
-	public void doServiceGet(HttpServletRequest request, HttpServletResponse response)
+	public void onGet(HttpServletRequest request, HttpServletResponse response)
 	{
 		sendError(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
-	public void doServicePost(HttpServletRequest request, HttpServletResponse response)
+	public void onPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		sendError(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
-	public void doMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String, String> paramMap)
+	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String, String> paramMap)
 	{
 		sendError(response, 405, "Servlet does not support this method.");
 		}
