@@ -16,8 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
 
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.db.QueryResult;
 import com.blackrook.framework.BRFrameworkTask;
-import com.blackrook.framework.BRQueryResult;
 import com.blackrook.framework.BRRootServlet;
 import com.blackrook.framework.tasks.BRQueryTask;
 
@@ -115,7 +115,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the ResultSet returned.
 	 */
-	public final BRQueryResult doQuery(String query, Object ... parameters)
+	public final QueryResult doQuery(String query, Object ... parameters)
 	{
 		return doQueryPooled(servletDefaultSQLPool, query, parameters);
 		}
@@ -128,7 +128,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the ResultSet returned.
 	 */
-	public final BRQueryResult doQueryInline(String query, Object ... parameters)
+	public final QueryResult doQueryInline(String query, Object ... parameters)
 	{
 		return doQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}
@@ -140,7 +140,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult doUpdateQuery(String query, Object ... parameters)
+	public final QueryResult doUpdateQuery(String query, Object ... parameters)
 	{
 		return doUpdateQueryPooled(servletDefaultSQLPool, query, parameters);
 		}
@@ -153,7 +153,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the ResultSet returned.
 	 */
-	public final BRQueryResult doUpdateQueryInline(String query, Object ... parameters)
+	public final QueryResult doUpdateQueryInline(String query, Object ... parameters)
 	{
 		return doUpdateQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}

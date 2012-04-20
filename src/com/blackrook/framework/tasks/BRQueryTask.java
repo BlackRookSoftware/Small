@@ -13,9 +13,10 @@ package com.blackrook.framework.tasks;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 
+import com.blackrook.db.QueryResult;
 import com.blackrook.framework.BRFrameworkTask;
-import com.blackrook.framework.BRQueryResult;
 
 /**
  * Query task structure for asynchronous queries.
@@ -31,7 +32,7 @@ public class BRQueryTask extends BRFrameworkTask
 	/** Is this an update query (as opposed to a data query)? */
 	protected boolean isUpdate;
 	/** The ResultSet, created after a successful query. */
-	protected BRQueryResult result;
+	protected QueryResult result;
 	/** The list of parameters supplied. */
 	protected Object[] parameters;
 	
@@ -72,11 +73,11 @@ public class BRQueryTask extends BRFrameworkTask
 		try {
 			if (isUpdate)
 			{
-				PreparedStatement st = connection.prepareStatement(query);
+				PreparedStatement st = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 				int i = 1;
 				for (Object obj : parameters)
 					st.setObject(i++, obj);
-				result = new BRQueryResult(st.executeUpdate());
+				result = new QueryResult(st.executeUpdate(), st.getGeneratedKeys());
 				st.close();
 				}
 			else
@@ -86,7 +87,7 @@ public class BRQueryTask extends BRFrameworkTask
 				for (Object obj : parameters)
 					st.setObject(i++, obj);
 				ResultSet rs = st.executeQuery(query);
-				result = new BRQueryResult(rs);
+				result = new QueryResult(rs);
 				rs.close();
 				st.close();
 				}
@@ -117,7 +118,7 @@ public class BRQueryTask extends BRFrameworkTask
 	 * Returns the result of the query.
 	 * Null if this thread performed an "update" query. 
 	 */
-	public BRQueryResult getResult()
+	public QueryResult getResult()
 	{
 		return result;
 		}

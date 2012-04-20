@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.servlet.ServletContext;
 
@@ -27,6 +28,7 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DatabaseUtils;
+import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
 import com.blackrook.framework.tasks.BREncapsulatedTask;
 import com.blackrook.framework.tasks.BRQueryTask;
@@ -341,7 +343,7 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final BRQueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
+	static final QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		String query = null;
 		try {
@@ -362,11 +364,11 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final BRQueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
+	static final QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		PreparedStatement st = null;
 		ResultSet rs = null;
-		BRQueryResult result = null;		
+		QueryResult result = null;		
 		try {
 			DBConnectionPool pool = CONNECTION_POOL.get(poolname);
 			Connection conn = pool.getAvailableConnection();
@@ -375,7 +377,7 @@ public final class BRRootManager {
 			for (Object obj : parameters)
 				st.setObject(i++, obj);
 			rs = st.executeQuery();
-			result = new BRQueryResult(rs);
+			result = new QueryResult(rs);
 			rs.close();
 			st.close();
 			conn.close(); // should release
@@ -397,7 +399,7 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final BRQueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
+	static final QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		String query = null;
 		try {
@@ -417,19 +419,19 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final BRQueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
+	static final QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		PreparedStatement st = null;
-		BRQueryResult result = null;		
+		QueryResult result = null;		
 		try {
 			DBConnectionPool pool = CONNECTION_POOL.get(poolname);
 			Connection conn = pool.getAvailableConnection();
-			st = conn.prepareStatement(query);
+			st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			int i = 1;
 			for (Object obj : parameters)
 				st.setObject(i++, obj);
 			int out = st.executeUpdate();
-			result = new BRQueryResult(out);
+			result = new QueryResult(out, st.getGeneratedKeys());
 			st.close();
 			conn.close(); // should release
 			return result;
@@ -449,7 +451,7 @@ public final class BRRootManager {
 	 * @param parameters list of lists of parameters for the respective parameterized queries.
 	 * @return the update results returned (usually number of rows affected).
 	 */
-	static final BRQueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
+	static final QueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
 	{
 		String[] query = new String[queryKeys.length];
 		for (int i = 0; i < query.length; i++)
@@ -474,9 +476,9 @@ public final class BRRootManager {
 	 * @param parameters list of lists of parameters for the respective parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final BRQueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
+	static final QueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
 	{
-		BRQueryResult[] result = new BRQueryResult[query.length];
+		QueryResult[] result = new QueryResult[query.length];
 		Exception ex = null;
 		try{
 			DBConnectionPool pool = CONNECTION_POOL.get(poolname);
@@ -486,12 +488,12 @@ public final class BRRootManager {
 			{
 				PreparedStatement st = null;
 				try {
-					st = conn.prepareStatement(query[n]);
+					st = conn.prepareStatement(query[n], Statement.RETURN_GENERATED_KEYS);
 					int i = 1;
 					for (Object obj : parameters)
 						st.setObject(i++, obj);
 					int out = st.executeUpdate();
-					result[n] = new BRQueryResult(out);
+					result[n] = new QueryResult(out, st.getGeneratedKeys());
 				} catch (SQLException e) {
 					ex = e;
 				} finally {

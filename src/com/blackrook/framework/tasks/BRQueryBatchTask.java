@@ -13,9 +13,10 @@ package com.blackrook.framework.tasks;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 
+import com.blackrook.db.QueryResult;
 import com.blackrook.framework.BRFrameworkTask;
-import com.blackrook.framework.BRQueryResult;
 
 /**
  * Query task structure for asynchronous query batches.
@@ -30,7 +31,7 @@ public class BRQueryBatchTask extends BRFrameworkTask
 	/** The query string. */
 	protected String[] queries;
 	/** The result sets, created after successful queries. */
-	protected BRQueryResult[] results;
+	protected QueryResult[] results;
 	/** The list of parameters supplied for each query. */
 	protected Object[][] parameters;
 	
@@ -61,13 +62,13 @@ public class BRQueryBatchTask extends BRFrameworkTask
 		{
 			PreparedStatement st = null;
 			try {
-				st = connection.prepareStatement(queries[n]);
+				st = connection.prepareStatement(queries[n], Statement.RETURN_GENERATED_KEYS);
 				int i = 1;
 				if (parameters != null && parameters[n] != null) 
 					for (Object obj : parameters[n])
 						st.setObject(i++, obj);
 				int out = st.executeUpdate();
-				results[n] = new BRQueryResult(out);
+				results[n] = new QueryResult(out, st.getGeneratedKeys());
 			} catch (SQLException e) {
 				throw e;
 			} finally {
@@ -95,7 +96,7 @@ public class BRQueryBatchTask extends BRFrameworkTask
 	 * Returns the results of the queries.
 	 * Null if this thread performed an "update" query. 
 	 */
-	public BRQueryResult[] getResults()
+	public QueryResult[] getResults()
 	{
 		return results;
 		}

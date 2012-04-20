@@ -30,6 +30,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.db.QueryResult;
 import com.blackrook.framework.tasks.BRQueryTask;
 
 /**
@@ -289,7 +290,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
+	public final QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		return BRRootManager.doQueryPooled(poolname, queryKey, parameters);
 		}
@@ -302,7 +303,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
+	public final QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		return BRRootManager.doQueryPooledInline(poolname, query, parameters);
 		}
@@ -314,7 +315,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
+	public final QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		return BRRootManager.doUpdateQueryPooled(poolname, queryKey, parameters);
 		}
@@ -326,7 +327,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
+	public final QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		return BRRootManager.doUpdateQueryPooledInline(poolname, query, parameters);
 		}
@@ -338,7 +339,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param parameters list of lists of parameters for the respective parameterized queries.
 	 * @return the update results returned (usually number of rows affected).
 	 */
-	public final BRQueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
+	public final QueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
 	{
 		return BRRootManager.doUpdateQueryBatchPooled(poolname, queryKeys, parameters);
 		}
@@ -352,7 +353,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param parameters list of lists of parameters for the respective parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
+	public final QueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
 	{
 		return BRRootManager.doUpdateQueryBatchPooledInline(poolname, query, parameters);
 		}

@@ -13,6 +13,7 @@ package com.blackrook.framework;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.blackrook.db.QueryResult;
 import com.blackrook.framework.tasks.BRQueryTask;
 
 /**
@@ -154,7 +155,7 @@ public abstract class BRFrameworkTask implements Runnable
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the ResultSet returned.
 	 */
-	public final BRQueryResult doQuery(String query, Object ... parameters)
+	public final QueryResult doQuery(String query, Object ... parameters)
 	{
 		return BRRootManager.doQueryPooled(servletDefaultSQLPool, query, parameters);
 		}
@@ -167,7 +168,7 @@ public abstract class BRFrameworkTask implements Runnable
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the ResultSet returned.
 	 */
-	public final BRQueryResult doQueryInline(String query, Object ... parameters)
+	public final QueryResult doQueryInline(String query, Object ... parameters)
 	{
 		return BRRootManager.doQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}
@@ -179,7 +180,7 @@ public abstract class BRFrameworkTask implements Runnable
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	public final BRQueryResult doUpdateQuery(String query, Object ... parameters)
+	public final QueryResult doUpdateQuery(String query, Object ... parameters)
 	{
 		return BRRootManager.doUpdateQueryPooled(servletDefaultSQLPool, query, parameters);
 		}
@@ -192,7 +193,7 @@ public abstract class BRFrameworkTask implements Runnable
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the ResultSet returned.
 	 */
-	public final BRQueryResult doUpdateQueryInline(String query, Object ... parameters)
+	public final QueryResult doUpdateQueryInline(String query, Object ... parameters)
 	{
 		return BRRootManager.doUpdateQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}
