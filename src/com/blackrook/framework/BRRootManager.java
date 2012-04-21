@@ -330,10 +330,7 @@ public final class BRRootManager {
 	 */
 	static String getMIMEType(String filename)
 	{
-		int extindex = filename.lastIndexOf(".");
-		if (extindex >= 0)
-			return MIME_TYPES.getType(filename.substring(extindex+1));
-		return "application/octet-stream";
+		return MIME_TYPES.getType(Common.getFileExtension(filename));
 		}
 	
 	/**
