@@ -15,20 +15,15 @@ import java.io.InputStream;
 
 import com.blackrook.db.QueryResult;
 import com.blackrook.framework.tasks.BRQueryTask;
+import com.blackrook.sync.Task;
 
 /**
  * A task that runs asynchronously from the rest of the application.
  * Classes that extend this one should make
  * @author Matthew Tropiano
  */
-public abstract class BRFrameworkTask implements Runnable
+public abstract class BRFrameworkTask extends Task
 {
-	/** Set if started. */
-	private boolean started;
-	/** Set if done. */
-	private boolean done;
-	/** Exception that occurred. Can be null. */
-	private Exception exception;
 
 	/** Progress value. */
 	private float progress;
@@ -53,32 +48,11 @@ public abstract class BRFrameworkTask implements Runnable
 	 */
 	protected BRFrameworkTask(String defaultSQLPoolName, String defaultThreadPoolName)
 	{
+		super();
 		servletDefaultSQLPool = defaultSQLPoolName;
 		servletDefaultThreadPool = defaultThreadPoolName;
-		started = false;
-		done = false;
-		exception = null;
 		}
 	
-	@Override
-	public final void run()
-	{
-		started = true;
-		try {
-			doTask();
-		} catch (Exception e) {
-			exception = e;
-			}
-		done = true;
-		}
-
-	/** 
-	 * The entry point of the task.
-	 * An exception thrown from this method is immediately caught and stored.
-	 * When this completes, {@link #isDone()} returns true.
-	 */
-	public abstract void doTask() throws Exception;
-
 	/**
 	 * Sets the current progress of this task.
 	 */
@@ -93,31 +67,6 @@ public abstract class BRFrameworkTask implements Runnable
 	protected void setProgressMax(float progressMax)
 	{
 		this.progressMax = progressMax;
-		}
-
-	/**
-	 * Returns true if this task is done.
-	 */
-	public boolean hasStarted()
-	{
-		return started;
-		}
-
-	/**
-	 * Returns true if this task is done.
-	 */
-	public boolean isDone()
-	{
-		return done;
-		}
-
-	/**
-	 * Returns the exception that occurred on this runnable, if any occurred.
-	 * Everything went fine if this is null. 
-	 */
-	public Exception getException()
-	{
-		return exception;
 		}
 
 	/**
