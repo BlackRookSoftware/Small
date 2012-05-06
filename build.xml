@@ -41,7 +41,7 @@
 	<property name="docs.dir" value="build/docs" />
 	<property name="zip.dir" value="build/zip" />
 
-	<property name="jar.filename" value="${project.archive}-${project.version}.jar" />
+	<property name="jar.filename" value="${project.archive}.jar" />
 
 	<property name="zip.jar.filename" value="${project.archive}-bin-${project.version}.zip" />
 	<property name="zip.src.filename" value="${project.archive}-src-${project.version}.zip" />
