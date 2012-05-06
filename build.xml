@@ -26,7 +26,7 @@
 	<tstamp>
 		<format property="project.build.date" pattern="yyyy.MM.dd" locale="en,US"/>
 	</tstamp>
-	<property name="project.appendix" value="NIGHTLY" />
+	<property name="project.appendix" value="BUILD" />
 	<property name="project.versionnumber" value="" />
 	<property name="project.version" value="${project.build.date}-${project.versionnumber}${project.appendix}" />
 	<property name="project.archive" value="blackrook-j2ee" />
