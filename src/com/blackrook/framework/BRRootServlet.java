@@ -13,8 +13,6 @@ package com.blackrook.framework;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import javax.servlet.http.HttpServlet;
@@ -30,6 +28,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.list.List;
 import com.blackrook.db.QueryResult;
 import com.blackrook.framework.tasks.BRQueryTask;
 
@@ -88,8 +87,8 @@ public abstract class BRRootServlet extends HttpServlet
 				FileItemFactory factory = new DiskFileItemFactory();
 				ServletFileUpload upload = new ServletFileUpload(factory);
 				try {
-					List<FileItem> list = upload.parseRequest(request);
-					ArrayList<FileItem> fitems = new ArrayList<FileItem>();
+					java.util.List<FileItem> list = upload.parseRequest(request);
+					List<FileItem> fitems = new List<FileItem>();
 					HashMap<String,String> paramTable = new HashMap<String,String>(4);
 					for (FileItem fit : list)
 					{
