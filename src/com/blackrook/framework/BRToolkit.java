@@ -23,6 +23,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
@@ -30,8 +32,6 @@ import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DatabaseUtils;
 import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
-import com.blackrook.framework.tasks.BREncapsulatedTask;
-import com.blackrook.framework.tasks.BRQueryTask;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
 import com.blackrook.sync.ThreadPool;
@@ -41,8 +41,10 @@ import com.blackrook.sync.ThreadPool;
  * pooled and lent out to servlets that request it. 
  * @author Matthew Tropiano
  */
-public final class BRRootManager {
-
+public final class BRToolkit
+{
+	/** Name for Black Rook Toolkit Application attribute. */
+	public static final String DEFAULT_APPLICATION_NAME = "__BRTOOLKIT__";
 	/** Pool settings XML file. */
 	public static final String MAPPING_XML_POOLS = "/WEB-INF/brframework-pools.xml";
 	/** View settings XML file. */
@@ -70,48 +72,66 @@ public final class BRRootManager {
 	public static final String XML_THREADS_NAME = "name";
 	public static final String XML_THREADS_SIZE = "size";
 
-	/** Was this initialized? */
-	private static boolean INITIALIZED = false;
 	/** The map for JSP pages. */
-	private static CaseInsensitiveHashMap<String> JSP_MAP;
+	private CaseInsensitiveHashMap<String> jspMap;
 	/** The map for queries. */
-	private static CaseInsensitiveHashMap<String> QUERY_MAP;
+	private CaseInsensitiveHashMap<String> queryMap;
 	/** The cache for queries. */
-	private static CaseInsensitiveHashMap<String> QUERY_CACHE;
+	private CaseInsensitiveHashMap<String> queryCache;
 	/** Database connection pool. */
-	private static CaseInsensitiveHashMap<DBConnectionPool> CONNECTION_POOL;
+	private CaseInsensitiveHashMap<DBConnectionPool> connectionPool;
 	/** Database connection pool. */
-	private static CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>> THREAD_POOL;
+	private CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>> threadPool;
 	/** Application context path. */
-	private static String REAL_APP_PATH = null;
-	
+	private String realAppPath = null;
 	/** MIME Type Map. */
-	private static BRMIMETypes MIME_TYPES = new BRMIMETypes();
+	private BRMIMETypes mimeTypeMap = new BRMIMETypes();
+
+	/** Singleton toolkit instance. */
+	private static BRToolkit INSTANCE = null;
 	
 	/**
-	 * Initializes the server from the first request using the XML files.
+	 * Constructs a new Toolkit.
+	 * @param context the servlet context.
 	 */
-	static void initializeRoot(ServletContext context)
+	synchronized static BRToolkit createToolkit(ServletContext context)
 	{
-		if (!INITIALIZED)
-			initializeMaps(context);
+		if (INSTANCE != null)
+			return INSTANCE;
+		return INSTANCE = new BRToolkit(context);
 		}
-
+	
 	/**
-	 * Initializes the mappings. 
+	 * Gets the toolkit from the application context.
+	 * @param context the servlet context.
 	 */
-	static synchronized void initializeMaps(ServletContext context)
+	static BRToolkit getToolkit(ServletContext context)
 	{
-		// threads will immediately give up the lock around here if one
-		// thread finishes the initializing.
-		if (INITIALIZED) return;
-			
-		JSP_MAP = new CaseInsensitiveHashMap<String>();
-		QUERY_MAP = new CaseInsensitiveHashMap<String>(25);
-		QUERY_CACHE = new CaseInsensitiveHashMap<String>(25);
-		CONNECTION_POOL = new CaseInsensitiveHashMap<DBConnectionPool>();
-		THREAD_POOL = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
-		REAL_APP_PATH = context.getRealPath(".");
+		if (INSTANCE != null)
+			return INSTANCE;
+		return createToolkit(context);
+		}
+	
+	/**
+	 * Returns the instance of instance.
+	 */
+	static BRToolkit getInstance()
+	{
+		return INSTANCE;
+		}
+	
+	/**
+	 * Constructs a new root toolkit used by all servlets and filters.
+	 * @param context the servlet context to use.
+	 */
+	private BRToolkit(ServletContext context)
+	{
+		jspMap = new CaseInsensitiveHashMap<String>();
+		queryMap = new CaseInsensitiveHashMap<String>(25);
+		queryCache = new CaseInsensitiveHashMap<String>(25);
+		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
+		threadPool = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
+		realAppPath = context.getRealPath(".");
 		
 		XMLStruct xml = null;
 		InputStream in = null;
@@ -174,13 +194,12 @@ public final class BRRootManager {
 		} finally {
 			Common.close(in);
 			}
-		INITIALIZED = true;
 		}
 
 	/**
 	 * Initializes an SQL connection pool.
 	 */
-	private static void initializeSQL(XMLStruct struct)
+	private void initializeSQL(XMLStruct struct)
 	{
 		DatabaseUtils dbu = null;
 		String user = null;
@@ -219,13 +238,13 @@ public final class BRRootManager {
 	
 		try {pool = new DBConnectionPool(dbu, conn, user, password);}
 		catch (Exception e) {throw new BRFrameworkException(e);}
-		CONNECTION_POOL.put(name, pool);
+		connectionPool.put(name, pool);
 		}
 
 	/**
 	 * Initializes a view.
 	 */
-	private static void initializeView(XMLStruct struct)
+	private void initializeView(XMLStruct struct)
 	{
 		String key = struct.getAttribute(XML_VIEW_KEY);
 		String location = struct.getAttribute(XML_VIEW_LOCATION);
@@ -235,13 +254,13 @@ public final class BRRootManager {
 			throw new BRFrameworkException("Missing name for location: "+location);
 		else if (location.length() == 0)
 			throw new BRFrameworkException("Missing src for name: "+key);
-		JSP_MAP.put(key, location);
+		jspMap.put(key, location);
 		}
 
 	/**
 	 * Initializes a query.
 	 */
-	private static void initializeQuery(XMLStruct struct)
+	private void initializeQuery(XMLStruct struct)
 	{
 		String key = struct.getAttribute(XML_QUERY_KEY);
 		String location = struct.getAttribute(XML_QUERY_LOCATION);
@@ -251,33 +270,33 @@ public final class BRRootManager {
 			throw new BRFrameworkException("Missing name for location: "+location);
 		else if (location.length() == 0)
 			throw new BRFrameworkException("Missing src for name: "+key);
-		QUERY_MAP.put(key, location);
+		queryMap.put(key, location);
 		}
 
 	/**
 	 * Initializes a thread pool.
 	 */
-	private static void initializeThreadPool(XMLStruct struct)
+	private void initializeThreadPool(XMLStruct struct)
 	{
 		String name = struct.getAttribute(XML_THREADS_NAME, "default");
 		int size = struct.getAttributeInt(XML_THREADS_SIZE, 10);
-		THREAD_POOL.put(name, new ThreadPool<BRFrameworkTask>(name, size));
+		threadPool.put(name, new ThreadPool<BRFrameworkTask>(name, size));
 		}
 
 	/**
 	 * The actual caching method.
 	 */
-	private static String cacheQuery(String key) throws IOException
+	private String cacheQuery(String key) throws IOException
 	{
 		String out = null;
-		synchronized (QUERY_CACHE)
+		synchronized (queryCache)
 		{
 			// threads will immediately give up the lock around here if one
 			// thread finishes the caching.
-			out = QUERY_CACHE.get(key);
+			out = queryCache.get(key);
 			if (out == null)
 			{
-				String src = QUERY_MAP.get(key);
+				String src = queryMap.get(key);
 				if (src != null)
 				{
 					BufferedReader br = new BufferedReader(new InputStreamReader(getResourceAsStream(src)));
@@ -296,7 +315,7 @@ public final class BRRootManager {
 						}
 					br.close();
 					out = sb.toString();
-					QUERY_CACHE.put(key, out);
+					queryCache.put(key, out);
 					}
 				}
 			}
@@ -306,21 +325,32 @@ public final class BRRootManager {
 	/**
 	 * Gets/loads the query to be used.
 	 */
-	static String getQuery(String key) throws IOException
+	private String getQuery(String key) throws IOException
 	{
-		String out = QUERY_CACHE.get(key);
+		String out = queryCache.get(key);
 		if (out == null)
 			out = cacheQuery(key);
 		return out;
 		}
 
 	/**
+	 * Forces an exception to propagate up to the dispatcher.
+	 * Basically encloses the provided throwable in a {@link BRFrameworkException},
+	 * which is a {@link RuntimeException}.
+	 * @param t the {@link Throwable} to encapsulate and throw.
+	 */
+	public final void throwException(Throwable t)
+	{
+		throw new BRFrameworkException(t);
+		}
+
+	/**
 	 * Gets the path to a view by key name.
 	 * @return the associated path or null if not found. 
 	 */
-	static String getViewByName(String key)
+	public String getViewByName(String key)
 	{
-		return JSP_MAP.get(key);
+		return jspMap.get(key);
 		}
 
 	/**
@@ -328,9 +358,9 @@ public final class BRRootManager {
 	 * @param filename the file name to use to figure out a MIME type.
 	 * @return the MIME type, or <code>application/octet-stream</code>.
 	 */
-	static String getMIMEType(String filename)
+	public String getMIMEType(String filename)
 	{
-		return MIME_TYPES.getType(Common.getFileExtension(filename));
+		return mimeTypeMap.getType(Common.getFileExtension(filename));
 		}
 	
 	/**
@@ -340,7 +370,7 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
+	public QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		String query = null;
 		try {
@@ -361,13 +391,13 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
+	public QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		PreparedStatement st = null;
 		ResultSet rs = null;
 		QueryResult result = null;		
 		try {
-			DBConnectionPool pool = CONNECTION_POOL.get(poolname);
+			DBConnectionPool pool = connectionPool.get(poolname);
 			Connection conn = pool.getAvailableConnection();
 			st = conn.prepareStatement(query);
 			int i = 1;
@@ -396,7 +426,7 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
+	public QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		String query = null;
 		try {
@@ -416,12 +446,12 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
+	public QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		PreparedStatement st = null;
 		QueryResult result = null;		
 		try {
-			DBConnectionPool pool = CONNECTION_POOL.get(poolname);
+			DBConnectionPool pool = connectionPool.get(poolname);
 			Connection conn = pool.getAvailableConnection();
 			st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			int i = 1;
@@ -448,14 +478,14 @@ public final class BRRootManager {
 	 * @param parameters list of lists of parameters for the respective parameterized queries.
 	 * @return the update results returned (usually number of rows affected).
 	 */
-	static final QueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
+	public QueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
 	{
 		String[] query = new String[queryKeys.length];
 		for (int i = 0; i < query.length; i++)
 		{
 			try {
 				query[i] = getQuery(queryKeys[i]);
-				if (query == null)
+				if (query[i] == null)
 					throw new BRFrameworkException("Query could not be loaded/cached - "+queryKeys[i]);
 			} catch (IOException e) {
 				throw new BRFrameworkException(e);
@@ -473,12 +503,12 @@ public final class BRRootManager {
 	 * @param parameters list of lists of parameters for the respective parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 */
-	static final QueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
+	public QueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
 	{
 		QueryResult[] result = new QueryResult[query.length];
 		Exception ex = null;
 		try{
-			DBConnectionPool pool = CONNECTION_POOL.get(poolname);
+			DBConnectionPool pool = connectionPool.get(poolname);
 			Connection conn = pool.getAvailableConnection();
 			conn.setAutoCommit(false);
 			for (int n = 0; ex == null && n < query.length; n++)
@@ -526,9 +556,9 @@ public final class BRRootManager {
 	 * @param task the task to run.
 	 * @return a framework task encapsulation for monitoring the task.
 	 */
-	static final BRFrameworkTask spawnTaskPooled(String poolname, BRFrameworkTask task)
+	public BRFrameworkTask spawnTaskPooled(String poolname, BRFrameworkTask task)
 	{
-		THREAD_POOL.get(poolname).execute(task);
+		threadPool.get(poolname).execute(task);
 		return task;
 		}
 
@@ -539,10 +569,10 @@ public final class BRRootManager {
 	 * @param runnable the runnable to run.
 	 * @return a framework task encapsulation for monitoring the task.
 	 */
-	static final BRFrameworkTask spawnRunnablePooled(String poolname, Runnable runnable)
+	public BRFrameworkTask spawnRunnablePooled(String poolname, Runnable runnable)
 	{
-		BRFrameworkTask task = new BREncapsulatedTask(runnable);
-		THREAD_POOL.get(poolname).execute(task);
+		BRFrameworkTask task = new BRRunnableTask(runnable);
+		threadPool.get(poolname).execute(task);
 		return task;
 		}
 
@@ -555,22 +585,22 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return an already-executing query thread, or null if connection acquisition died somehow.
 	 */
-	static final BRQueryTask spawnQueryPooled(String sqlPoolName, String threadPoolName, String queryKey, Object ... parameters)
+	public BRQueryTask spawnQueryPooled(String sqlPoolName, String threadPoolName, String queryKey, Object ... parameters)
 	{
+		String query = null;
+		
 		try {
-			Connection conn = CONNECTION_POOL.get(sqlPoolName).getAvailableConnection();
-			String query = getQuery(queryKey);
-			if (query == null)
-				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-			BRQueryTask queryTask = new BRQueryTask(conn, query, true, parameters);
-			THREAD_POOL.get(threadPoolName).execute(queryTask);
-			return queryTask;
+			query = getQuery(queryKey);
 		} catch (IOException e) {
 			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
-			e.printStackTrace(System.err);
-			return null;
 			}
+
+		if (query == null)
+			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
+
+		BRQueryTask queryTask = new BRQueryTask(sqlPoolName, query, true, parameters);
+		threadPool.get(threadPoolName).execute(queryTask);
+		return queryTask;
 		}
 
 	/**
@@ -582,21 +612,17 @@ public final class BRRootManager {
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return an already-executing update query thread, or null if connection acquisition died somehow.
 	 */
-	static final BRQueryTask spawnUpdateQueryPooled(String sqlPoolName, String threadPoolName, String queryKey, Object ... parameters)
+	public BRQueryTask spawnUpdateQueryPooled(String sqlPoolName, String threadPoolName, String queryKey, Object ... parameters)
 	{
 		try {
-			Connection conn = CONNECTION_POOL.get(sqlPoolName).getAvailableConnection();
 			String query = getQuery(queryKey);
 			if (query == null)
 				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-			BRQueryTask queryTask = new BRQueryTask(conn, query, true, parameters);
-			THREAD_POOL.get(threadPoolName).execute(queryTask);
+			BRQueryTask queryTask = new BRQueryTask(sqlPoolName, query, true, parameters);
+			threadPool.get(threadPoolName).execute(queryTask);
 			return queryTask;
 		} catch (IOException e) {
 			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
-			e.printStackTrace(System.err);
-			return null;
 			}
 		}
 	
@@ -607,7 +633,7 @@ public final class BRRootManager {
 	 * @param path the path to the resource to open.
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
 	 */
-	static final InputStream getResourceAsStream(String path) throws IOException
+	public InputStream getResourceAsStream(String path) throws IOException
 	{
 		File inFile = getFile(path);
 		return inFile != null ? new FileInputStream(inFile) : null;
@@ -619,10 +645,315 @@ public final class BRRootManager {
 	 * @param path the path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	static final File getFile(String path)
+	public File getFile(String path)
 	{
-		File inFile = new File(REAL_APP_PATH+"/"+path);
+		File inFile = new File(realAppPath+"/"+path);
 		return inFile.exists() ? inFile : null;
+		}
+
+	/**
+	 * Gets the current connection's session id.
+	 * Meant to be a convenience method. 
+	 * @param request servlet request object.
+	 */
+	public String getSessionId(HttpServletRequest request)
+	{
+		return request.getSession().getId();
+		}
+
+	/**
+	 * Escapes a string so that it can be input safely into a URL string.
+	 */
+	public String urlEscape(String inString)
+	{
+		StringBuffer sb = new StringBuffer();
+		char[] inChars = inString.toCharArray();
+		int i = 0;
+		while (i < inChars.length)
+		{
+			char c = inChars[i];
+			if (c > 255)
+				sb.append(String.format("%%%02x%%%02x", ((short)c) >>> 8, ((short)c) & 0x0ff)); // big endian
+			else if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)))
+				sb.append(String.format("%%%02x", (short)c));
+			else
+				sb.append(c);
+			i++;
+			}
+		return sb.toString();
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the session level.
+	 * @param request the source request object.
+	 * @param name the attribute name.
+	 * @param clazz the class type of the object that should be returned.
+	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
+	 */
+	public <T> T getRequestBean(HttpServletRequest request, String name, Class<T> clazz)
+	{
+		T out = null;
+		try {
+			out = getRequestBean(request, name, clazz, false);
+		} catch (Exception e) {
+			throwException(e);
+			} 
+		return out;
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the request level.
+	 * @param request the source request object.
+	 * @param name the attribute name.
+	 * @param clazz the class type of the object that should be returned.
+	 * @param create if true, instantiate this class in the request (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @return a typecast object on the request.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public <T> T getRequestBean(HttpServletRequest request, String name, Class<T> clazz, boolean create)
+	{
+		Object obj = request.getAttribute(name);
+		if (obj == null)
+		{
+			try {
+				obj = create ? clazz.newInstance() : null;
+				request.setAttribute(name, obj);
+			} catch (Exception e) {
+				throwException(e);
+				}
+			}
+	
+		if (obj == null)
+			return null;
+		return clazz.cast(obj);
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the session level.
+	 * @param request the source request object.
+	 * @param name the attribute name.
+	 * @param clazz the class type of the object that should be returned.
+	 * @return a typecast object on the session, or <code>null</code>, if the session is null or the attribute does not exist.
+	 */
+	public <T> T getSessionBean(HttpServletRequest request, String name, Class<T> clazz)
+	{
+		T out = null;
+		try {
+			out = getSessionBean(request, name, clazz, false);
+		} catch (Exception e) {
+			throwException(e);
+			} 
+		return out;
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the session level.
+	 * @param request the source request object.
+	 * @param name the attribute name.
+	 * @param clazz the class type of the object that should be returned.
+	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @return a typecast object on the session, a new instance if it doesn't exist, or null if the session is null.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public <T> T getSessionBean(HttpServletRequest request, String name, Class<T> clazz, boolean create)
+	{
+		HttpSession session = request.getSession();
+		if (session == null)
+			return null;
+		
+		Object obj = session.getAttribute(name);
+		if (obj == null)
+		{
+			try {
+				obj = create ? clazz.newInstance() : null;
+				session.setAttribute(name, obj);
+			} catch (Exception e) {
+				throwException(e);
+				}
+			}
+	
+		if (obj == null)
+			return null;
+		return clazz.cast(obj);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns true if it exists, false otherwise.
+	 */
+	public boolean getParameterExist(HttpServletRequest request, String paramName)
+	{
+		return request.getParameter(paramName) != null;
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns true or false.
+	 * This flavor of <code>getParameterBoolean</code> assumes that the parameter
+	 * received is a string that is either "true" or not "true".
+	 * @see {@link Common#parseBoolean(String)}
+	 */
+	public boolean getParameterBoolean(HttpServletRequest request, String paramName)
+	{
+		return Common.parseBoolean(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns true or false, if the string found in the request evaluates
+	 * to <code>trueValue</code>. The value of <code>trueValue</code> can be <code>null</code>,
+	 * meaning that the parameter was not received.
+	 */
+	public boolean getParameterBoolean(HttpServletRequest request, String paramName, String trueValue)
+	{
+		String out = request.getParameter(paramName);
+		return out != null && out.equalsIgnoreCase(trueValue);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns the empty string if it doesn't exist.
+	 */
+	public String getParameterString(HttpServletRequest request, String paramName)
+	{
+		String out = request.getParameter(paramName);
+		return out != null ? out : "";
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a byte and returns 0 if it doesn't exist.
+	 */
+	public byte getParameterByte(HttpServletRequest request, String paramName)
+	{
+		return Common.parseByte(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a short and returns 0 if it doesn't exist.
+	 */
+	public short getParameterShort(HttpServletRequest request, String paramName)
+	{
+		return Common.parseShort(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a char and returns '\0' if it doesn't exist.
+	 */
+	public char getParameterChar(HttpServletRequest request, String paramName)
+	{
+		return Common.parseChar(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses an integer and returns 0 if it doesn't exist.
+	 */
+	public int getParameterInt(HttpServletRequest request, String paramName)
+	{
+		return Common.parseChar(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a long integer and returns 0L if it doesn't exist.
+	 */
+	public long getParameterLong(HttpServletRequest request, String paramName)
+	{
+		return Common.parseChar(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a float and returns 0.0f if it doesn't exist.
+	 */
+	public float getParameterFloat(HttpServletRequest request, String paramName)
+	{
+		return Common.parseFloat(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a double and returns 0.0 if it doesn't exist.
+	 */
+	public double getParameterDouble(HttpServletRequest request, String paramName)
+	{
+		return Common.parseDouble(request.getParameter(paramName));
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and returns <code>def</code> if it doesn't exist.
+	 */
+	public String getParameterString(HttpServletRequest request, String paramName, String def)
+	{
+		String out = request.getParameter(paramName);
+		return out != null ? out : def;
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a byte and returns <code>def</code> if it doesn't exist.
+	 */
+	public byte getParameterByte(HttpServletRequest request, String paramName, byte def)
+	{
+		return Common.parseByte(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a short and returns <code>def</code> if it doesn't exist.
+	 */
+	public short getParameterShort(HttpServletRequest request, String paramName, short def)
+	{
+		return Common.parseShort(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a char and returns <code>def</code> if it doesn't exist.
+	 */
+	public char getParameterChar(HttpServletRequest request, String paramName, char def)
+	{
+		return Common.parseChar(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses an integer and returns <code>def</code> if it doesn't exist.
+	 */
+	public int getParameterInt(HttpServletRequest request, String paramName, int def)
+	{
+		return Common.parseInt(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a long integer and returns <code>def</code> if it doesn't exist.
+	 */
+	public long getParameterLong(HttpServletRequest request, String paramName, long def)
+	{
+		return Common.parseLong(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a float and returns <code>def</code> if it doesn't exist.
+	 */
+	public float getParameterFloat(HttpServletRequest request, String paramName, float def)
+	{
+		return Common.parseFloat(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a double and returns <code>def</code> if it doesn't exist.
+	 */
+	public double getParameterDouble(HttpServletRequest request, String paramName, double def)
+	{
+		return Common.parseDouble(request.getParameter(paramName), def);
 		}
 	
 }

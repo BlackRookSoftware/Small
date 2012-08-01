@@ -8,15 +8,9 @@
  * Contributors:
  *     Matt Tropiano - initial API and implementation
  ******************************************************************************/
-package com.blackrook.framework.tasks;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+package com.blackrook.framework;
 
 import com.blackrook.db.QueryResult;
-import com.blackrook.framework.BRFrameworkTask;
 
 /**
  * Query task structure for asynchronous queries.
@@ -25,8 +19,6 @@ import com.blackrook.framework.BRFrameworkTask;
  */
 public class BRQueryTask extends BRFrameworkTask
 {
-	/** The connection to use for the query. */
-	protected Connection connection;
 	/** The query string. */
 	protected String query;
 	/** Is this an update query (as opposed to a data query)? */
@@ -43,9 +35,9 @@ public class BRQueryTask extends BRFrameworkTask
 	 * @param query the query string to use.
 	 * @param parameters the set of parameters passed for parameterized queries.
 	 */
-	public BRQueryTask(Connection connection, String query, Object ... parameters)
+	BRQueryTask(String defaultSQLPoolName, String query, Object ... parameters)
 	{
-		this(connection,query,false);
+		this(defaultSQLPoolName, query, false, parameters);
 		}
 
 	/**
@@ -55,12 +47,9 @@ public class BRQueryTask extends BRFrameworkTask
 	 * @param isUpdate is this an update query (as opposed to a data query)?
 	 * @param parameters the set of parameters passed for parameterized queries.
 	 */
-	public BRQueryTask(Connection connection, String query, boolean isUpdate, Object ... parameters)
+	BRQueryTask(String defaultSQLPoolName, String query, boolean isUpdate, Object ... parameters)
 	{
-		super();
-		if (connection == null || query == null)
-			throw new IllegalArgumentException("Connection and query cannot be null.");
-		this.connection = connection;
+		super(defaultSQLPoolName);
 		this.query = query;
 		this.isUpdate = isUpdate;
 		this.result = null;
@@ -70,32 +59,10 @@ public class BRQueryTask extends BRFrameworkTask
 	@Override
 	public void doTask() throws Exception
 	{
-		try {
-			if (isUpdate)
-			{
-				PreparedStatement st = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-				int i = 1;
-				for (Object obj : parameters)
-					st.setObject(i++, obj);
-				result = new QueryResult(st.executeUpdate(), st.getGeneratedKeys());
-				st.close();
-				}
-			else
-			{
-				PreparedStatement st = connection.prepareStatement(query);
-				int i = 1;
-				for (Object obj : parameters)
-					st.setObject(i++, obj);
-				ResultSet rs = st.executeQuery(query);
-				result = new QueryResult(rs);
-				rs.close();
-				st.close();
-				}
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			connection.close();
-			}
+		if (isUpdate)
+			result = doUpdateQueryInline(query, parameters);
+		else
+			result = doQueryInline(query, parameters);
 		}
 	
 	/**

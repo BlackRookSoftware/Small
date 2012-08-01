@@ -18,8 +18,8 @@ import org.apache.commons.fileupload.FileItem;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.db.QueryResult;
 import com.blackrook.framework.BRFrameworkTask;
+import com.blackrook.framework.BRQueryTask;
 import com.blackrook.framework.BRRootServlet;
-import com.blackrook.framework.tasks.BRQueryTask;
 
 /**
  * Base servlet for all entry points into Black Rook framework servlets.
@@ -117,7 +117,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final QueryResult doQuery(String query, Object ... parameters)
 	{
-		return doQueryPooled(servletDefaultSQLPool, query, parameters);
+		return getToolkit().doQueryPooled(servletDefaultSQLPool, query, parameters);
 		}
 
 	/**
@@ -130,7 +130,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final QueryResult doQueryInline(String query, Object ... parameters)
 	{
-		return doQueryPooledInline(servletDefaultSQLPool, query, parameters);
+		return getToolkit().doQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}
 
 	/**
@@ -142,7 +142,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final QueryResult doUpdateQuery(String query, Object ... parameters)
 	{
-		return doUpdateQueryPooled(servletDefaultSQLPool, query, parameters);
+		return getToolkit().doUpdateQueryPooled(servletDefaultSQLPool, query, parameters);
 		}
 
 	/**
@@ -155,7 +155,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final QueryResult doUpdateQueryInline(String query, Object ... parameters)
 	{
-		return doUpdateQueryPooledInline(servletDefaultSQLPool, query, parameters);
+		return getToolkit().doUpdateQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}
 
 	/**
@@ -166,7 +166,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final BRFrameworkTask spawnTask(BRFrameworkTask task)
 	{
-		return spawnTaskPooled(servletDefaultThreadPool, task);
+		return getToolkit().spawnTaskPooled(servletDefaultThreadPool, task);
 		}
 
 	/**
@@ -178,7 +178,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final BRFrameworkTask spawnRunnable(Runnable runnable)
 	{
-		return spawnRunnablePooled(servletDefaultThreadPool, runnable);
+		return getToolkit().spawnRunnablePooled(servletDefaultThreadPool, runnable);
 		}
 
 	/**
@@ -190,7 +190,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final BRQueryTask spawnQuery(String query, Object ... parameters)
 	{
-		return spawnQueryPooled(servletDefaultSQLPool, servletDefaultThreadPool, query, parameters);
+		return getToolkit().spawnQueryPooled(servletDefaultSQLPool, servletDefaultThreadPool, query, parameters);
 		}
 
 	/**
@@ -202,7 +202,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 	 */
 	public final BRQueryTask spawnUpdateQuery(String query, Object ... parameters)
 	{
-		return spawnUpdateQueryPooled(servletDefaultSQLPool, servletDefaultThreadPool, query, parameters);
+		return getToolkit().spawnUpdateQueryPooled(servletDefaultSQLPool, servletDefaultThreadPool, query, parameters);
 		}
 
 }
