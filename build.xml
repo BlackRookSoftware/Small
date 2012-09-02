@@ -11,16 +11,18 @@
 
 	<!-- Class Dependencies -->
 	<property name="dev.base" value=".." />
+	<property name="lib.base" value="E:\JavaLibraries" />
+
 	<property name="commons.lib" value="${dev.base}/Commons/bin"/>
 	<property name="commons.io.lib" value="${dev.base}/CommonsIO/bin"/>
 	<property name="commons.lang.lib" value="${dev.base}/CommonsLang/bin"/>
 	<property name="commons.sync.lib" value="${dev.base}/CommonsSync/bin" />
 	<property name="db.lib" value="${dev.base}/DB/bin"/>
-	<property name="apache.commons.io.lib" value="E:/JavaLibraries/Jakarta Commons IO/jar/commons-io-1.4.jar" />	
-	<property name="apache.commons.fileupload.lib" value="E:/JavaLibraries/Jakarta Commons FileUpload/jar/commons-fileupload-1.2.1.jar" />	
+	<property name="apache.commons.io.lib.jar" value="${lib.base}/Jakarta Commons IO/jar/commons-io-1.4.jar" />	
+	<property name="apache.commons.fileupload.lib.jar" value="${lib.base}/Jakarta Commons FileUpload/jar/commons-fileupload-1.2.1.jar" />	
 
-	<property name="j2ee.libdir" value="E:/JavaLibraries/Tomcat 6 Libraries" />
-	<property name="j2ee.servlet.lib" value="${j2ee.libdir}/servlet-api.jar" />
+	<property name="j2ee.libdir" value="${lib.base}/Tomcat 6 Libraries" />
+	<property name="j2ee.servlet.lib.jar" value="${j2ee.libdir}/servlet-api.jar" />
 	
 	<!-- Project Info -->
 	<tstamp>
