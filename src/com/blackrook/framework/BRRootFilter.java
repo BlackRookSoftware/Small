@@ -110,7 +110,7 @@ public abstract class BRRootFilter implements Filter
 		try{
 			response.sendError(statusCode, message);
 		} catch (Exception e) {
-			getToolkit().throwException(e);
+			BRUtil.throwException(e);
 			}
 		}
 
@@ -124,7 +124,7 @@ public abstract class BRRootFilter implements Filter
 		try{
 			response.sendRedirect(url);
 		} catch (Exception e) {
-			getToolkit().throwException(e);
+			BRUtil.throwException(e);
 			}
 		}
 
@@ -153,7 +153,7 @@ public abstract class BRRootFilter implements Filter
 		try{
 			request.getRequestDispatcher(path).include(request, response);
 		} catch (Exception e) {
-			getToolkit().throwException(e);
+			BRUtil.throwException(e);
 			}
 		}
 
@@ -182,7 +182,7 @@ public abstract class BRRootFilter implements Filter
 		try{
 			request.getRequestDispatcher(path).forward(request, response);
 		} catch (Exception e) {
-			getToolkit().throwException(e);
+			BRUtil.throwException(e);
 			}
 		}
 }
