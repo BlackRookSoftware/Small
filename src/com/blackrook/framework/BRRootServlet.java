@@ -55,6 +55,27 @@ public abstract class BRRootServlet extends HttpServlet
 		directService(request,response,true);
 		}
 	
+	@Override
+	public final void doHead(HttpServletRequest request, HttpServletResponse response)
+	{
+		BRToolkit.createToolkit(getServletContext());
+		onHead(request,response);
+		}
+	
+	@Override
+	public final void doPut(HttpServletRequest request, HttpServletResponse response)
+	{
+		BRToolkit.createToolkit(getServletContext());
+		onPut(request,response);
+		}
+	
+	@Override
+	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
+	{
+		BRToolkit.createToolkit(getServletContext());
+		onDelete(request,response);
+		}
+	
 	/**
 	 * Function that redirects a service call to the appropriate handler methods.
 	 * @param request servlet request object.
@@ -125,6 +146,30 @@ public abstract class BRRootServlet extends HttpServlet
 	 */
 	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String,String> paramMap);
 
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onHead(HttpServletRequest request, HttpServletResponse response);
+	
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a PUT request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onPut(HttpServletRequest request, HttpServletResponse response);
+	
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a DELETE request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onDelete(HttpServletRequest request, HttpServletResponse response);
+	
 	/**
 	 * Sends request to the error page with a status code.
 	 * @param response servlet response object.

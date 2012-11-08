@@ -108,6 +108,24 @@ public abstract class BRCommonServlet extends BRRootServlet
 		sendError(response, 405, "Servlet does not support this method.");
 		}
 
+	@Override
+	public void onHead(HttpServletRequest request, HttpServletResponse response)
+	{
+		sendError(response, 405, "Servlet does not support this method.");
+		}
+
+	@Override
+	public void onPut(HttpServletRequest request, HttpServletResponse response)
+	{
+		sendError(response, 405, "Servlet does not support this method.");
+		}
+
+	@Override
+	public void onDelete(HttpServletRequest request, HttpServletResponse response)
+	{
+		sendError(response, 405, "Servlet does not support this method.");
+		}
+
 	/**
 	 * Attempts to grab an available connection from the default 
 	 * servlet connection pool and performs a query.
