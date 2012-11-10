@@ -127,7 +127,8 @@
         	nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" 
         	packagenames="
         		com.blackrook.framework,
-    			com.blackrook.framework.tasks
+    			com.blackrook.framework.filter,
+				com.blackrook.framework.servlet
     			"
         	source="1.6" 
         	sourcepath="${src.dir}" 
