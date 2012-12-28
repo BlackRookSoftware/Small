@@ -13,7 +13,6 @@ package com.blackrook.framework;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.blackrook.db.QueryResult;
 import com.blackrook.sync.Task;
 
 /**
@@ -23,31 +22,15 @@ import com.blackrook.sync.Task;
  */
 public abstract class BRFrameworkTask extends Task
 {
-	/** Name for all default pools. */
-	public static final String DEFAULT_POOL_NAME = "default";
-
-	/** Default Servlet SQL Pool. */
-	private String servletDefaultSQLPool;
-
 	/**
 	 * Creates a new runnable task that uses the default database and thread pools.
 	 */
 	protected BRFrameworkTask()
 	{
-		this(DEFAULT_POOL_NAME);
 		}
 	
 	/**
-	 * Creates a new runnable task that uses the database and thread pools provided.
-	 */
-	protected BRFrameworkTask(String defaultSQLPoolName)
-	{
-		super();
-		servletDefaultSQLPool = defaultSQLPoolName;
-		}
-	
-	/**
-	 * Gets the Black Rook Servlet Toolkit.
+	 * Gets the Black Rook Framework Toolkit.
 	 */
 	public final BRToolkit getToolkit()
 	{
@@ -64,56 +47,6 @@ public abstract class BRFrameworkTask extends Task
 	public final InputStream getResourceAsStream(String path) throws IOException
 	{
 		return getToolkit().getResourceAsStream(path);
-		}
-	
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs a query.
-	 * @param query the query (by key) to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the ResultSet returned.
-	 */
-	public final QueryResult doQuery(String query, Object ... parameters)
-	{
-		return getToolkit().doQueryPooled(servletDefaultSQLPool, query, parameters);
-		}
-
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs a query. The provided query
-	 * is a literal query - NOT a key that references a query.
-	 * @param query the query to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the ResultSet returned.
-	 */
-	public final QueryResult doQueryInline(String query, Object ... parameters)
-	{
-		return getToolkit().doQueryPooledInline(servletDefaultSQLPool, query, parameters);
-		}
-
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs an update query.
-	 * @param query the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 */
-	public final QueryResult doUpdateQuery(String query, Object ... parameters)
-	{
-		return getToolkit().doUpdateQueryPooled(servletDefaultSQLPool, query, parameters);
-		}
-
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs an update query. The provided query
-	 * is a literal query - NOT a key that references a query.
-	 * @param query the query to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the ResultSet returned.
-	 */
-	public final QueryResult doUpdateQueryInline(String query, Object ... parameters)
-	{
-		return getToolkit().doUpdateQueryPooledInline(servletDefaultSQLPool, query, parameters);
 		}
 
 }

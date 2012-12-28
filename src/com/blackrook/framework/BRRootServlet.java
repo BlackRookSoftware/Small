@@ -34,9 +34,6 @@ import com.blackrook.commons.list.List;
  */
 public abstract class BRRootServlet extends HttpServlet
 {
-	/** Name for all default pools. */
-	public static final String DEFAULT_POOL_NAME = "default";
-
 	private static final long serialVersionUID = 7057939105164581326L;
 
 	private static final Random LAG_SIM_RANDOM = new Random();

@@ -20,6 +20,8 @@ public final class BRUtil
 	/** MIME Type Map. */
 	private static BRMIMETypes MIME_TYPE_MAP = new BRMIMETypes();
 
+	private BRUtil() {}
+	
 	/**
 	 * Gets the MIME type of a file (uses a database that is more complete than javax.activation).
 	 * @param filename the file name to use to figure out a MIME type.

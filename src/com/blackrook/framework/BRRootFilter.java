@@ -17,9 +17,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public abstract class BRRootFilter implements Filter
 {
-	/** Name for all default pools. */
-	public static final String DEFAULT_POOL_NAME = "default";
-
 	@Override
 	public final void init(FilterConfig config) throws ServletException
 	{

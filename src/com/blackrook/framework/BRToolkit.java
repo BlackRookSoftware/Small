@@ -43,6 +43,8 @@ public final class BRToolkit
 {
 	/** Name for Black Rook Toolkit Application attribute. */
 	public static final String DEFAULT_APPLICATION_NAME = "__BRTOOLKIT__";
+	/** Name for all default pools. */
+	public static final String DEFAULT_POOL_NAME = "default";
 	/** Pool settings XML file. */
 	public static final String MAPPING_XML_POOLS = "/WEB-INF/brframework-pools.xml";
 	/** View settings XML file. */
@@ -551,56 +553,6 @@ public final class BRToolkit
 		return task;
 		}
 
-	/**
-	 * Attempts to grab an available connection from a connection pool and starts a query task
-	 * that can be monitored by the caller.
-	 * @param sqlPoolName the SQL connection pool name to use.
-	 * @param threadPoolName the thread pool to use.
-	 * @param queryKey the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return an already-executing query thread, or null if connection acquisition died somehow.
-	 */
-	public BRQueryTask spawnQueryPooled(String sqlPoolName, String threadPoolName, String queryKey, Object ... parameters)
-	{
-		String query = null;
-		
-		try {
-			query = getQuery(queryKey);
-		} catch (IOException e) {
-			throw new BRFrameworkException(e);
-			}
-
-		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-
-		BRQueryTask queryTask = new BRQueryTask(sqlPoolName, query, true, parameters);
-		threadPool.get(threadPoolName).execute(queryTask);
-		return queryTask;
-		}
-
-	/**
-	 * Attempts to grab an available connection from a connection pool 
-	 * and starts an update query task that can be monitored by the caller.
-	 * @param sqlPoolName the SQL connection pool name to use.
-	 * @param threadPoolName the thread pool to use.
-	 * @param queryKey the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return an already-executing update query thread, or null if connection acquisition died somehow.
-	 */
-	public BRQueryTask spawnUpdateQueryPooled(String sqlPoolName, String threadPoolName, String queryKey, Object ... parameters)
-	{
-		try {
-			String query = getQuery(queryKey);
-			if (query == null)
-				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-			BRQueryTask queryTask = new BRQueryTask(sqlPoolName, query, true, parameters);
-			threadPool.get(threadPoolName).execute(queryTask);
-			return queryTask;
-		} catch (IOException e) {
-			throw new BRFrameworkException(e);
-			}
-		}
-	
 	/**
 	 * Opens an input stream to a resource using a path relative to the
 	 * application context path. 
