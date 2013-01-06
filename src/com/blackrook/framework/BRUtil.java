@@ -269,13 +269,13 @@ public final class BRUtil
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and returns true or false, if the string found in the request evaluates
-	 * to <code>trueValue</code>. The value of <code>trueValue</code> can be <code>null</code>,
+	 * to <code>trueValue</code>, case-insensitively. The value of <code>trueValue</code> can be <code>null</code>,
 	 * meaning that the parameter was not received.
 	 */
 	public static boolean getParameterBoolean(HttpServletRequest request, String paramName, String trueValue)
 	{
 		String out = request.getParameter(paramName);
-		return out != null && out.equalsIgnoreCase(trueValue);
+		return (out == null && trueValue == null) || (out != null && out.equalsIgnoreCase(trueValue));
 		}
 
 	/**
