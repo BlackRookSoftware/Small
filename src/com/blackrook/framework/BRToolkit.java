@@ -30,6 +30,7 @@ import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DatabaseUtils;
 import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
+import com.blackrook.db.sqlite.SQLiteUtils;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
 import com.blackrook.sync.ThreadPool;
@@ -53,6 +54,7 @@ public final class BRToolkit
 	public static final String MAPPING_XML_QUERIES = "/WEB-INF/brframework-queries.xml";
 	/** MySQL type name. */
 	public static final String SQL_TYPE_MYSQL = "mysql";
+	public static final String SQL_TYPE_SQLITE = "sqlite";
 	public static final String XML_VIEW = "view";
 	public static final String XML_VIEW_KEY = "name";
 	public static final String XML_VIEW_LOCATION = "src";
@@ -199,46 +201,75 @@ public final class BRToolkit
 	 */
 	private void initializeSQL(XMLStruct struct)
 	{
-		DatabaseUtils dbu = null;
-		String user = null;
-		String password = null;
-		
 		String name = struct.getAttribute(XML_SQL_NAME, "default");
 		if (name == null || name.trim().length() == 0)
 			throw new BRFrameworkException("Missing <name> key for SQL server pool.");
 		
 		String type = struct.getAttribute(XML_SQL_TYPE);
 		if (SQL_TYPE_MYSQL.equalsIgnoreCase(type))
-		{
-			user = struct.getAttribute(XML_SQL_USER, "root");
-			if (user.trim().length() == 0)
-				throw new BRFrameworkException("Missing user for SQL server pool.");
-			password = struct.getAttribute(XML_SQL_PASSWORD, "");
-	
-			String host = struct.getAttribute(XML_SQL_HOST, "localhost");
-	
-			String db = struct.getAttribute(XML_SQL_DB, user);
-			if (db.trim().length() == 0)
-				throw new BRFrameworkException("Missing URL for SQL server pool.");
-			
-			int port = struct.getAttributeInt(XML_SQL_PORT, MySQLUtils.DEFAULT_PORT);
-			
-			try {dbu = new MySQLUtils(db, host, port);}
-			catch (Exception e) {throw new BRFrameworkException(e);}
-			}
+			connectionPool.put(name, initializeMYSQL(struct));
+		else if (SQL_TYPE_SQLITE.equalsIgnoreCase(type))
+			connectionPool.put(name, initializeSQLite(struct));
 		else
 			throw new BRFrameworkException("Unsupported SQL Server pool type: "+type);
-	
-	
-		int conn = struct.getAttributeInt(XML_SQL_CONNECTIONS, 10);
-	
-		DBConnectionPool pool = null;
-	
-		try {pool = new DBConnectionPool(dbu, conn, user, password);}
-		catch (Exception e) {throw new BRFrameworkException(e);}
-		connectionPool.put(name, pool);
 		}
 
+	/**
+	 * Creates a MYSQL pool using the gathered settings. 
+	 */
+	private DBConnectionPool initializeMYSQL(XMLStruct struct)
+	{
+		DBConnectionPool pool = null;
+		DatabaseUtils dbu = null;
+		String user = null;
+		String password = null;
+				
+		user = struct.getAttribute(XML_SQL_USER, "root");
+		if (user.trim().length() == 0)
+			throw new BRFrameworkException("Missing user for SQL server pool.");
+		password = struct.getAttribute(XML_SQL_PASSWORD, "");
+
+		String host = struct.getAttribute(XML_SQL_HOST, "localhost");
+
+		String db = struct.getAttribute(XML_SQL_DB, user);
+		if (db.trim().length() == 0)
+			throw new BRFrameworkException("Missing URL for SQL server pool.");
+		
+		int port = struct.getAttributeInt(XML_SQL_PORT, MySQLUtils.DEFAULT_PORT);
+		
+		try {dbu = new MySQLUtils(db, host, port);}
+		catch (Exception e) {throw new BRFrameworkException(e);}
+
+		int conn = struct.getAttributeInt(XML_SQL_CONNECTIONS, 10);
+
+		try {pool = new DBConnectionPool(dbu, conn, user, password);}
+		catch (Exception e) {throw new BRFrameworkException(e);}
+		
+		return pool;
+		}
+	
+	/**
+	 * Creates a SQLite "pool" using the gathered settings.
+	 * One connection only. 
+	 */
+	private DBConnectionPool initializeSQLite(XMLStruct struct)
+	{
+		DBConnectionPool pool = null;
+		DatabaseUtils dbu = null;
+		
+		String db = struct.getAttribute(XML_SQL_DB);
+		if (db.trim().length() == 0)
+			throw new BRFrameworkException("Missing database path for SQL server pool.");
+
+		try {dbu = new SQLiteUtils(getFile(db));}
+		catch (Exception e) {throw new BRFrameworkException(e);}
+		
+		try {pool = new DBConnectionPool(dbu, 1);}
+		catch (Exception e) {throw new BRFrameworkException(e);}
+		
+		return pool;
+		}
+	
 	/**
 	 * Initializes a view.
 	 */

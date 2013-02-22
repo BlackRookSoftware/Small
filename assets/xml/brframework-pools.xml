@@ -26,9 +26,6 @@
 					with. So far, the only valid value for this attribute is 
 					"mysql".
 	
-	connections		The number of connections to open to the database.
-					Default is 10.
-
 	If the database type is "mysql", the following attributes are accepted:
 	
 	user			The username to use for the pooled connections.
@@ -46,7 +43,20 @@
 	database		The database to use for all query requests.
 					Default is the same value as the user attribute.
 	
+	connections		The number of connections to open to the database.
+					Default is 10.
+
+	If the database type is "sqlite", the following attributes are accepted:
+	
+	database		The path to the database file. If relative path, it is 
+					relative to the application context root.
+	
+					NOTE: SQLite can only have one connection open to it.
+					So, in the case of SQLite, the number of pooled connections
+					is 1. Always.
+	
 -->
+	<!-- MYSQL -->
 	<connectionpool 
 		name="default" 
 		type="mysql"
@@ -57,6 +67,15 @@
 		port="3306"
 		database="root" 
 	/>
+
+	<!-- SQLite -->
+	<!--
+	<connectionpool 
+		name="default" 
+		type="sqlite"
+		database="/WEB-INF/default.db" 
+	/>
+	-->
 
 <!--
 
