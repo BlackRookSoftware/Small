@@ -19,6 +19,8 @@ public final class BRUtil
 {
 	/** MIME Type Map. */
 	private static BRMIMETypes MIME_TYPE_MAP = new BRMIMETypes();
+	/** Singleton context for beans not attached to the application context. */
+	private static final HashMap<String, Object> SINGLETON_MAP = new HashMap<String, Object>();
 
 	private BRUtil() {}
 	
@@ -115,7 +117,7 @@ public final class BRUtil
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
-		return getRequestBean(request, clazz, name, false);
+		return getRequestBean(request, clazz, name, true);
 		}
 
 	/**
@@ -201,7 +203,7 @@ public final class BRUtil
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz)
 	{
-		return getApplicationBean(context, clazz, clazz.getPackage().getName()+"."+clazz.getName(), true);
+		return getApplicationBean(context, clazz, "$$"+clazz.getPackage().getName()+"."+clazz.getName(), true);
 		}
 
 	/**
@@ -237,6 +239,67 @@ public final class BRUtil
 				context.setAttribute(name, obj);
 			} catch (Exception e) {
 				throwException(e);
+				}
+			}
+	
+		if (obj == null)
+			return null;
+		return clazz.cast(obj);
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the program level,
+	 * accessible always, and not attached to a servlet context.
+	 * The bean is created and stored if it doesn't exist.
+	 * The name used is the fully-qualified class name.
+	 * @param request the source request object.
+	 * @param clazz the class type of the object that should be returned.
+	 * @return a typecast object on the application scope.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public static <T> T getBean(Class<T> clazz)
+	{
+		return getBean(clazz, "$$"+clazz.getPackage().getName()+"."+clazz.getName(), true);
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the program level,
+	 * accessible always, and not attached to a servlet context.
+	 * @param request the source request object.
+	 * @param clazz the class type of the object that should be returned.
+	 * @param name the attribute name.
+	 * @return a typecast object on the application scope.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public static <T> T getBean(Class<T> clazz, String name)
+	{
+		return getBean(clazz, name, true);
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the program level,
+	 * accessible always, and not attached to a servlet context.
+	 * @param request the source request object.
+	 * @param clazz the class type of the object that should be returned.
+	 * @param name the attribute name.
+	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public static <T> T getBean(Class<T> clazz, String name, boolean create)
+	{
+		Object obj = null;
+		synchronized (SINGLETON_MAP) 
+		{
+			obj = SINGLETON_MAP.get(name);
+			if (obj == null)
+			{
+				try {
+					obj = create ? clazz.newInstance() : null;
+					SINGLETON_MAP.put(name, obj);
+				} catch (Exception e) {
+					throwException(e);
+					}
 				}
 			}
 	
