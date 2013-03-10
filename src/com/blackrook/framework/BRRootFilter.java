@@ -41,7 +41,7 @@ public abstract class BRRootFilter implements Filter
 		}
 	
 	/**
-	 * Gets the Black Rook Servlet Toolkit.
+	 * Gets the Black Rook Framework Toolkit.
 	 */
 	public final BRToolkit getToolkit()
 	{

@@ -217,7 +217,7 @@ public abstract class BRRootServlet extends HttpServlet
 		}
 
 	/**
-	 * Gets the Black Rook Servlet Toolkit.
+	 * Gets the Black Rook Framework Toolkit.
 	 */
 	public final BRToolkit getToolkit()
 	{

@@ -562,7 +562,7 @@ public final class BRToolkit
 	 * that can be monitored by the caller.
 	 * @param poolname the thread pool to use.
 	 * @param task the task to run.
-	 * @return a framework task encapsulation for monitoring the task.
+	 * @return the task that was passed into this method.
 	 */
 	public BRFrameworkTask spawnTaskPooled(String poolname, BRFrameworkTask task)
 	{
