@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
 
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.db.DBConnectionPool;
 import com.blackrook.framework.BRToolkit;
 import com.blackrook.sync.ThreadPool;
 
@@ -66,14 +67,26 @@ public final class BRDiagnosticServlet extends BRRootServlet
 			
 			stats.put("running", pool.getRunningCount());
 			stats.put("waiting", pool.getWaitingCount());
-			stats.put("total", pool.getRunningCount() + pool.getWaitingCount());
+			stats.put("total", pool.getCount());
 			
 			map.put(key, toolkit.getViewByName(key));
 			}
 		request.setAttribute("threadpools", map);
 
-		// TODO: Finish.
-		
+		map = new HashMap<String, Object>();
+		for (String key : toolkit.getConnectionPoolNames())
+		{
+			DBConnectionPool pool = toolkit.getConnectionPool(key);
+			HashMap<String, Object> stats = new HashMap<String, Object>();
+			
+			stats.put("inuse", pool.getUsedConnectionCount());
+			stats.put("available", pool.getAvailableConnectionCount());
+			stats.put("total", pool.getTotalConnectionCount());
+			
+			map.put(key, toolkit.getViewByName(key));
+			}
+		request.setAttribute("connectionpools", map);
+
 		sendToView(request, response, viewKey);
 		}
 
