@@ -21,11 +21,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Iterator;
 
 import javax.servlet.ServletContext;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
+import com.blackrook.commons.list.List;
 import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DatabaseUtils;
 import com.blackrook.db.QueryResult;
@@ -75,7 +77,7 @@ public final class BRToolkit
 	public static final String XML_THREADS_SIZE = "size";
 
 	/** The map for JSP pages. */
-	private CaseInsensitiveHashMap<String> jspMap;
+	private CaseInsensitiveHashMap<String> viewMap;
 	/** The map for queries. */
 	private CaseInsensitiveHashMap<String> queryMap;
 	/** The cache for queries. */
@@ -121,12 +123,66 @@ public final class BRToolkit
 		}
 	
 	/**
+	 * Returns a list of view names.
+	 */
+	String[] getViewNames()
+	{
+		return getKeys(viewMap);
+		}
+	
+	/**
+	 * Returns a list of query keyword names.
+	 */
+	String[] getQueryKeywordNames()
+	{
+		return getKeys(queryMap);
+		}
+	
+	/**
+	 * Returns a list of cached query keyword names.
+	 */
+	String[] getCachedQueryKeywordNames()
+	{
+		return getKeys(queryCache);
+		}
+	
+	/**
+	 * Returns a list of thread pool names.
+	 */
+	String[] getThreadPoolNames()
+	{
+		return getKeys(threadPool);
+		}
+	
+	/**
+	 * Returns a list of connection pool names.
+	 */
+	String[] getConnectionPoolNames()
+	{
+		return getKeys(connectionPool);
+		}
+	
+	// gets String keys from a map.
+	private String[] getKeys(CaseInsensitiveHashMap<?> map)
+	{
+		List<String> outList = new List<String>();
+		
+		Iterator<String> it = map.keyIterator();
+		while(it.hasNext())
+			outList.add(it.next());
+		
+		String[] out = new String[outList.size()];
+		outList.toArray(out);
+		return out;
+		}
+	
+	/**
 	 * Constructs a new root toolkit used by all servlets and filters.
 	 * @param context the servlet context to use.
 	 */
 	private BRToolkit(ServletContext context)
 	{
-		jspMap = new CaseInsensitiveHashMap<String>();
+		viewMap = new CaseInsensitiveHashMap<String>();
 		queryMap = new CaseInsensitiveHashMap<String>(25);
 		queryCache = new CaseInsensitiveHashMap<String>(25);
 		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
@@ -283,7 +339,7 @@ public final class BRToolkit
 			throw new BRFrameworkException("Missing name for location: "+location);
 		else if (location.length() == 0)
 			throw new BRFrameworkException("Missing src for name: "+key);
-		jspMap.put(key, location);
+		viewMap.put(key, location);
 		}
 
 	/**
@@ -363,12 +419,32 @@ public final class BRToolkit
 		}
 
 	/**
+	 * Returns a database connection pool by key name.
+	 * @param key the name of the connection pool.
+	 * @return the connection pool connected to the key or null if none are attached to that name.
+	 */
+	DBConnectionPool getConnectionPool(String key)
+	{
+		return connectionPool.get(key);
+		}
+	
+	/**
+	 * Returns a thread pool by key name.
+	 * @param key the name of the thread pool.
+	 * @return the thread pool connected to the key or null if none are attached to that name.
+	 */
+	ThreadPool<BRFrameworkTask> getThreadPool(String key)
+	{
+		return threadPool.get(key);
+		}
+	
+	/**
 	 * Gets the path to a view by key name.
 	 * @return the associated path or null if not found. 
 	 */
 	public String getViewByName(String key)
 	{
-		return jspMap.get(key);
+		return viewMap.get(key);
 		}
 
 	/**
@@ -458,8 +534,10 @@ public final class BRToolkit
 	{
 		PreparedStatement st = null;
 		QueryResult result = null;		
+		DBConnectionPool pool = connectionPool.get(poolname);
+		if (pool == null)
+			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		try {
-			DBConnectionPool pool = connectionPool.get(poolname);
 			Connection conn = pool.getAvailableConnection();
 			st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			int i = 1;
@@ -515,8 +593,10 @@ public final class BRToolkit
 	{
 		QueryResult[] result = new QueryResult[query.length];
 		Exception ex = null;
+		DBConnectionPool pool = connectionPool.get(poolname);
+		if (pool == null)
+			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		try{
-			DBConnectionPool pool = connectionPool.get(poolname);
 			Connection conn = pool.getAvailableConnection();
 			conn.setAutoCommit(false);
 			for (int n = 0; ex == null && n < query.length; n++)
@@ -566,7 +646,10 @@ public final class BRToolkit
 	 */
 	public BRFrameworkTask spawnTaskPooled(String poolname, BRFrameworkTask task)
 	{
-		threadPool.get(poolname).execute(task);
+		ThreadPool<BRFrameworkTask> pool = threadPool.get(poolname);
+		if (pool == null)
+			throw new BRFrameworkException("Thread pool \""+poolname+"\" does not exist.");
+		pool.execute(task);
 		return task;
 		}
 
@@ -580,7 +663,10 @@ public final class BRToolkit
 	public BRFrameworkTask spawnRunnablePooled(String poolname, Runnable runnable)
 	{
 		BRFrameworkTask task = new BRRunnableTask(runnable);
-		threadPool.get(poolname).execute(task);
+		ThreadPool<BRFrameworkTask> pool = threadPool.get(poolname);
+		if (pool == null)
+			throw new BRFrameworkException("Thread pool \""+poolname+"\" does not exist.");
+		pool.execute(task);
 		return task;
 		}
 
