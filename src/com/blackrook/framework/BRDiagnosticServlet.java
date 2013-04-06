@@ -3,8 +3,6 @@ package com.blackrook.framework;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItem;
-
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.db.DBConnectionPool;
 import com.blackrook.framework.BRToolkit;
@@ -91,7 +89,7 @@ public final class BRDiagnosticServlet extends BRRootServlet
 		}
 
 	@Override
-	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String, String> paramMap)
+	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		sendError(response, 405, "Servlet does not support this method.");
 		}

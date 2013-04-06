@@ -86,7 +86,7 @@ public abstract class BRCommonServlet extends BRRootServlet
 		}
 
 	@Override
-	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String, String> paramMap)
+	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		sendError(response, 405, "Servlet does not support this method.");
 		}

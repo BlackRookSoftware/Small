@@ -8,8 +8,16 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import com.blackrook.commons.AbstractVector;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.list.List;
 
 /**
  * Utility library for common or useful functions.
@@ -308,6 +316,27 @@ public final class BRUtil
 		return clazz.cast(obj);
 		}
 
+	/**
+	 * Parses the content of a multiform request such that files and parameters are separated.
+	 * @param request the HTTP request object.
+	 * @param fileOutput the output vector to place the files that it finds (form content identified as files).
+	 * @param paramOutput the output map to place key/value pairs that it identifies as "not files".
+	 */
+	@SuppressWarnings("unchecked")
+	public static void parseForm(HttpServletRequest request, 
+		AbstractVector<FileItem> fileOutput, HashMap<String, String> paramOutput) throws FileUploadException
+	{
+		FileItemFactory factory = new DiskFileItemFactory();
+		ServletFileUpload upload = new ServletFileUpload(factory);
+		for (FileItem fit : (List<FileItem>)upload.parseRequest(request))
+		{
+			if (!fit.isFormField())
+				fileOutput.add(fit);
+			else
+				paramOutput.put(fit.getFieldName(), fit.getString());
+			}
+		}
+	
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and returns true if it exists, false otherwise.

@@ -16,15 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-
 import com.blackrook.commons.Common;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.list.List;
 
 /**
  * Root control servlet for the Black Rook J2EE Framework.
@@ -79,41 +71,17 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param response servlet response object.
 	 * @param post did this come from a POST request? if not, this is false ("GET", probably).
 	 */
-	@SuppressWarnings("unchecked")
 	public final void directService(HttpServletRequest request, HttpServletResponse response, boolean post)
 	{
 		if (post)
 		{
-			if (ServletFileUpload.isMultipartContent(request))
-			{
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				try {
-					java.util.List<FileItem> list = upload.parseRequest(request);
-					List<FileItem> fitems = new List<FileItem>();
-					HashMap<String,String> paramTable = new HashMap<String,String>(4);
-					for (FileItem fit : list)
-					{
-						if (!fit.isFormField())
-							fitems.add(fit);
-						else
-							paramTable.put(fit.getFieldName(),fit.getString());
-						}
-					list = null;
-					FileItem[] fileItems = new FileItem[fitems.size()];
-					fitems.toArray(fileItems);
-					fitems = null;
-					onMultiformPost(request, response, fileItems, paramTable);
-				} catch (FileUploadException e) {
-					e.printStackTrace(System.err);
-					onPost(request,response);
-					}
-				}
+			if (request.getContentType().toLowerCase().startsWith("multiform/"))
+				onMultiformPost(request, response);
 			else
-				onPost(request,response);
+				onPost(request, response);
 			}
 		else
-			onGet(request,response);
+			onGet(request, response);
 		}
 	
 	/**
@@ -141,7 +109,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param fileItems	the list of file items parsed in the multiform packet.
 	 * @param paramMap the table of the parameters passed found in the multiform packet (THEY WILL NOT BE IN THE REQUEST).
 	 */
-	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response, FileItem[] fileItems, HashMap<String,String> paramMap);
+	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response);
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.
