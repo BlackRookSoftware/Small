@@ -10,12 +10,10 @@
  ******************************************************************************/
 package com.blackrook.framework;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -48,21 +46,16 @@ public final class BRToolkit
 	public static final String DEFAULT_APPLICATION_NAME = "__BRTOOLKIT__";
 	/** Name for all default pools. */
 	public static final String DEFAULT_POOL_NAME = "default";
-	/** Pool settings XML file. */
-	public static final String MAPPING_XML_POOLS = "/WEB-INF/brframework-pools.xml";
-	/** View settings XML file. */
-	public static final String MAPPING_XML_VIEWS = "/WEB-INF/brframework-views.xml";
-	/** Query settings XML file. */
-	public static final String MAPPING_XML_QUERIES = "/WEB-INF/brframework-queries.xml";
-	/** MySQL type name. */
+	/** Application settings XML file. */
+	public static final String MAPPING_XML = "/WEB-INF/brframework-config.xml";
+	
+	public static final String XML_VIEW = "viewresolver";
+	public static final String XML_VIEW_CLASS = "class";
+	public static final String XML_QUERY = "queryresolver";
+	public static final String XML_QUERY_CLASS = "class";
+
 	public static final String SQL_TYPE_MYSQL = "mysql";
 	public static final String SQL_TYPE_SQLITE = "sqlite";
-	public static final String XML_VIEW = "view";
-	public static final String XML_VIEW_KEY = "name";
-	public static final String XML_VIEW_LOCATION = "src";
-	public static final String XML_QUERY = "query";
-	public static final String XML_QUERY_KEY = "name";
-	public static final String XML_QUERY_LOCATION = "src";
 	public static final String XML_SQL = "connectionpool";
 	public static final String XML_SQL_NAME = "name";
 	public static final String XML_SQL_TYPE = "type";
@@ -76,12 +69,14 @@ public final class BRToolkit
 	public static final String XML_THREADS_NAME = "name";
 	public static final String XML_THREADS_SIZE = "size";
 
-	/** The map for JSP pages. */
-	private CaseInsensitiveHashMap<String> viewMap;
-	/** The map for queries. */
-	private CaseInsensitiveHashMap<String> queryMap;
+	/** The cache map for JSP pages. */
+	private CaseInsensitiveHashMap<String> viewCache;
+	/** List of view resolvers. */
+	private List<BRViewResolver> viewResolvers;
 	/** The cache for queries. */
 	private CaseInsensitiveHashMap<String> queryCache;
+	/** List of query resolvers. */
+	private List<BRQueryResolver> queryResolvers;
 	/** Database connection pool. */
 	private CaseInsensitiveHashMap<DBConnectionPool> connectionPool;
 	/** Database connection pool. */
@@ -92,6 +87,14 @@ public final class BRToolkit
 	/** Singleton toolkit instance. */
 	private static BRToolkit INSTANCE = null;
 	
+	/**
+	 * Returns the instance of instance.
+	 */
+	public static BRToolkit getInstance()
+	{
+		return INSTANCE;
+		}
+
 	/**
 	 * Constructs a new Toolkit.
 	 * @param context the servlet context.
@@ -115,27 +118,11 @@ public final class BRToolkit
 		}
 	
 	/**
-	 * Returns the instance of instance.
-	 */
-	static BRToolkit getInstance()
-	{
-		return INSTANCE;
-		}
-	
-	/**
 	 * Returns a list of view names.
 	 */
-	String[] getViewNames()
+	String[] getCachedViewNames()
 	{
-		return getKeys(viewMap);
-		}
-	
-	/**
-	 * Returns a list of query keyword names.
-	 */
-	String[] getQueryKeywordNames()
-	{
-		return getKeys(queryMap);
+		return getKeys(viewCache);
 		}
 	
 	/**
@@ -182,9 +169,10 @@ public final class BRToolkit
 	 */
 	private BRToolkit(ServletContext context)
 	{
-		viewMap = new CaseInsensitiveHashMap<String>();
-		queryMap = new CaseInsensitiveHashMap<String>(25);
+		viewCache = new CaseInsensitiveHashMap<String>(25);
+		viewResolvers = new List<BRViewResolver>(25);
 		queryCache = new CaseInsensitiveHashMap<String>(25);
+		queryResolvers = new List<BRQueryResolver>(25);
 		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
 		threadPool = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
 		realAppPath = context.getRealPath(".");
@@ -193,56 +181,22 @@ public final class BRToolkit
 		InputStream in = null;
 		
 		try {
-			in = getResourceAsStream(MAPPING_XML_POOLS);
+			in = getResourceAsStream(MAPPING_XML);
 			if (in == null)
-				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_POOLS);
+				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML);
 			xml = XMLStructFactory.readXML(in);
 			for (XMLStruct root : xml)
 			{
-				if (root.getName().equalsIgnoreCase("pools")) for (XMLStruct struct : root)
+				if (root.isName("config")) for (XMLStruct struct : root)
 				{
-					if (struct.getName().equalsIgnoreCase(XML_SQL))
+					if (struct.isName(XML_SQL))
 						initializeSQL(struct);
-					else if (struct.getName().equalsIgnoreCase(XML_THREADS))
+					else if (struct.isName(XML_THREADS))
 						initializeThreadPool(struct);
-					}
-				}
-		} catch (Exception e) {
-			throw new BRFrameworkException(e);
-		} finally {
-			Common.close(in);
-			}
-
-		try {
-			in = getResourceAsStream(MAPPING_XML_VIEWS);
-			if (in == null)
-				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_VIEWS);
-			xml = XMLStructFactory.readXML(in);
-			for (XMLStruct root : xml)
-			{
-				if (root.getName().equalsIgnoreCase("views")) for (XMLStruct struct : root)
-				{
-					if (struct.getName().equalsIgnoreCase(XML_VIEW))
-						initializeView(struct);
-					}
-				}
-		} catch (Exception e) {
-			throw new BRFrameworkException(e);
-		} finally {
-			Common.close(in);
-			}
-
-		try {
-			in = getResourceAsStream(MAPPING_XML_QUERIES);
-			if (in == null)
-				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML_QUERIES);
-			xml = XMLStructFactory.readXML(in);
-			for (XMLStruct root : xml)
-			{
-				if (root.getName().equalsIgnoreCase("queries")) for (XMLStruct struct : root)
-				{
-					if (struct.getName().equalsIgnoreCase(XML_QUERY))
-						initializeQuery(struct);
+					else if (struct.isName(XML_VIEW))
+						initializeViewResolver(struct);
+					else if (struct.isName(XML_QUERY))
+						initializeQueryResolver(struct);
 					}
 				}
 		} catch (Exception e) {
@@ -327,35 +281,63 @@ public final class BRToolkit
 		}
 	
 	/**
-	 * Initializes a view.
+	 * Initializes a view resolver.
 	 */
-	private void initializeView(XMLStruct struct)
+	private void initializeViewResolver(XMLStruct struct)
 	{
-		String key = struct.getAttribute(XML_VIEW_KEY);
-		String location = struct.getAttribute(XML_VIEW_LOCATION);
-		if (key.length() == 0 && location.length() == 0)
-			throw new BRFrameworkException("Missing name,src in view.");
-		else if (key.length() == 0)
-			throw new BRFrameworkException("Missing name for location: "+location);
-		else if (location.length() == 0)
-			throw new BRFrameworkException("Missing src for name: "+key);
-		viewMap.put(key, location);
+		String clazz = struct.getAttribute(XML_VIEW_CLASS).trim();
+		if (clazz.length() == 0)
+			throw new BRFrameworkException("Missing class in view resolver delaration.");
+
+		Class<?> clz = null;
+		BRViewResolver resolver = null;
+		
+		try {
+			clz = Class.forName(clazz);
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in view resolver could not be found: "+clazz);
+			}
+		
+		try {
+			resolver = (BRViewResolver)BRUtil.getBean(clz);
+		} catch (ClassCastException e) {
+			throw new BRFrameworkException("Class in view resolver is not an instance of BRViewResolver: "+clz.getName());
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in view resolver could not be instantiated: "+clz.getName());
+			}
+
+		if (resolver != null)
+			viewResolvers.add(resolver);
 		}
 
 	/**
-	 * Initializes a query.
+	 * Initializes a query resolver.
 	 */
-	private void initializeQuery(XMLStruct struct)
+	private void initializeQueryResolver(XMLStruct struct)
 	{
-		String key = struct.getAttribute(XML_QUERY_KEY);
-		String location = struct.getAttribute(XML_QUERY_LOCATION);
-		if (key.length() == 0 && location.length() == 0)
-			throw new BRFrameworkException("Missing name,src in view.");
-		else if (key.length() == 0)
-			throw new BRFrameworkException("Missing name for location: "+location);
-		else if (location.length() == 0)
-			throw new BRFrameworkException("Missing src for name: "+key);
-		queryMap.put(key, location);
+		String clazz = struct.getAttribute(XML_QUERY_CLASS).trim();
+		if (clazz.length() == 0)
+			throw new BRFrameworkException("Missing class in query resolver delaration.");
+		
+		Class<?> clz = null;
+		BRQueryResolver resolver = null;
+		
+		try {
+			clz = Class.forName(clazz);
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in query resolver could not be found: "+clazz);
+			}
+		
+		try {
+			resolver = (BRQueryResolver)BRUtil.getBean(clz);
+		} catch (ClassCastException e) {
+			throw new BRFrameworkException("Class in query resolver is not an instance of BRQueryResolver: "+clz.getName());
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in query resolver could not be instantiated: "+clz.getName());
+			}
+
+		if (resolver != null)
+			queryResolvers.add(resolver);
 		}
 
 	/**
@@ -366,56 +348,6 @@ public final class BRToolkit
 		String name = struct.getAttribute(XML_THREADS_NAME, "default");
 		int size = struct.getAttributeInt(XML_THREADS_SIZE, 10);
 		threadPool.put(name, new ThreadPool<BRFrameworkTask>(name, size));
-		}
-
-	/**
-	 * The actual caching method.
-	 */
-	private String cacheQuery(String key) throws IOException
-	{
-		String out = null;
-		synchronized (queryCache)
-		{
-			// threads will immediately give up the lock around here if one
-			// thread finishes the caching.
-			out = queryCache.get(key);
-			if (out == null)
-			{
-				String src = queryMap.get(key);
-				if (src != null)
-				{
-					BufferedReader br = new BufferedReader(new InputStreamReader(getResourceAsStream(src)));
-					StringBuffer sb = new StringBuffer();
-					String line = null;
-					while ((line = br.readLine()) != null)
-					{
-						// cull unnecessary lines reasonably.
-						String tline = line.trim();
-						if (tline.length() == 0) // blank lines
-							continue;
-						if (tline.startsWith("--")) // line comments
-							continue;
-						
-						sb.append(line).append('\n');
-						}
-					br.close();
-					out = sb.toString();
-					queryCache.put(key, out);
-					}
-				}
-			}
-		return out;
-		}
-
-	/**
-	 * Gets/loads the query to be used.
-	 */
-	private String getQuery(String key) throws IOException
-	{
-		String out = queryCache.get(key);
-		if (out == null)
-			out = cacheQuery(key);
-		return out;
 		}
 
 	/**
@@ -439,12 +371,45 @@ public final class BRToolkit
 		}
 	
 	/**
-	 * Gets the path to a view by key name.
+	 * Gets the path to a view by keyword.
 	 * @return the associated path or null if not found. 
 	 */
-	public String getViewByName(String key)
+	public String getViewByName(String keyword)
 	{
-		return viewMap.get(key);
+		String out = viewCache.get(keyword);
+		if  (out == null)
+		{
+			for (BRViewResolver resolver : viewResolvers)
+				if ((out = resolver.resolveView(keyword)) != null)
+				{
+					if (!resolver.dontCacheView(keyword))
+						viewCache.put(keyword, out);
+					break;					
+					}
+			}
+		
+		return out;
+		}
+
+	/**
+	 * Gets a query by keyword.
+	 * @return the associated query or null if not found. 
+	 */
+	public String getQueryByName(String keyword)
+	{
+		String out = queryCache.get(keyword);
+		if  (out == null)
+		{
+			for (BRQueryResolver resolver : queryResolvers)
+				if ((out = resolver.resolveQuery(keyword)) != null)
+				{
+					if (!resolver.dontCacheQuery(keyword))
+						queryCache.put(keyword, out);
+					break;					
+					}
+			}
+		
+		return out;
 		}
 
 	/**
@@ -456,14 +421,9 @@ public final class BRToolkit
 	 */
 	public QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
-		String query = null;
-		try {
-			query = getQuery(queryKey);
-			if (query == null)
-				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		} catch (IOException e) {
-			throw new BRFrameworkException(e);
-			}
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 		return doQueryPooledInline(poolname, query, parameters);
 		}
 
@@ -512,14 +472,9 @@ public final class BRToolkit
 	 */
 	public QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
-		String query = null;
-		try {
-			query = getQuery(queryKey);
-			if (query == null)
-				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		} catch (IOException e) {
-			throw new BRFrameworkException(e);
-			}
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 		return doUpdateQueryPooledInline(poolname, query, parameters);
 		}
 
@@ -569,13 +524,9 @@ public final class BRToolkit
 		String[] query = new String[queryKeys.length];
 		for (int i = 0; i < query.length; i++)
 		{
-			try {
-				query[i] = getQuery(queryKeys[i]);
-				if (query[i] == null)
-					throw new BRFrameworkException("Query could not be loaded/cached - "+queryKeys[i]);
-			} catch (IOException e) {
-				throw new BRFrameworkException(e);
-				}
+			query[i] = getQueryByName(queryKeys[i]);
+			if (query[i] == null)
+				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKeys[i]);
 			}
 		return doUpdateQueryBatchPooledInline(poolname, query, parameters);
 		}
@@ -685,7 +636,6 @@ public final class BRToolkit
 	
 	/**
 	 * Gets a file that is on the application path. 
-	 * Outside users should not be able to access this!
 	 * @param path the path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */

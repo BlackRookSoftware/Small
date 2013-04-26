@@ -53,7 +53,7 @@ public final class BRDiagnosticServlet extends BRRootServlet
 		HashMap<String, Object> map = null;
 		
 		map = new HashMap<String, Object>();
-		for (String key : toolkit.getViewNames())
+		for (String key : toolkit.getCachedViewNames())
 			map.put(key, toolkit.getViewByName(key));
 		request.setAttribute("queries", map);
 

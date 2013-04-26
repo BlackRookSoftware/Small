@@ -135,7 +135,7 @@ public abstract class BRRootFilter implements Filter
 	{
 		String path = getToolkit().getViewByName(key);
 		if (path == null)
-			throw new BRFrameworkException("No such view: \""+key+"\". It may not be declared in "+BRToolkit.MAPPING_XML_VIEWS);
+			throw new BRFrameworkException("No such view: \""+key+"\". No view resolver returned an adequate path.");
 		includeViewInline(request, response, path);
 		}
 
@@ -164,7 +164,7 @@ public abstract class BRRootFilter implements Filter
 	{
 		String path = getToolkit().getViewByName(key);
 		if (path == null)
-			throw new BRFrameworkException("No such view: \""+key+"\". It may not be declared in "+BRToolkit.MAPPING_XML_VIEWS);
+			throw new BRFrameworkException("No such view: \""+key+"\". No view resolver returned an adequate path.");
 		sendToViewInline(request, response, path);
 		}
 

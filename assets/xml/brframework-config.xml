@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<pools>
+<config>
 
 <!-- 
-	Black Rook Servlet Framework Pool Definition File
-	================================================= 
+	Database Connection Pool Definitions
+	====================================
 
-	All Pool definitions go in this file.
+	All Pool definitions go in this tag.
 	
-	The two types of pools that can be defined in this file are Database 
+	The two types of pools that can be defined in this tag are Database 
 	Connection Pools and Thread Pools for asynchronously executed tasks.
 	
--->
-
-<!--
-
 	Database Connection Pools are defined in "connectionpool" tags, and have
 	the following attributes:
 	
@@ -56,28 +52,32 @@
 					is 1. Always.
 	
 -->
-	<!-- MYSQL -->
-	<connectionpool 
-		name="default" 
-		type="mysql"
-		connections="10" 
-		user="root" 
-		password="" 
-		host="localhost"
-		port="3306"
-		database="root" 
-	/>
 
-	<!-- SQLite -->
-	<!--
-	<connectionpool 
-		name="default" 
-		type="sqlite"
-		database="/WEB-INF/default.db" 
-	/>
-	-->
+<!-- MYSQL -->
+<connectionpool 
+	name="default" 
+	type="mysql"
+	connections="10" 
+	user="root" 
+	password="" 
+	host="localhost"
+	port="3306"
+	database="root" 
+/>
+
+<!-- SQLite -->
+<!--
+<connectionpool 
+	name="default" 
+	type="sqlite"
+	database="/WEB-INF/default.db" 
+/>
+-->
 
 <!--
+
+	Thread Pool Definitions
+	=======================
 
 	Thread Pools are defined in "threadpool" tags, and have
 	the following attributes:
@@ -86,14 +86,59 @@
 					pool in the framework. All uses of this pool are through 
 					this key. Default is "default".
 	
-	size			The number of worker threads to spawn to the database.
+	size			The number of worker threads to spawn.
 					Default is 10.
 
 -->
 
-	<threadpool 
-		name="default" 
-		size="10" 
-	/>
+<threadpool 
+	name="default" 
+	size="10" 
+/>
 	
-</pools>
+<!-- 
+	View Resolvers
+	==============
+	
+	These next XML structures declare the view resolvers to use when
+	a framework servlet wants to call or include a view.
+	
+	The view resolvers are called in the order in which they are declared 
+	in this file.
+	
+	Each view resolver is declared in a "viewresolver" tag, and have the
+	following attributes:
+	
+	class			The fully-qualified classname of the class to instantiate
+					for this resolver.
+	
+-->
+
+<viewresolver 
+	class="com.blackrook.framework.resolver.DefaultViewResolver" 
+	/>
+
+<!-- 
+	Query Resolvers
+	===============
+	
+	These next XML structures declare the query resolvers to use when
+	a framework servlet wants to load a query.
+	
+	The query resolvers are called in the order in which they are declared 
+	in this file.
+	
+	Each query resolver is declared in a "queryresolver" tag, and have the
+	following attributes:
+	
+	class			The fully-qualified classname of the class to instantiate
+					for this resolver.
+	
+-->
+
+<queryresolver 
+	class="com.blackrook.framework.resolver.DefaultQueryResolver" 
+	/>
+
+</config>
+	
