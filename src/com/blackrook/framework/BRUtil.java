@@ -3,6 +3,7 @@ package com.blackrook.framework;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -323,7 +324,7 @@ public final class BRUtil
 	 * @param paramOutput the output map to place key/value pairs that it identifies as "not files".
 	 */
 	@SuppressWarnings("unchecked")
-	public static void parseForm(HttpServletRequest request, 
+	public static void parseMultiForm(HttpServletRequest request, 
 		AbstractVector<FileItem> fileOutput, HashMap<String, String> paramOutput) throws FileUploadException
 	{
 		FileItemFactory factory = new DiskFileItemFactory();
@@ -335,6 +336,22 @@ public final class BRUtil
 			else
 				paramOutput.put(fit.getFieldName(), fit.getString());
 			}
+		}
+	
+	/**
+	 * Gets a group of parameters that start with a specific prefix.
+	 * @param prefix the prefix to search for.
+	 * @return a HashMap containing a map of parameter to String value of parameter. 
+	 * The parameters in the map are ones that match the prefix.
+	 */
+	@SuppressWarnings("unchecked")
+	public static HashMap<String, String> getParameters(HttpServletRequest request, String prefix)
+	{
+		HashMap<String, String> out = new HashMap<String, String>();
+		for (Map.Entry<String, String> entry : ((Map<String, String>)request.getParameterMap()).entrySet())
+			if (entry.getKey().startsWith(prefix))
+				out.put(entry.getKey(), entry.getValue());
+		return out;
 		}
 	
 	/**

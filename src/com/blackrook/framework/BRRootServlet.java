@@ -141,7 +141,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 * @param statusCode the status code to use.
 	 * @param message the status message.
 	 */
-	protected final void sendError(HttpServletResponse response, int statusCode, String message)
+	protected final void sendCode(HttpServletResponse response, int statusCode, String message)
 	{
 		try{
 			response.sendError(statusCode, message);

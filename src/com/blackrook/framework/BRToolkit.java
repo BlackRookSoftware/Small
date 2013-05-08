@@ -271,8 +271,15 @@ public final class BRToolkit
 		if (db.trim().length() == 0)
 			throw new BRFrameworkException("Missing database path for SQL server pool.");
 
-		try {dbu = new SQLiteUtils(getFile(db));}
-		catch (Exception e) {throw new BRFrameworkException(e);}
+		try {
+			File f = getApplicationFile(db);
+			if (f == null)
+			{
+				Common.createPathForFile(getApplicationFilePath(db));
+				f = new File(getApplicationFilePath(db));
+				}
+			dbu = new SQLiteUtils(f);
+		} catch (Exception e) {throw new BRFrameworkException(e);}
 		
 		try {pool = new DBConnectionPool(dbu, 1);}
 		catch (Exception e) {throw new BRFrameworkException(e);}
@@ -437,12 +444,13 @@ public final class BRToolkit
 	 */
 	public QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
+		Connection conn = null;
 		PreparedStatement st = null;
 		ResultSet rs = null;
 		QueryResult result = null;		
 		try {
 			DBConnectionPool pool = connectionPool.get(poolname);
-			Connection conn = pool.getAvailableConnection();
+			conn = pool.getAvailableConnection();
 			st = conn.prepareStatement(query);
 			int i = 1;
 			for (Object obj : parameters)
@@ -460,6 +468,7 @@ public final class BRToolkit
 		} finally {
 			if (rs != null) try {rs.close();} catch (SQLException e) {};
 			if (st != null) try {st.close();} catch (SQLException e) {};
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
 			}
 		}
 
@@ -487,13 +496,14 @@ public final class BRToolkit
 	 */
 	public QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
+		Connection conn = null;
 		PreparedStatement st = null;
 		QueryResult result = null;		
 		DBConnectionPool pool = connectionPool.get(poolname);
 		if (pool == null)
 			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		try {
-			Connection conn = pool.getAvailableConnection();
+			conn = pool.getAvailableConnection();
 			st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			int i = 1;
 			for (Object obj : parameters)
@@ -509,6 +519,7 @@ public final class BRToolkit
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (st != null) try {st.close();} catch (SQLException e) {};
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
 			}
 		}
 
@@ -630,7 +641,7 @@ public final class BRToolkit
 	 */
 	public InputStream getResourceAsStream(String path) throws IOException
 	{
-		File inFile = getFile(path);
+		File inFile = getApplicationFile(path);
 		return inFile != null ? new FileInputStream(inFile) : null;
 		}
 	
@@ -639,10 +650,20 @@ public final class BRToolkit
 	 * @param path the path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	public File getFile(String path)
+	public File getApplicationFile(String path)
 	{
 		File inFile = new File(realAppPath+"/"+path);
 		return inFile.exists() ? inFile : null;
+		}
+	
+	/**
+	 * Gets a file path that is on the application path. 
+	 * @param relativepath the relative path to the file to get.
+	 * @return a file representing the specified resource or null if it couldn't be found.
+	 */
+	public String getApplicationFilePath(String relativepath)
+	{
+		return realAppPath + "/" + relativepath;
 		}
 	
 }

@@ -91,25 +91,25 @@ public final class BRDiagnosticServlet extends BRRootServlet
 	@Override
 	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onHead(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onPut(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onDelete(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 	
 }

@@ -76,37 +76,37 @@ public abstract class BRCommonServlet extends BRRootServlet
 	@Override
 	public void onGet(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onPost(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onHead(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onPut(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
 	public void onDelete(HttpServletRequest request, HttpServletResponse response)
 	{
-		sendError(response, 405, "Servlet does not support this method.");
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	/**
