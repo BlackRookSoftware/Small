@@ -1,7 +1,9 @@
 package com.blackrook.framework;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.blackrook.commons.AbstractVector;
 import com.blackrook.commons.Common;
+import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
 
@@ -30,6 +33,8 @@ public final class BRUtil
 	private static BRMIMETypes MIME_TYPE_MAP = new BRMIMETypes();
 	/** Singleton context for beans not attached to the application context. */
 	private static final HashMap<String, Object> SINGLETON_MAP = new HashMap<String, Object>();
+	/** Date format parser map. */
+	private static final HashMap<String, SimpleDateFormat> DATE_PATTERN_MAP = new HashMap<String, SimpleDateFormat>();
 
 	private BRUtil() {}
 	
@@ -95,25 +100,17 @@ public final class BRUtil
 			String s = it.next();
 			Object obj = map.get(s);
 			
+			Method setterMethod;
+			String setterName = Reflect.getSetterName(s);
 			try {
-				Method setterMethod = obj.getClass().getMethod(getSetterName(s), obj.getClass());
-				setterMethod.invoke(bean, obj);
-			} catch (NoSuchMethodException ex) {
-				// Do nothing. Skip.
-			} catch (InvocationTargetException ex) {
-				// Do nothing. Skip.
-			} catch (IllegalArgumentException e) {
-				// Do nothing. Skip.
-			} catch (IllegalAccessException e) {
-				// Do nothing. Skip.
+				setterMethod = obj.getClass().getMethod(setterName, obj.getClass());
+				Reflect.invokeBlind(setterMethod, bean, obj);
+			} catch (SecurityException e) {
+				throw new BRFrameworkException("Could not set bean field " + setterName, e);
+			} catch (NoSuchMethodException e) {
+				throw new BRFrameworkException("Could not set bean field " + setterName, e);
 				}
 			}
-		}
-	
-	// Gets the setter name for a field.
-	private static String getSetterName(String fieldName)
-	{
-		return "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1); 
 		}
 	
 	/**
@@ -372,7 +369,7 @@ public final class BRUtil
 	 */
 	public static boolean getParameterBoolean(HttpServletRequest request, String paramName)
 	{
-		return Common.parseBoolean(request.getParameter(paramName));
+		return getParameterBoolean(request, paramName, "true");
 		}
 
 	/**
@@ -393,71 +390,7 @@ public final class BRUtil
 	 */
 	public static String getParameterString(HttpServletRequest request, String paramName)
 	{
-		String out = request.getParameter(paramName);
-		return out != null ? out : "";
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a byte and returns 0 if it doesn't exist.
-	 */
-	public static byte getParameterByte(HttpServletRequest request, String paramName)
-	{
-		return Common.parseByte(request.getParameter(paramName));
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a short and returns 0 if it doesn't exist.
-	 */
-	public static short getParameterShort(HttpServletRequest request, String paramName)
-	{
-		return Common.parseShort(request.getParameter(paramName));
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a char and returns '\0' if it doesn't exist.
-	 */
-	public static char getParameterChar(HttpServletRequest request, String paramName)
-	{
-		return Common.parseChar(request.getParameter(paramName));
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses an integer and returns 0 if it doesn't exist.
-	 */
-	public static int getParameterInt(HttpServletRequest request, String paramName)
-	{
-		return Common.parseChar(request.getParameter(paramName));
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a long integer and returns 0L if it doesn't exist.
-	 */
-	public static long getParameterLong(HttpServletRequest request, String paramName)
-	{
-		return Common.parseChar(request.getParameter(paramName));
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a float and returns 0.0f if it doesn't exist.
-	 */
-	public static float getParameterFloat(HttpServletRequest request, String paramName)
-	{
-		return Common.parseFloat(request.getParameter(paramName));
-		}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a double and returns 0.0 if it doesn't exist.
-	 */
-	public static double getParameterDouble(HttpServletRequest request, String paramName)
-	{
-		return Common.parseDouble(request.getParameter(paramName));
+		return getParameterString(request, paramName, "");
 		}
 
 	/**
@@ -472,11 +405,29 @@ public final class BRUtil
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a byte and returns 0 if it doesn't exist.
+	 */
+	public static byte getParameterByte(HttpServletRequest request, String paramName)
+	{
+		return getParameterByte(request, paramName, (byte)0);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and parses a byte and returns <code>def</code> if it doesn't exist.
 	 */
 	public static byte getParameterByte(HttpServletRequest request, String paramName, byte def)
 	{
 		return Common.parseByte(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a short and returns 0 if it doesn't exist.
+	 */
+	public static short getParameterShort(HttpServletRequest request, String paramName)
+	{
+		return getParameterShort(request, paramName, (short)0);
 		}
 
 	/**
@@ -490,11 +441,29 @@ public final class BRUtil
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a char and returns '\0' if it doesn't exist.
+	 */
+	public static char getParameterChar(HttpServletRequest request, String paramName)
+	{
+		return getParameterChar(request, paramName, '\0');
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and parses a char and returns <code>def</code> if it doesn't exist.
 	 */
 	public static char getParameterChar(HttpServletRequest request, String paramName, char def)
 	{
 		return Common.parseChar(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses an integer and returns 0 if it doesn't exist.
+	 */
+	public static int getParameterInt(HttpServletRequest request, String paramName)
+	{
+		return getParameterInt(request, paramName, 0);
 		}
 
 	/**
@@ -508,11 +477,11 @@ public final class BRUtil
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a long integer and returns <code>def</code> if it doesn't exist.
+	 * and parses a float and returns 0.0f if it doesn't exist.
 	 */
-	public static long getParameterLong(HttpServletRequest request, String paramName, long def)
+	public static float getParameterFloat(HttpServletRequest request, String paramName)
 	{
-		return Common.parseLong(request.getParameter(paramName), def);
+		return getParameterFloat(request, paramName, 0f);
 		}
 
 	/**
@@ -526,6 +495,33 @@ public final class BRUtil
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a long integer and returns 0L if it doesn't exist.
+	 */
+	public static long getParameterLong(HttpServletRequest request, String paramName)
+	{
+		return getParameterLong(request, paramName, 0L);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a long integer and returns <code>def</code> if it doesn't exist.
+	 */
+	public static long getParameterLong(HttpServletRequest request, String paramName, long def)
+	{
+		return Common.parseLong(request.getParameter(paramName), def);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
+	 * and parses a double and returns 0.0 if it doesn't exist.
+	 */
+	public static double getParameterDouble(HttpServletRequest request, String paramName)
+	{
+		return getParameterDouble(request, paramName, 0.0);
+		}
+
+	/**
+	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and parses a double and returns <code>def</code> if it doesn't exist.
 	 */
 	public static double getParameterDouble(HttpServletRequest request, String paramName, double def)
@@ -533,6 +529,35 @@ public final class BRUtil
 		return Common.parseDouble(request.getParameter(paramName), def);
 		}
 
+	/**
+	 * Method that parses a parameter as a date. 
+	 * @param request the HTTP request object.
+	 * @param paramName the parameter name.
+	 * @param formatString the {@link SimpleDateFormat} format string.
+	 * @return
+	 */
+	public static Date getParameterDate(HttpServletRequest request, String paramName, String formatString)
+	{
+		SimpleDateFormat formatter = DATE_PATTERN_MAP.get(formatString);
+		if (formatter == null)
+		{
+			synchronized (DATE_PATTERN_MAP)
+			{
+				formatter = new SimpleDateFormat(formatString);
+				DATE_PATTERN_MAP.put(formatString, formatter);
+				}
+			}
+		
+		Date out = null;
+		try {
+			out = formatter.parse(getParameterString(request, paramName));
+		} catch (ParseException e) {
+			throw new BRFrameworkException("Parameter \""+paramName+"\" could not be parsed with pattern \""+formatString+"\".", e);
+			}
+		
+		return out;
+		}
+	
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
 	 * Basically encloses the provided throwable in a {@link BRFrameworkException},
