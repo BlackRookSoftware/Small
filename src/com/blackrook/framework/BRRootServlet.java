@@ -34,14 +34,17 @@ public abstract class BRRootServlet extends HttpServlet
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		directService(request,response,false);
+		onGet(request, response);
 		}
 
 	@Override
 	public final void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		directService(request,response,true);
+		if (request.getContentType().toLowerCase().startsWith("multiform/"))
+			onMultiformPost(request, response);
+		else
+			onPost(request, response);
 		}
 	
 	@Override
@@ -63,25 +66,6 @@ public abstract class BRRootServlet extends HttpServlet
 	{
 		BRToolkit.createToolkit(getServletContext());
 		onDelete(request,response);
-		}
-	
-	/**
-	 * Function that redirects a service call to the appropriate handler methods.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @param post did this come from a POST request? if not, this is false ("GET", probably).
-	 */
-	public final void directService(HttpServletRequest request, HttpServletResponse response, boolean post)
-	{
-		if (post)
-		{
-			if (request.getContentType().toLowerCase().startsWith("multiform/"))
-				onMultiformPost(request, response);
-			else
-				onPost(request, response);
-			}
-		else
-			onGet(request, response);
 		}
 	
 	/**
