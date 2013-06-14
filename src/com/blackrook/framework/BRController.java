@@ -193,7 +193,7 @@ public abstract class BRController
 
 	/**
 	 * Simulates latency on a response, for testing.
-	 * Just calls {@link Common.sleep(long)} and varies the input value.
+	 * Just calls {@link Common#sleep(long)} and varies the input value.
 	 */
 	protected final void simulateLag(int millis)
 	{
@@ -222,8 +222,6 @@ public abstract class BRController
 	 * All servlets that do not implement this method should return status 405, Method Not Supported.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
-	 * @param fileItems	the list of file items parsed in the multiform packet.
-	 * @param paramMap the table of the parameters passed found in the multiform packet (THEY WILL NOT BE IN THE REQUEST).
 	 */
 	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response);
 

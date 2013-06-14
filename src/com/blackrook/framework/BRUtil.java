@@ -202,7 +202,7 @@ public final class BRUtil
 	 * Gets and auto-casts an object bean stored at the application level.
 	 * The bean is created and stored if it doesn't exist.
 	 * The name used is the fully-qualified class name.
-	 * @param request the source request object.
+	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the application scope.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
@@ -215,7 +215,7 @@ public final class BRUtil
 	/**
 	 * Gets and auto-casts an object bean stored at the application level.
 	 * The bean is created and stored if it doesn't exist.
-	 * @param request the source request object.
+	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
@@ -228,7 +228,7 @@ public final class BRUtil
 
 	/**
 	 * Gets and auto-casts an object bean stored at the application level.
-	 * @param request the source request object.
+	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
@@ -258,7 +258,6 @@ public final class BRUtil
 	 * accessible always, and not attached to a servlet context.
 	 * The bean is created and stored if it doesn't exist.
 	 * The name used is the fully-qualified class name.
-	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the application scope.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
@@ -271,7 +270,6 @@ public final class BRUtil
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
-	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
@@ -285,7 +283,6 @@ public final class BRUtil
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
-	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
@@ -365,7 +362,7 @@ public final class BRUtil
 	 * and returns true or false.
 	 * This flavor of <code>getParameterBoolean</code> assumes that the parameter
 	 * received is a string that is either "true" or not "true".
-	 * @see {@link Common#parseBoolean(String)}
+	 * @see Common#parseBoolean(String)
 	 */
 	public static boolean getParameterBoolean(HttpServletRequest request, String paramName)
 	{
@@ -534,7 +531,6 @@ public final class BRUtil
 	 * @param request the HTTP request object.
 	 * @param paramName the parameter name.
 	 * @param formatString the {@link SimpleDateFormat} format string.
-	 * @return
 	 */
 	public static Date getParameterDate(HttpServletRequest request, String paramName, String formatString)
 	{

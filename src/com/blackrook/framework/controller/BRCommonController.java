@@ -13,9 +13,6 @@ package com.blackrook.framework.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItem;
-
-import com.blackrook.commons.hash.HashMap;
 import com.blackrook.framework.BRController;
 
 /**
@@ -23,7 +20,7 @@ import com.blackrook.framework.BRController;
  * All servlets that use the framework should extend this one.
  * The methods {@link #onGet(HttpServletRequest, HttpServletResponse)}, 
  * {@link #onPost(HttpServletRequest, HttpServletResponse)},
- * {@link #onMultiformPost(HttpServletRequest, HttpServletResponse, FileItem[], HashMap)},
+ * {@link #onMultiformPost(HttpServletRequest, HttpServletResponse)},
  * {@link #onHead(HttpServletRequest, HttpServletResponse)},
  * {@link #onDelete(HttpServletRequest, HttpServletResponse)}, and
  * {@link #onPut(HttpServletRequest, HttpServletResponse)}

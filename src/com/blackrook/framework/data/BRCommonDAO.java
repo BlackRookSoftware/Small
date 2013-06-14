@@ -15,7 +15,7 @@ public abstract class BRCommonDAO extends BRDAO
 
 	/**
 	 * Base constructor. Sets default pools to default names.
-	 * @see {@link BRToolkit#DEFAULT_POOL_NAME}
+	 * @see BRToolkit#DEFAULT_POOL_NAME
 	 */
 	protected BRCommonDAO()
 	{

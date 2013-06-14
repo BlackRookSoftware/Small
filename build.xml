@@ -23,6 +23,7 @@
 
 	<property name="j2ee.libdir" value="${lib.base}/Tomcat 6 Libraries" />
 	<property name="j2ee.servlet.lib.jar" value="${j2ee.libdir}/servlet-api.jar" />
+	<property name="j2ee.jsp.lib.jar" value="${j2ee.libdir}/jsp-api.jar" />
 	
 	<!-- Project Info -->
 	<tstamp>
@@ -100,9 +101,10 @@
 				${commons.lang.lib}${S}
 				${commons.sync.lib}${S}
 				${db.lib}${S}
-				${j2ee.servlet.lib}${S}
-				${apache.commons.io.lib}${S}
-				${apache.commons.fileupload.lib}
+				${j2ee.servlet.lib.jar}${S}
+	    		${j2ee.jsp.lib.jar}${S}
+				${apache.commons.io.lib.jar}${S}
+				${apache.commons.fileupload.lib.jar}
 			"
             includeAntRuntime="false"
 			debug="off" 
@@ -117,9 +119,10 @@
 				${commons.lang.lib}${S}
 				${commons.sync.lib}${S}
 				${db.lib}${S}
-				${j2ee.servlet.lib}${S}
-				${apache.commons.io.lib}${S}
-				${apache.commons.fileupload.lib}${S}
+				${j2ee.servlet.lib.jar}${S}
+        		${j2ee.jsp.lib.jar}${S}
+				${apache.commons.io.lib.jar}${S}
+				${apache.commons.fileupload.lib.jar}${S}
 				${bin.dir}
 			"
         	destdir="${docs.dir}" 
@@ -127,8 +130,10 @@
         	nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" 
         	packagenames="
         		com.blackrook.framework,
+				com.blackrook.framework.controller,
+				com.blackrook.framework.data,
     			com.blackrook.framework.filter,
-				com.blackrook.framework.servlet
+				com.blackrook.framework.resolver,
     			"
         	source="1.6" 
         	sourcepath="${src.dir}" 

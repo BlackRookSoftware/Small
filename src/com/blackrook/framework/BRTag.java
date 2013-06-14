@@ -107,7 +107,6 @@ public abstract class BRTag extends TagSupport
 	
 	/**
 	 * Gets and auto-casts an object bean stored at the page context level.
-	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
@@ -121,7 +120,6 @@ public abstract class BRTag extends TagSupport
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
-	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
