@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.blackrook.framework.BRFrameworkTask;
-import com.blackrook.framework.BRRootFilter;
+import com.blackrook.framework.BRFilter;
 import com.blackrook.framework.BRToolkit;
 
 /**
  * The common root filter.
  * @author Matthew Tropiano
  */
-public abstract class BRCommonFilter extends BRRootFilter
+public abstract class BRCommonFilter extends BRFilter
 {
 	/** Default Filter Thread Pool. */
 	private String filterDefaultThreadPool;

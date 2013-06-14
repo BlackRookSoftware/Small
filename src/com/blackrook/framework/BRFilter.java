@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
  * The root filter.
  * @author Matthew Tropiano
  */
-public abstract class BRRootFilter implements Filter
+public abstract class BRFilter implements Filter
 {
 	@Override
 	public final void init(FilterConfig config) throws ServletException
@@ -45,7 +45,7 @@ public abstract class BRRootFilter implements Filter
 	 */
 	public final BRToolkit getToolkit()
 	{
-		return BRToolkit.getInstance();
+		return BRToolkit.INSTANCE;
 		}
 
 	/**

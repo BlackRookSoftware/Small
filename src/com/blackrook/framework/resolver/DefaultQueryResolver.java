@@ -29,7 +29,7 @@ public class DefaultQueryResolver implements BRQueryResolver
 	{
 		StringBuffer sb = new StringBuffer();
 		String src = "/WEB-INF/sql/" + keyword + ".sql";
-		File f = BRToolkit.getInstance().getApplicationFile(src); 
+		File f = BRToolkit.INSTANCE.getApplicationFile(src); 
 		FileInputStream in = null;
 		BufferedReader br = null;
 		try {

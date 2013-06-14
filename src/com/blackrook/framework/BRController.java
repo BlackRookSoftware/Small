@@ -12,7 +12,6 @@ package com.blackrook.framework;
 
 import java.util.Random;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,50 +23,36 @@ import com.blackrook.commons.Common;
  * transparent to users of the framework. 
  * @author Matthew Tropiano
  */
-public abstract class BRRootServlet extends HttpServlet
+public abstract class BRController
 {
-	private static final long serialVersionUID = 7057939105164581326L;
+	private Random randomLagSimulator;
 
-	private static final Random LAG_SIM_RANDOM = new Random();
+	/** Default Servlet Thread Pool. */
+	private String defaultThreadPool;
+	
+	/** Default constructor. */
+	protected BRController()
+	{
+		defaultThreadPool = BRToolkit.DEFAULT_POOL_NAME;
+		randomLagSimulator = new Random();
+		}
+	
+	/**
+	 * Sets the name of the default thread pool that this controller uses.
+	 */
+	final void setDefaultThreadPool(String servletDefaultThreadPool)
+	{
+		this.defaultThreadPool = servletDefaultThreadPool;
+		}
 
-	@Override
-	public final void doGet(HttpServletRequest request, HttpServletResponse response)
+	/**
+	 * Gets the name of the default thread pool that this controller uses.
+	 */
+	public String getDefaultThreadPool()
 	{
-		BRToolkit.createToolkit(getServletContext());
-		onGet(request, response);
+		return defaultThreadPool;
 		}
 
-	@Override
-	public final void doPost(HttpServletRequest request, HttpServletResponse response)
-	{
-		BRToolkit.createToolkit(getServletContext());
-		if (request.getContentType().toLowerCase().startsWith("multiform/"))
-			onMultiformPost(request, response);
-		else
-			onPost(request, response);
-		}
-	
-	@Override
-	public final void doHead(HttpServletRequest request, HttpServletResponse response)
-	{
-		BRToolkit.createToolkit(getServletContext());
-		onHead(request,response);
-		}
-	
-	@Override
-	public final void doPut(HttpServletRequest request, HttpServletResponse response)
-	{
-		BRToolkit.createToolkit(getServletContext());
-		onPut(request,response);
-		}
-	
-	@Override
-	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
-	{
-		BRToolkit.createToolkit(getServletContext());
-		onDelete(request,response);
-		}
-	
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a GET request call.
 	 * All servlets that do not implement this method should return status 405, Method Not Supported.
@@ -160,12 +145,35 @@ public abstract class BRRootServlet extends HttpServlet
 		}
 	
 	/**
+	 * Attempts to grab an available thread from the servlet's default 
+	 * thread pool and starts a task that can be monitored by the caller.
+	 * @param task the task to run.
+	 * @return a framework task encapsulation for monitoring the task.
+	 */
+	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
+	{
+		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
+		}
+
+	/**
+	 * Attempts to grab an available thread from the servlet's default 
+	 * thread pool and starts a runnable encapsulated as a 
+	 * BRFrameworkTask that can be monitored by the caller.
+	 * @param runnable the runnable to run.
+	 * @return a framework task encapsulation for monitoring the task.
+	 */
+	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
+	{
+		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
+		}
+
+	/**
 	 * Simulates latency on a response, for testing.
 	 * Just calls {@link Common.sleep(long)} and varies the input value.
 	 */
-	public final void simulateLag(int millis)
+	protected final void simulateLag(int millis)
 	{
-		Common.sleep(LAG_SIM_RANDOM.nextInt(millis));
+		Common.sleep(randomLagSimulator.nextInt(millis));
 		}
 
 	/**
@@ -173,7 +181,7 @@ public abstract class BRRootServlet extends HttpServlet
 	 */
 	public final BRToolkit getToolkit()
 	{
-		return BRToolkit.getInstance();
+		return BRToolkit.INSTANCE;
 		}
 
 	/**

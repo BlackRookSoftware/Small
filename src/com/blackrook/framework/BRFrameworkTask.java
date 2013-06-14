@@ -34,7 +34,7 @@ public abstract class BRFrameworkTask extends Task
 	 */
 	public final BRToolkit getToolkit()
 	{
-		return BRToolkit.getInstance();
+		return BRToolkit.INSTANCE;
 		}
 
 	/**

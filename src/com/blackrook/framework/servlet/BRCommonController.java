@@ -16,12 +16,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
 
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.framework.BRFrameworkTask;
-import com.blackrook.framework.BRRootServlet;
-import com.blackrook.framework.BRToolkit;
+import com.blackrook.framework.BRController;
 
 /**
- * Base servlet for all entry points into Black Rook framework servlets.
+ * Base servlet for all entry points into Black Rook Framework servlets.
  * All servlets that use the framework should extend this one.
  * The methods {@link #onGet(HttpServletRequest, HttpServletResponse)}, 
  * {@link #onPost(HttpServletRequest, HttpServletResponse)},
@@ -32,47 +30,8 @@ import com.blackrook.framework.BRToolkit;
  * all send HTTP 405 status codes by default.
  * @author Matthew Tropiano
  */
-public abstract class BRCommonServlet extends BRRootServlet
+public class BRCommonController extends BRController
 {
-	private static final long serialVersionUID = -5794345293732460631L;
-
-	/** Default Servlet Thread Pool. */
-	private String defaultThreadPool;
-	
-	/**
-	 * Base constructor. Sets default pools to default names.
-	 * @see {@link BRToolkit#DEFAULT_POOL_NAME}
-	 */
-	protected BRCommonServlet()
-	{
-		this(BRToolkit.DEFAULT_POOL_NAME);
-		}
-
-	/**
-	 * Other constructor. Sets default pools.
-	 */
-	protected BRCommonServlet(String defaultThreadPoolName)
-	{
-		super();
-		defaultThreadPool = defaultThreadPoolName;
-		}
-
-	/**
-	 * Gets the name of the default thread pool that this servlet uses.
-	 */
-	public String getDefaultThreadPool()
-	{
-		return defaultThreadPool;
-		}
-
-	/**
-	 * Sets the name of the default thread pool that this servlet uses.
-	 */
-	public void setDefaultThreadPool(String servletDefaultThreadPool)
-	{
-		this.defaultThreadPool = servletDefaultThreadPool;
-		}
-
 	@Override
 	public void onGet(HttpServletRequest request, HttpServletResponse response)
 	{
@@ -107,29 +66,6 @@ public abstract class BRCommonServlet extends BRRootServlet
 	public void onDelete(HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
-
-	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a task that can be monitored by the caller.
-	 * @param task the task to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
-	{
-		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
-		}
-
-	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a runnable encapsulated as a 
-	 * BRFrameworkTask that can be monitored by the caller.
-	 * @param runnable the runnable to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
-	{
-		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
 		}
 
 }

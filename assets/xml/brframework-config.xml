@@ -140,5 +140,27 @@
 	class="com.blackrook.framework.resolver.DefaultQueryResolver" 
 	/>
 
+<!-- 
+	Controllers
+	===========
+	
+	These next XML structures declare controllers.
+	
+	Each controller is declared in a "controller" tag, and have the following
+	attributes:
+	
+	path			The path of the controller according to the submitted path
+					to the BRDispatcherServlet.
+
+	class			The fully-qualified classname of the class to instantiate
+					for this controller.
+	
+	threadpool		The name of the thread pool to use. If not specified, the
+					value is "default".
+	
+-->
+
+<controller path="common.view" class="com.blackrook.framework.servlet" threadpool="default" />
+
 </config>
 	

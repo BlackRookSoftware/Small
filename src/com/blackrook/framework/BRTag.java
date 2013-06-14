@@ -11,7 +11,7 @@ import javax.servlet.jsp.tagext.TagSupport;
  * A (non-body) tag that provides access to the framework toolkit.
  * @author Matthew Tropiano
  */
-public abstract class BRRootTag extends TagSupport
+public abstract class BRTag extends TagSupport
 {
 	private static final long serialVersionUID = -3952524726929216608L;
 	
@@ -32,6 +32,7 @@ public abstract class BRRootTag extends TagSupport
 	 */
 	public enum EndResponse
 	{
+		EVALUATE_BODY(Tag.EVAL_BODY_INCLUDE),
 		EVALUATE_PAGE(Tag.EVAL_PAGE),
 		SKIP_PAGE(Tag.SKIP_PAGE);
 		
@@ -44,7 +45,7 @@ public abstract class BRRootTag extends TagSupport
 	 */
 	public final BRToolkit getToolkit()
 	{
-		return BRToolkit.getInstance();
+		return BRToolkit.INSTANCE;
 		}
 
 	@Override

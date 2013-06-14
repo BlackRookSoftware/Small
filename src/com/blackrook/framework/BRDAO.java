@@ -6,12 +6,12 @@ import com.blackrook.framework.BRToolkit;
  * Data access object for submitting database queries.
  * @author Matthew Tropiano
  */
-public abstract class BRRootDAO
+public abstract class BRDAO
 {
 	/**
 	 * Base constructor.
 	 */
-	protected BRRootDAO()
+	protected BRDAO()
 	{
 		}
 
@@ -20,7 +20,7 @@ public abstract class BRRootDAO
 	 */
 	public final BRToolkit getToolkit()
 	{
-		return BRToolkit.getInstance();
+		return BRToolkit.INSTANCE;
 		}
 
 }

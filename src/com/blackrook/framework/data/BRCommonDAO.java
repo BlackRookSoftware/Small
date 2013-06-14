@@ -1,14 +1,14 @@
 package com.blackrook.framework.data;
 
 import com.blackrook.db.QueryResult;
-import com.blackrook.framework.BRRootDAO;
+import com.blackrook.framework.BRDAO;
 import com.blackrook.framework.BRToolkit;
 
 /**
  * Common data access object.
  * @author Matthew Tropiano
  */
-public abstract class BRCommonDAO extends BRRootDAO
+public abstract class BRCommonDAO extends BRDAO
 {
 	/** Default SQL Pool. */
 	private String defaultSQLPool;

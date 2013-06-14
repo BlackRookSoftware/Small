@@ -25,6 +25,7 @@ import javax.servlet.ServletContext;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
+import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
 import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DatabaseUtils;
@@ -53,6 +54,10 @@ public final class BRToolkit
 	public static final String XML_VIEW_CLASS = "class";
 	public static final String XML_QUERY = "queryresolver";
 	public static final String XML_QUERY_CLASS = "class";
+	public static final String XML_CONTROLLER = "controller";
+	public static final String XML_CONTROLLER_NAME = "path";
+	public static final String XML_CONTROLLER_CLASS = "class";
+	public static final String XML_CONTROLLER_THREADPOOL = "threadpool";
 
 	public static final String SQL_TYPE_MYSQL = "mysql";
 	public static final String SQL_TYPE_SQLITE = "sqlite";
@@ -70,29 +75,41 @@ public final class BRToolkit
 	public static final String XML_THREADS_SIZE = "size";
 
 	/** The cache map for JSP pages. */
-	private CaseInsensitiveHashMap<String> viewCache;
+	private HashMap<String, String> viewCache;
 	/** List of view resolvers. */
 	private List<BRViewResolver> viewResolvers;
 	/** The cache for queries. */
-	private CaseInsensitiveHashMap<String> queryCache;
+	private HashMap<String, String> queryCache;
 	/** List of query resolvers. */
 	private List<BRQueryResolver> queryResolvers;
+	/** The controllers that were instantiated. */
+	private HashMap<String, BRController> controllerCache;
+	/** List of controller entries. */
+	private HashMap<String, ControllerEntry> controllerEntries;
+
 	/** Database connection pool. */
-	private CaseInsensitiveHashMap<DBConnectionPool> connectionPool;
-	/** Database connection pool. */
-	private CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>> threadPool;
+	private HashMap<String, DBConnectionPool> connectionPool;
+	/** Thread pool. */
+	private HashMap<String, ThreadPool<BRFrameworkTask>> threadPool;
+
+	/** Servlet context. */
+	private ServletContext servletContext;
+	
 	/** Application context path. */
 	private String realAppPath = null;
 
 	/** Singleton toolkit instance. */
-	private static BRToolkit INSTANCE = null;
-	
+	public static BRToolkit INSTANCE = null;
+
 	/**
-	 * Returns the instance of instance.
+	 * Gets a file that is on the application path. 
+	 * @param path the path to the file to get.
+	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	public static BRToolkit getInstance()
+	public File getApplicationFile(String path)
 	{
-		return INSTANCE;
+		File inFile = new File(realAppPath+"/"+path);
+		return inFile.exists() ? inFile : null;
 		}
 
 	/**
@@ -104,17 +121,6 @@ public final class BRToolkit
 		if (INSTANCE != null)
 			return INSTANCE;
 		return INSTANCE = new BRToolkit(context);
-		}
-	
-	/**
-	 * Gets the toolkit from the application context.
-	 * @param context the servlet context.
-	 */
-	static BRToolkit getToolkit(ServletContext context)
-	{
-		if (INSTANCE != null)
-			return INSTANCE;
-		return createToolkit(context);
 		}
 	
 	/**
@@ -150,7 +156,7 @@ public final class BRToolkit
 		}
 	
 	// gets String keys from a map.
-	private String[] getKeys(CaseInsensitiveHashMap<?> map)
+	private String[] getKeys(HashMap<String, ?> map)
 	{
 		List<String> outList = new List<String>();
 		
@@ -169,12 +175,15 @@ public final class BRToolkit
 	 */
 	private BRToolkit(ServletContext context)
 	{
+		servletContext = context;
 		viewCache = new CaseInsensitiveHashMap<String>(25);
 		viewResolvers = new List<BRViewResolver>(25);
 		queryCache = new CaseInsensitiveHashMap<String>(25);
 		queryResolvers = new List<BRQueryResolver>(25);
 		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
 		threadPool = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
+		controllerCache = new HashMap<String, BRController>();
+		controllerEntries = new HashMap<String, ControllerEntry>();
 		realAppPath = context.getRealPath(".");
 		
 		XMLStruct xml = null;
@@ -197,6 +206,8 @@ public final class BRToolkit
 						initializeViewResolver(struct);
 					else if (struct.isName(XML_QUERY))
 						initializeQueryResolver(struct);
+					else if (struct.isName(XML_CONTROLLER))
+						initializeController(struct);
 					}
 				}
 		} catch (Exception e) {
@@ -272,8 +283,8 @@ public final class BRToolkit
 			throw new BRFrameworkException("Missing database path for SQL server pool.");
 
 		try {
-			File f = getApplicationFile(db);
-			if (f == null)
+			File f = new File(db);
+			if (!f.exists())
 			{
 				Common.createPathForFile(getApplicationFilePath(db));
 				f = new File(getApplicationFilePath(db));
@@ -358,6 +369,23 @@ public final class BRToolkit
 		}
 
 	/**
+	 * Initializes a controller.
+	 */
+	private void initializeController(XMLStruct struct)
+	{
+		String name = struct.getAttribute(XML_CONTROLLER_NAME);
+		String className = struct.getAttribute(XML_CONTROLLER_CLASS);
+		String threadPoolName = struct.getAttribute(XML_CONTROLLER_THREADPOOL, "default");
+
+		if (name == null)
+			throw new BRFrameworkException("Controller in declaration does not have a name.");
+		if (className == null)
+			throw new BRFrameworkException("Controller \""+name+"\" does not declare a class.");
+		
+		controllerEntries.put(name, new ControllerEntry(className, threadPoolName));
+		}
+
+	/**
 	 * Returns a database connection pool by key name.
 	 * @param key the name of the connection pool.
 	 * @return the connection pool connected to the key or null if none are attached to that name.
@@ -375,6 +403,51 @@ public final class BRToolkit
 	ThreadPool<BRFrameworkTask> getThreadPool(String key)
 	{
 		return threadPool.get(key);
+		}
+	
+	/**
+	 * Returns a controller for a path.
+	 * @param path the path of the controller.
+	 * @return a controller instance to call or null to trigger a 404.
+	 */
+	BRController getController(String path)
+	{
+		if (controllerCache.containsKey(path))
+			return controllerCache.get(path);
+		
+		if (!controllerEntries.containsKey(path))
+			return null;
+			
+		synchronized (controllerCache)
+		{
+			// in case a thread already completed it.
+			if (controllerCache.containsKey(path))
+				return controllerCache.get(path);
+			
+			ControllerEntry entry = controllerEntries.get(path);
+			Class<?> controllerClass = null;
+			try {
+				controllerClass = Class.forName(entry.className);
+			} catch (ClassNotFoundException e) {
+				throw new BRFrameworkException("Class in controller declaration could not be found: "+entry.className);
+				}
+			
+			BRController out = null;
+			
+			try {
+				out = (BRController)BRUtil.getBean(controllerClass);
+			} catch (ClassCastException e) {
+				throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+entry.className);
+			} catch (Exception e) {
+				throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+entry.className);
+				}
+			
+			out.setDefaultThreadPool(entry.threadPoolName);
+			
+			// add to cache and return.
+			controllerCache.put(path, out);
+			return out;
+			}
 		}
 	
 	/**
@@ -646,17 +719,6 @@ public final class BRToolkit
 		}
 	
 	/**
-	 * Gets a file that is on the application path. 
-	 * @param path the path to the file to get.
-	 * @return a file representing the specified resource or null if it couldn't be found.
-	 */
-	public File getApplicationFile(String path)
-	{
-		File inFile = new File(realAppPath+"/"+path);
-		return inFile.exists() ? inFile : null;
-		}
-	
-	/**
 	 * Gets a file path that is on the application path. 
 	 * @param relativepath the relative path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
@@ -664,6 +726,21 @@ public final class BRToolkit
 	public String getApplicationFilePath(String relativepath)
 	{
 		return realAppPath + "/" + relativepath;
+		}
+	
+	/**
+	 * Controller entry.
+	 */
+	public static class ControllerEntry
+	{
+		private String className;
+		private String threadPoolName;
+		
+		public ControllerEntry(String className, String threadPoolName)
+		{
+			this.className = className;
+			this.threadPoolName = threadPoolName;
+			}
 		}
 	
 }
