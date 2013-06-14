@@ -155,6 +155,14 @@ public final class BRToolkit
 		return getKeys(connectionPool);
 		}
 	
+	/**
+	 * Returns servlet context that constructed this.
+	 */
+	ServletContext getServletContext()
+	{
+		return servletContext;
+		}
+
 	// gets String keys from a map.
 	private String[] getKeys(HashMap<String, ?> map)
 	{

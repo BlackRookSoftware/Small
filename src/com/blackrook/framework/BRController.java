@@ -12,6 +12,7 @@ package com.blackrook.framework;
 
 import java.util.Random;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,16 +26,16 @@ import com.blackrook.commons.Common;
  */
 public abstract class BRController
 {
+	/** Lag simulator seed. */
 	private Random randomLagSimulator;
-
 	/** Default Servlet Thread Pool. */
 	private String defaultThreadPool;
 	
 	/** Default constructor. */
 	protected BRController()
 	{
-		defaultThreadPool = BRToolkit.DEFAULT_POOL_NAME;
 		randomLagSimulator = new Random();
+		defaultThreadPool = BRToolkit.DEFAULT_POOL_NAME;
 		}
 	
 	/**
@@ -48,132 +49,9 @@ public abstract class BRController
 	/**
 	 * Gets the name of the default thread pool that this controller uses.
 	 */
-	public String getDefaultThreadPool()
+	public final String getDefaultThreadPool()
 	{
 		return defaultThreadPool;
-		}
-
-	/**
-	 * The entry point for all Black Rook Framework Servlets on a GET request call.
-	 * All servlets that do not implement this method should return status 405, Method Not Supported.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 */
-	public abstract void onGet(HttpServletRequest request, HttpServletResponse response);
-
-	/**
-	 * The entry point for all Black Rook Framework Servlets on a POST request call.
-	 * All servlets that do not implement this method should return status 405, Method Not Supported.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 */
-	public abstract void onPost(HttpServletRequest request, HttpServletResponse response);
-
-	/**
-	 * The entry point for all Black Rook Framework Servlets on a POST request call 
-	 * and it contains a multiform request.
-	 * All servlets that do not implement this method should return status 405, Method Not Supported.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @param fileItems	the list of file items parsed in the multiform packet.
-	 * @param paramMap the table of the parameters passed found in the multiform packet (THEY WILL NOT BE IN THE REQUEST).
-	 */
-	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response);
-
-	/**
-	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.
-	 * All servlets that do not implement this method should return status 405, Method Not Supported.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 */
-	public abstract void onHead(HttpServletRequest request, HttpServletResponse response);
-	
-	/**
-	 * The entry point for all Black Rook Framework Servlets on a PUT request call.
-	 * All servlets that do not implement this method should return status 405, Method Not Supported.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 */
-	public abstract void onPut(HttpServletRequest request, HttpServletResponse response);
-	
-	/**
-	 * The entry point for all Black Rook Framework Servlets on a DELETE request call.
-	 * All servlets that do not implement this method should return status 405, Method Not Supported.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 */
-	public abstract void onDelete(HttpServletRequest request, HttpServletResponse response);
-	
-	/**
-	 * Sends request to the error page with a status code.
-	 * @param response servlet response object.
-	 * @param statusCode the status code to use.
-	 * @param message the status message.
-	 */
-	protected final void sendCode(HttpServletResponse response, int statusCode, String message)
-	{
-		try{
-			response.sendError(statusCode, message);
-		} catch (Exception e) {
-			throwException(e);
-			}
-		}
-
-	/**
-	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link BRFrameworkException},
-	 * which is a {@link RuntimeException}.
-	 * @param t the {@link Throwable} to encapsulate and throw.
-	 */
-	protected final void throwException(Throwable t)
-	{
-		throw new BRFrameworkException(t);
-		}
-
-	/**
-	 * Forwards the client abruptly to another document or servlet (new client request). 
-	 * @param response	servlet response object.
-	 * @param url		target URL.
-	 */
-	protected final void sendRedirect(HttpServletResponse response, String url)
-	{
-		try{
-			response.sendRedirect(url);
-		} catch (Exception e) {
-			throwException(e);
-			}
-		}
-	
-	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a task that can be monitored by the caller.
-	 * @param task the task to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
-	{
-		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
-		}
-
-	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a runnable encapsulated as a 
-	 * BRFrameworkTask that can be monitored by the caller.
-	 * @param runnable the runnable to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
-	{
-		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
-		}
-
-	/**
-	 * Simulates latency on a response, for testing.
-	 * Just calls {@link Common.sleep(long)} and varies the input value.
-	 */
-	protected final void simulateLag(int millis)
-	{
-		Common.sleep(randomLagSimulator.nextInt(millis));
 		}
 
 	/**
@@ -182,6 +60,14 @@ public abstract class BRController
 	public final BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
+		}
+
+	/**
+	 * Gets the servlet context.
+	 */
+	public final ServletContext getServletContext()
+	{
+		return getToolkit().getServletContext();
 		}
 
 	/**
@@ -241,5 +127,128 @@ public abstract class BRController
 			throwException(e);
 			}
 		}
+
+	/**
+	 * Sends request to the error page with a status code.
+	 * @param response servlet response object.
+	 * @param statusCode the status code to use.
+	 * @param message the status message.
+	 */
+	protected final void sendCode(HttpServletResponse response, int statusCode, String message)
+	{
+		try{
+			response.sendError(statusCode, message);
+		} catch (Exception e) {
+			throwException(e);
+			}
+		}
+
+	/**
+	 * Forces an exception to propagate up to the dispatcher.
+	 * Basically encloses the provided throwable in a {@link BRFrameworkException},
+	 * which is a {@link RuntimeException}.
+	 * @param t the {@link Throwable} to encapsulate and throw.
+	 */
+	protected final void throwException(Throwable t)
+	{
+		throw new BRFrameworkException(t);
+		}
+
+	/**
+	 * Forwards the client abruptly to another document or servlet (new client request). 
+	 * @param response	servlet response object.
+	 * @param url		target URL.
+	 */
+	protected final void sendRedirect(HttpServletResponse response, String url)
+	{
+		try{
+			response.sendRedirect(url);
+		} catch (Exception e) {
+			throwException(e);
+			}
+		}
+
+	/**
+	 * Attempts to grab an available thread from the servlet's default 
+	 * thread pool and starts a task that can be monitored by the caller.
+	 * @param task the task to run.
+	 * @return a framework task encapsulation for monitoring the task.
+	 */
+	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
+	{
+		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
+		}
+
+	/**
+	 * Attempts to grab an available thread from the servlet's default 
+	 * thread pool and starts a runnable encapsulated as a 
+	 * BRFrameworkTask that can be monitored by the caller.
+	 * @param runnable the runnable to run.
+	 * @return a framework task encapsulation for monitoring the task.
+	 */
+	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
+	{
+		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
+		}
+
+	/**
+	 * Simulates latency on a response, for testing.
+	 * Just calls {@link Common.sleep(long)} and varies the input value.
+	 */
+	protected final void simulateLag(int millis)
+	{
+		Common.sleep(randomLagSimulator.nextInt(millis));
+		}
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a GET request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onGet(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a POST request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onPost(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a POST request call 
+	 * and it contains a multiform request.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 * @param fileItems	the list of file items parsed in the multiform packet.
+	 * @param paramMap the table of the parameters passed found in the multiform packet (THEY WILL NOT BE IN THE REQUEST).
+	 */
+	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onHead(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a PUT request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onPut(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a DELETE request call.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 */
+	public abstract void onDelete(HttpServletRequest request, HttpServletResponse response);
 	
 }

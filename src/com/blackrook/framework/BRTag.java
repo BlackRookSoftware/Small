@@ -1,5 +1,6 @@
 package com.blackrook.framework;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
@@ -48,10 +49,17 @@ public abstract class BRTag extends TagSupport
 		return BRToolkit.INSTANCE;
 		}
 
+	/**
+	 * Gets the servlet context.
+	 */
+	public final ServletContext getServletContext()
+	{
+		return getToolkit().getServletContext();
+		}
+
 	@Override
 	public final int doStartTag() throws JspException 
 	{
-		
 		return onStart(
 			(HttpServletRequest)pageContext.getRequest(),
 			(HttpServletResponse)pageContext.getResponse()
