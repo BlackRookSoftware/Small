@@ -5,15 +5,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.tagext.IterationTag;
 import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
 
 /**
- * A (non-body) tag that provides access to the framework toolkit.
+ * A body tag that provides access to the framework toolkit.
  * @author Matthew Tropiano
  */
-public abstract class BRTag extends TagSupport
+public abstract class BRTag extends BodyTagSupport
 {
 	private static final long serialVersionUID = -3952524726929216608L;
 	
