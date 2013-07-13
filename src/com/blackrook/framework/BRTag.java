@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.IterationTag;
 import javax.servlet.jsp.tagext.Tag;
 import javax.servlet.jsp.tagext.TagSupport;
 
@@ -17,7 +18,7 @@ public abstract class BRTag extends TagSupport
 	private static final long serialVersionUID = -3952524726929216608L;
 	
 	/**
-	 * Response type for tags.
+	 * Response type for tag start.
 	 */
 	public enum StartResponse
 	{
@@ -29,11 +30,12 @@ public abstract class BRTag extends TagSupport
 		}
 	
 	/**
-	 * Response type for tags.
+	 * Response type for tag end.
 	 */
 	public enum EndResponse
 	{
 		EVALUATE_BODY(Tag.EVAL_BODY_INCLUDE),
+		EVALUATE_BODY_AGAIN(IterationTag.EVAL_BODY_AGAIN),
 		EVALUATE_PAGE(Tag.EVAL_PAGE),
 		SKIP_PAGE(Tag.SKIP_PAGE);
 		
