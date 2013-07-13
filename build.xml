@@ -45,12 +45,49 @@
 	<property name="zip.dir" value="build/zip" />
 
 	<property name="jar.filename" value="${project.archive}.jar" />
+	<property name="jar.one.filename" value="${project.archive}-one.jar" />
 
+	<property name="zip.one.filename" value="${project.archive}-one-${project.version}.zip" />
 	<property name="zip.jar.filename" value="${project.archive}-bin-${project.version}.zip" />
 	<property name="zip.src.filename" value="${project.archive}-src-${project.version}.zip" />
 	<property name="zip.docs.filename" value="${project.archive}-javadocs-${project.version}.zip" />
 	
-	<property file="build.properties" />
+	<!-- Filesets -->
+
+	<patternset id="pattern.classes.notest">
+		<include name="**/*.class" />
+		<exclude name="**/*Test*" />
+		<exclude name="**/test/*" />
+	</patternset>
+
+	<patternset id="pattern.source.notest">
+		<include name="**/*.java" />
+		<include name="**/*.txt" />
+		<exclude name="**/*Test*" />
+		<exclude name="**/test/*" />
+	</patternset>
+	
+	<fileset id="fileset.commons.classes.notest" dir="${commons.lib}">
+		<patternset refid="pattern.classes.notest" />
+	</fileset>
+	
+	<fileset id="fileset.commons.io.classes.notest" dir="${commons.io.lib}">
+		<patternset refid="pattern.classes.notest" />
+	</fileset>
+	
+	<fileset id="fileset.commons.lang.classes.notest" dir="${commons.lang.lib}">
+		<patternset refid="pattern.classes.notest" />
+	</fileset>
+
+	<fileset id="fileset.commons.sync.classes.notest" dir="${commons.sync.lib}">
+		<patternset refid="pattern.classes.notest" />
+	</fileset>
+
+	<fileset id="fileset.db.classes.notest" dir="${db.lib}">
+		<patternset refid="pattern.classes.notest" />
+	</fileset>
+
+	<!-- Targets -->
 
 	<target name="clean.compile">
 		<delete dir="${bin.dir}" includeemptydirs="true" casesensitive="false"/>
@@ -163,9 +200,30 @@
 		</jar>
 	</target>
 
+	<target name="jar.one" depends="init.jar" description="Jars up all of the required files.">
+		<jar destfile="${jar.dir}/${jar.one.filename}">
+			<fileset dir="${bin.dir}" excludes="**/test*" />
+		</jar>
+		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
+			<fileset refid="fileset.commons.classes.notest" />
+		</jar>
+		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
+			<fileset refid="fileset.commons.io.classes.notest" />
+		</jar>
+		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
+			<fileset refid="fileset.commons.lang.classes.notest" />
+		</jar>
+		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
+			<fileset refid="fileset.commons.sync.classes.notest" />
+		</jar>
+		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
+			<fileset refid="fileset.db.classes.notest" />
+		</jar>
+	</target>
+
 	<target name="zip.jar">
 		<delete file="${zip.dir}/${zip.jar.filename}" />
-		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.jar.filename}"></zip>
+		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.jar.filename}" compress="true"></zip>
 		<zip basedir="docs" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
 		<zip basedir="assets" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
 	</target>
@@ -182,6 +240,15 @@
 		<zip basedir="assets" destfile="${zip.dir}/${zip.src.filename}" update="true"></zip>
 	</target>
 	
+	<target name="zip.one">
+		<delete file="${zip.dir}/${zip.one.filename}" />
+		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.one.filename}" compress="true">
+			<fileset file="${jar.one.filename}" />
+		</zip>
+		<zip basedir="docs" destfile="${zip.dir}/${zip.one.filename}" update="true"></zip>
+		<zip basedir="assets" destfile="${zip.dir}/${zip.one.filename}" update="true"></zip>
+	</target>
+
 	<target name="release" depends="compile, javadoc, jar, init.zip, zip.jar, zip.docs, zip.src">
 	</target>
 	
