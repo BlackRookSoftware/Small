@@ -513,9 +513,6 @@ public final class BRToolkit
 		if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
 		
-		if (!controllerEntries.containsKey(path))
-			return null;
-			
 		synchronized (controllerCache)
 		{
 			// in case a thread already completed it.
@@ -553,7 +550,7 @@ public final class BRToolkit
 	{
 		String pkg = controllerRootPackage + ".";
 		String cls = "";
-		String[] dirs = path.split("[/]+");
+		String[] dirs = path.substring(1).split("[/]+");
 		if (dirs.length > 1)
 		{
 			StringBuilder sb = new StringBuilder();
