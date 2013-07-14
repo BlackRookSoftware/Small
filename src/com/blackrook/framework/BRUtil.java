@@ -466,6 +466,7 @@ public final class BRUtil
 	 * @param request the HTTP request object.
 	 * @param paramName the parameter name.
 	 * @param formatString the {@link SimpleDateFormat} format string.
+	 * @return a Date object representing the parsed date or null if not parsed.
 	 */
 	public static Date getParameterDate(HttpServletRequest request, String paramName, String formatString)
 	{
@@ -483,7 +484,7 @@ public final class BRUtil
 		try {
 			out = formatter.parse(getParameterString(request, paramName));
 		} catch (ParseException e) {
-			throw new BRFrameworkException("Parameter \""+paramName+"\" could not be parsed with pattern \""+formatString+"\".", e);
+			return null;
 			}
 		
 		return out;
