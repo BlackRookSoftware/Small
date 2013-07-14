@@ -205,7 +205,8 @@
 	
 	package			The classpath of the root package.
 	
-	extension		The extension to ignore, if any.
+	extension		The extension to ignore, if any. This should match the
+					BRDispatcherServlet URL pattern.
 					Default is "view", if unspecified. 
 	
 	classprefix		The prefix prepended to the controller name.

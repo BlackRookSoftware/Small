@@ -559,7 +559,7 @@ public final class BRToolkit
 				sb.append(dirs[i]);
 				sb.append('.');
 				}
-			pkg = sb.toString();
+			pkg += sb.toString();
 			}
 		cls = dirs[dirs.length - 1];
 		
