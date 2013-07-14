@@ -1,27 +1,16 @@
 package com.blackrook.framework;
 
-import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-
-import com.blackrook.commons.AbstractVector;
 import com.blackrook.commons.Common;
-import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.list.List;
 
 /**
  * Utility library for common or useful functions.
@@ -80,39 +69,6 @@ public final class BRUtil
 		return request.getSession().getId();
 		}
 
-	/**
-	 * Sets the fields on a bean using values in a map.
-	 * The keys in the map correspond to the "setter" methods of the object,
-	 * without the "set" part. Corresponding methods that are not found will be skipped.
-	 * <p>
-	 * For example, the object at key "color" will be set using "setColor()" 
-	 * (note the change in camel case).
-	 * <p>
-	 * @param bean the target bean.
-	 * @param map the map to lift the values from.
-	 * @throws ClassCastException if one of the fields could not be cast to the proper type.
-	 */
-	public static void setBeanFields(Object bean, HashMap<String, Object> map)
-	{
-		Iterator<String> it = map.keyIterator();
-		while (it.hasNext())
-		{
-			String s = it.next();
-			Object obj = map.get(s);
-			
-			Method setterMethod;
-			String setterName = Reflect.getSetterName(s);
-			try {
-				setterMethod = obj.getClass().getMethod(setterName, obj.getClass());
-				Reflect.invokeBlind(setterMethod, bean, obj);
-			} catch (SecurityException e) {
-				throw new BRFrameworkException("Could not set bean field " + setterName, e);
-			} catch (NoSuchMethodException e) {
-				throw new BRFrameworkException("Could not set bean field " + setterName, e);
-				}
-			}
-		}
-	
 	/**
 	 * Gets and auto-casts an object bean stored at the session level.
 	 * The bean is created and stored if it doesn't exist.
@@ -311,27 +267,6 @@ public final class BRUtil
 		return clazz.cast(obj);
 		}
 
-	/**
-	 * Parses the content of a multiform request such that files and parameters are separated.
-	 * @param request the HTTP request object.
-	 * @param fileOutput the output vector to place the files that it finds (form content identified as files).
-	 * @param paramOutput the output map to place key/value pairs that it identifies as "not files".
-	 */
-	@SuppressWarnings("unchecked")
-	public static void parseMultiForm(HttpServletRequest request, 
-		AbstractVector<FileItem> fileOutput, HashMap<String, String> paramOutput) throws FileUploadException
-	{
-		FileItemFactory factory = new DiskFileItemFactory();
-		ServletFileUpload upload = new ServletFileUpload(factory);
-		for (FileItem fit : (List<FileItem>)upload.parseRequest(request))
-		{
-			if (!fit.isFormField())
-				fileOutput.add(fit);
-			else
-				paramOutput.put(fit.getFieldName(), fit.getString());
-			}
-		}
-	
 	/**
 	 * Gets a group of parameters that start with a specific prefix.
 	 * @param prefix the prefix to search for.
