@@ -58,6 +58,11 @@ public final class BRToolkit
 	public static final String XML_CONTROLLER_NAME = "path";
 	public static final String XML_CONTROLLER_CLASS = "class";
 	public static final String XML_CONTROLLER_THREADPOOL = "threadpool";
+	public static final String XML_CONTROLLERROOT = "controllerroot";
+	public static final String XML_CONTROLLERROOT_PACKAGE = "package";
+	public static final String XML_CONTROLLERROOT_EXTENSION= "extension";
+	public static final String XML_CONTROLLERROOT_PREFIX = "classprefix";
+	public static final String XML_CONTROLLERROOT_SUFFIX = "classsuffix";
 
 	public static final String SQL_TYPE_MYSQL = "mysql";
 	public static final String SQL_TYPE_SQLITE = "sqlite";
@@ -87,6 +92,15 @@ public final class BRToolkit
 	/** List of controller entries. */
 	private HashMap<String, ControllerEntry> controllerEntries;
 
+	/** Controller root package. */
+	private String controllerRootPackage;
+	/** Controller root extension to ignore. */
+	private String controllerRootExtension;
+	/** Controller root prefix. */
+	private String controllerRootPrefix;
+	/** Controller root suffix. */
+	private String controllerRootSuffix;
+	
 	/** Database connection pool. */
 	private HashMap<String, DBConnectionPool> connectionPool;
 	/** Thread pool. */
@@ -216,6 +230,8 @@ public final class BRToolkit
 						initializeQueryResolver(struct);
 					else if (struct.isName(XML_CONTROLLER))
 						initializeController(struct);
+					else if (struct.isName(XML_CONTROLLERROOT))
+						initializeControllerRoot(struct);
 					}
 				}
 		} catch (Exception e) {
@@ -394,6 +410,22 @@ public final class BRToolkit
 		}
 
 	/**
+	 * Initializes the controller root resolver.
+	 */
+	private void initializeControllerRoot(XMLStruct struct)
+	{
+		String pkg = struct.getAttribute(XML_CONTROLLERROOT_PACKAGE).trim();
+		controllerRootExtension = struct.getAttribute(XML_CONTROLLERROOT_EXTENSION, "view").trim();
+		controllerRootPrefix = struct.getAttribute(XML_CONTROLLERROOT_PREFIX, "").trim();
+		controllerRootSuffix = struct.getAttribute(XML_CONTROLLERROOT_SUFFIX, "Controller").trim();
+
+		if (pkg == null)
+			throw new BRFrameworkException("Controller root declaration must specify a root package.");
+		
+		controllerRootPackage = pkg;
+		}
+
+	/**
 	 * Returns a database connection pool by key name.
 	 * @param key the name of the connection pool.
 	 * @return the connection pool connected to the key or null if none are attached to that name.
@@ -420,6 +452,16 @@ public final class BRToolkit
 	 */
 	BRController getController(String path)
 	{
+		BRController out = getControllerUsingDefinitions(path);
+		if (out != null)
+			return out;
+		
+		return getControllerUsingRoot(path);
+		}
+	
+	// Get controller using path definitions.
+	private BRController getControllerUsingDefinitions(String path)
+	{
 		if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
 		
@@ -432,30 +474,104 @@ public final class BRToolkit
 			if (controllerCache.containsKey(path))
 				return controllerCache.get(path);
 			
-			ControllerEntry entry = controllerEntries.get(path);
-			Class<?> controllerClass = null;
-			try {
-				controllerClass = Class.forName(entry.className);
-			} catch (ClassNotFoundException e) {
-				throw new BRFrameworkException("Class in controller declaration could not be found: "+entry.className);
-				}
-			
-			BRController out = null;
-			
-			try {
-				out = (BRController)BRUtil.getBean(controllerClass);
-			} catch (ClassCastException e) {
-				throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+entry.className);
-			} catch (Exception e) {
-				throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+entry.className);
-				}
-			
-			out.setDefaultThreadPool(entry.threadPoolName);
+			BRController out = instantiateControllerByEntry(path);
 			
 			// add to cache and return.
 			controllerCache.put(path, out);
 			return out;
 			}
+		}
+	
+	// Creates a controller by its controller entry.
+	private BRController instantiateControllerByEntry(String path)
+	{			
+		ControllerEntry entry = controllerEntries.get(path);
+		Class<?> controllerClass = null;
+		try {
+			controllerClass = Class.forName(entry.className);
+		} catch (ClassNotFoundException e) {
+			throw new BRFrameworkException("Class in controller declaration could not be found: "+entry.className);
+			}
+		
+		BRController out = null;
+		
+		try {
+			out = (BRController)BRUtil.getBean(controllerClass);
+		} catch (ClassCastException e) {
+			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+entry.className);
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+entry.className);
+			}
+		
+		out.setDefaultThreadPool(entry.threadPoolName);
+		return out;
+		}
+	
+	// Get controller using root definition.
+	private BRController getControllerUsingRoot(String path)
+	{
+		if (controllerCache.containsKey(path))
+			return controllerCache.get(path);
+		
+		if (!controllerEntries.containsKey(path))
+			return null;
+			
+		synchronized (controllerCache)
+		{
+			// in case a thread already completed it.
+			if (controllerCache.containsKey(path))
+				return controllerCache.get(path);
+			
+			BRController out = instantiateControllerByRoot(path);
+
+			// add to cache and return.
+			controllerCache.put(path, out);
+			return out;
+			}
+
+		}
+	
+	// Instantiates a controller via rot resolver.
+	private BRController instantiateControllerByRoot(String path)
+	{
+		String className = getClassNameForController(path);
+		BRController out = null;
+		
+		try {
+			out = (BRController)BRUtil.getBean(Class.forName(className));
+		} catch (ClassCastException e) {
+			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+className);
+			}
+		
+		return out;
+		}
+	
+	// Gets the classname of a path.
+	private String getClassNameForController(String path)
+	{
+		String pkg = controllerRootPackage + ".";
+		String cls = "";
+		String[] dirs = path.split("[/]+");
+		if (dirs.length > 1)
+		{
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < dirs.length - 1; i++)
+			{
+				sb.append(dirs[i]);
+				sb.append('.');
+				}
+			pkg = sb.toString();
+			}
+		cls = dirs[dirs.length - 1];
+		
+		int extIndex = controllerRootExtension.length() > 0 ? cls.indexOf("."+controllerRootExtension) : -1;
+		
+		cls = cls.substring(0, 1).toUpperCase() + (extIndex >= 0 ? cls.substring(1, extIndex) : cls.substring(1));
+		cls = controllerRootPrefix + cls + controllerRootSuffix;
+		
+		return pkg + cls;
 		}
 	
 	/**

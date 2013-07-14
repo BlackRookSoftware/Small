@@ -137,8 +137,11 @@
 -->
 
 <queryresolver 
-	class="com.blackrook.framework.resolver.DefaultQueryResolver" 
+	class="com.blackrook.framework.resolver.DefaultResolver" 
 	/>
+
+
+<controllerroot package="com.blackrook.framework.resolver.DefaultResolver" />
 
 <!-- 
 	Controllers
@@ -160,7 +163,64 @@
 	
 -->
 
-<controller path="index.view" class="com.blackrook.framework.controller.BRCommonController" threadpool="default" />
+<controller 
+	path="common.view" 
+	class="com.blackrook.framework.controller.BRCommonController" 
+	threadpool="default" 
+	/>
+
+<!-- 
+	Controller Root
+	===============
+	
+	This XML structure declares the root package to resolve controllers from
+	should no path be defined for it. The request URL must be processed by 
+	BRDispatcherServlet for this to have any effect. Sub-folders in the path
+	are considered to be sub-packages.
+	
+	................................
+	
+	Controllers are resolved as follows (examples), if the tag is: 
+	<controllerroot 
+		package="com.blackrook.controller" 
+		extension="view"  
+		classprefix=""  
+		classsuffix="Controller"  
+		/>
+	
+	/index.view
+	com.example.controller.IndexController
+
+	/somePage.view
+	com.example.controller.SomePageController
+
+	/admin/index.view
+	com.example.controller.admin.IndexController
+	
+	................................
+
+	This definition is considered last after "controller" tags.
+	
+	The root declaration has the following attributes:
+	
+	package			The classpath of the root package.
+	
+	extension		The extension to ignore, if any.
+					Default is "view", if unspecified. 
+	
+	classprefix		The prefix prepended to the controller name.
+					Default is "", if unspecified. 
+	
+	classsuffix		The suffix appended to the controller name.
+					Default is "Controller", if unspecified. 
+-->
+
+<controllerroot 
+	package="com.add.path.here" 
+	extension="view"  
+	classprefix=""  
+	classsuffix="Controller"  
+	/>
 
 </config>
 	

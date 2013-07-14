@@ -9,14 +9,27 @@ import com.blackrook.commons.Common;
 import com.blackrook.framework.BRFrameworkException;
 import com.blackrook.framework.BRQueryResolver;
 import com.blackrook.framework.BRToolkit;
+import com.blackrook.framework.BRViewResolver;
 
 /**
- * Default query resolver. 
- * Always returns the contents of files read from <code>"/WEB-INF/sql/" + keyword + ".sql"</code> for every keyword.
+ * Default resolver for all things. 
  * @author Matthew Tropiano
  */
-public class DefaultQueryResolver implements BRQueryResolver
+public class DefaultResolver implements BRQueryResolver, BRViewResolver
 {
+	/** Always returns false. */
+	@Override
+	public boolean dontCacheView(String keyword)
+	{
+		return false;
+		}
+
+	/** Always returns <code>"/WEB-INF/jsp/" + keyword + ".jsp"</code> for every keyword. */
+	@Override
+	public String resolveView(String keyword)
+	{
+		return "/WEB-INF/jsp/" + keyword + ".jsp";
+		}
 
 	@Override
 	public boolean dontCacheQuery(String keyword)

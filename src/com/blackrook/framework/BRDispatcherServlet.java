@@ -16,7 +16,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		String path = request.getRequestURI().substring(request.getContextPath().length());
+		String path = getPath(request);
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
@@ -28,7 +28,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	public final void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		String path = request.getRequestURI().substring(request.getContextPath().length());
+		String path = getPath(request);
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
@@ -42,7 +42,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	public final void doHead(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		String path = request.getRequestURI().substring(request.getContextPath().length());
+		String path = getPath(request);
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
@@ -54,7 +54,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	public final void doPut(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		String path = request.getRequestURI().substring(request.getContextPath().length());
+		String path = getPath(request);
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
@@ -66,7 +66,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
 	{
 		BRToolkit.createToolkit(getServletContext());
-		String path = request.getRequestURI().substring(request.getContextPath().length());
+		String path = getPath(request);
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
@@ -74,6 +74,20 @@ public final class BRDispatcherServlet extends HttpServlet
 			servlet.onDelete(request,response);
 		}
 
+	/**
+	 * Get the base path parsed out of the request URI.
+	 */
+	private final String getPath(HttpServletRequest request)
+	{
+		String requestURI = request.getRequestURI();
+		int contextPathLen = request.getContextPath().length();
+		int queryIndex = requestURI.indexOf('?');
+		if (queryIndex >= 0)
+			return requestURI.substring(contextPathLen, queryIndex);
+		else
+			return requestURI.substring(contextPathLen); 
+		}
+	
 	/**
 	 * Gets the controller to call using the requested path.
 	 * @param uriPath the path to resolve, no query string.

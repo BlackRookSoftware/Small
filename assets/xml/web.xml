@@ -1,0 +1,10 @@
+<!-- Required Servlets -->
+
+<servlet>
+	<servlet-name>BRDispatcher</servlet-name>
+	<servlet-class>com.blackrook.framework.BRDispatcherServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+	<servlet-name>BRDispatcher</servlet-name>
+	<url-pattern>*.view</url-pattern>
+</servlet-mapping>
