@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 
+ * The main dispatcher servlet for the controller portion of the framework.
  * @author Matthew Tropiano
  */
 public final class BRDispatcherServlet extends HttpServlet

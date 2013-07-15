@@ -15,10 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Iterator;
 
 import javax.servlet.ServletContext;
@@ -28,7 +25,7 @@ import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
 import com.blackrook.db.DBConnectionPool;
-import com.blackrook.db.DatabaseUtils;
+import com.blackrook.db.DBUtils;
 import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
 import com.blackrook.db.sqlite.SQLiteUtils;
@@ -265,7 +262,7 @@ public final class BRToolkit
 	private DBConnectionPool initializeMYSQL(XMLStruct struct)
 	{
 		DBConnectionPool pool = null;
-		DatabaseUtils dbu = null;
+		DBUtils dbu = null;
 		String user = null;
 		String password = null;
 				
@@ -300,7 +297,7 @@ public final class BRToolkit
 	private DBConnectionPool initializeSQLite(XMLStruct struct)
 	{
 		DBConnectionPool pool = null;
-		DatabaseUtils dbu = null;
+		DBUtils dbu = null;
 		
 		String db = struct.getAttribute(XML_SQL_DB);
 		if (db.trim().length() == 0)
@@ -639,31 +636,20 @@ public final class BRToolkit
 	public QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		Connection conn = null;
-		PreparedStatement st = null;
-		ResultSet rs = null;
 		QueryResult result = null;		
 		try {
 			DBConnectionPool pool = connectionPool.get(poolname);
 			conn = pool.getAvailableConnection();
-			st = conn.prepareStatement(query);
-			int i = 1;
-			for (Object obj : parameters)
-				st.setObject(i++, obj);
-			rs = st.executeQuery();
-			result = new QueryResult(rs);
-			rs.close();
-			st.close();
+			result = DBUtils.doQuery(conn, query, parameters);
 			conn.close(); // should release
-			return result;
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
 		} catch (InterruptedException e) {
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
-			if (rs != null) try {rs.close();} catch (SQLException e) {};
-			if (st != null) try {st.close();} catch (SQLException e) {};
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
 			}
+		return result;
 		}
 
 	/**
@@ -691,104 +677,20 @@ public final class BRToolkit
 	public QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		Connection conn = null;
-		PreparedStatement st = null;
-		QueryResult result = null;		
+		QueryResult result = null;
 		DBConnectionPool pool = connectionPool.get(poolname);
 		if (pool == null)
 			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		try {
 			conn = pool.getAvailableConnection();
-			st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-			int i = 1;
-			for (Object obj : parameters)
-				st.setObject(i++, obj);
-			int out = st.executeUpdate();
-			result = new QueryResult(out, st.getGeneratedKeys());
-			st.close();
+			result = DBUtils.doQueryUpdate(conn, query, parameters);
 			conn.close(); // should release
-			return result;
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
 		} catch (InterruptedException e) {
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
-			if (st != null) try {st.close();} catch (SQLException e) {};
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
-			}
-		}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs an update query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param queryKeys the lookup keys of the update statements.
-	 * @param parameters list of lists of parameters for the respective parameterized queries.
-	 * @return the update results returned (usually number of rows affected).
-	 */
-	public QueryResult[] doUpdateQueryBatchPooled(String poolname, String[] queryKeys, Object[][] parameters)
-	{
-		String[] query = new String[queryKeys.length];
-		for (int i = 0; i < query.length; i++)
-		{
-			query[i] = getQueryByName(queryKeys[i]);
-			if (query[i] == null)
-				throw new BRFrameworkException("Query could not be loaded/cached - "+queryKeys[i]);
-			}
-		return doUpdateQueryBatchPooledInline(poolname, query, parameters);
-		}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a series
-	 * of queries. These queries are batched together as a single transaction - if one
-	 * fails, the entire transaction is not committed.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param query the query statements to execute.
-	 * @param parameters list of lists of parameters for the respective parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 */
-	public QueryResult[] doUpdateQueryBatchPooledInline(String poolname, String[] query, Object[][] parameters)
-	{
-		QueryResult[] result = new QueryResult[query.length];
-		Exception ex = null;
-		DBConnectionPool pool = connectionPool.get(poolname);
-		if (pool == null)
-			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
-		try{
-			Connection conn = pool.getAvailableConnection();
-			conn.setAutoCommit(false);
-			for (int n = 0; ex == null && n < query.length; n++)
-			{
-				PreparedStatement st = null;
-				try {
-					st = conn.prepareStatement(query[n], Statement.RETURN_GENERATED_KEYS);
-					int i = 1;
-					for (Object obj : parameters)
-						st.setObject(i++, obj);
-					int out = st.executeUpdate();
-					result[n] = new QueryResult(out, st.getGeneratedKeys());
-				} catch (SQLException e) {
-					ex = e;
-				} finally {
-					if (st != null) try {st.close();} catch (SQLException e) {};
-					}
-				}
-			
-			if (ex != null)
-			{
-				conn.setAutoCommit(true);
-				conn.close(); // should release
-				throw new BRFrameworkException(ex);
-				}
-			else
-			{
-				conn.commit();
-				conn.setAutoCommit(true);
-				conn.close(); // should release
-				}
-			
-		} catch (SQLException e) {
-			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 			}
 		return result;
 		}
