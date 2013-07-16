@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.framework.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -11,6 +11,8 @@ import javax.servlet.http.HttpSession;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.framework.BRFrameworkException;
+import com.blackrook.framework.BRMIMETypes;
 
 /**
  * Utility library for common or useful functions.

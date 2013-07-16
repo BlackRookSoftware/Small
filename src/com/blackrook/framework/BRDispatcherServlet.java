@@ -4,6 +4,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.framework.multiform.MultipartParser;
+
 /**
  * The main dispatcher servlet for the controller portion of the framework.
  * @author Matthew Tropiano
@@ -32,8 +34,8 @@ public final class BRDispatcherServlet extends HttpServlet
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
-		else if (request.getContentType().toLowerCase().startsWith("multiform/"))
-			servlet.onMultiformPost(request, response);
+		else if (MultipartParser.isMultipart(request))
+			servlet.onMultipartPost(request, response);
 		else
 			servlet.onPost(request, response);
 		}

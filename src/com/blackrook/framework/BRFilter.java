@@ -12,6 +12,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.framework.util.BRUtil;
+
 /**
  * The root filter.
  * @author Matthew Tropiano

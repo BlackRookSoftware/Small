@@ -20,7 +20,7 @@ import com.blackrook.framework.BRController;
  * All servlets that use the framework should extend this one.
  * The methods {@link #onGet(HttpServletRequest, HttpServletResponse)}, 
  * {@link #onPost(HttpServletRequest, HttpServletResponse)},
- * {@link #onMultiformPost(HttpServletRequest, HttpServletResponse)},
+ * {@link #onMultipartPost(HttpServletRequest, HttpServletResponse)},
  * {@link #onHead(HttpServletRequest, HttpServletResponse)},
  * {@link #onDelete(HttpServletRequest, HttpServletResponse)}, and
  * {@link #onPut(HttpServletRequest, HttpServletResponse)}
@@ -42,7 +42,7 @@ public class BRCommonController extends BRController
 		}
 
 	@Override
-	public void onMultiformPost(HttpServletRequest request, HttpServletResponse response)
+	public void onMultipartPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
 		}

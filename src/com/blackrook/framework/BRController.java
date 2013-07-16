@@ -223,7 +223,7 @@ public abstract class BRController
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 */
-	public abstract void onMultiformPost(HttpServletRequest request, HttpServletResponse response);
+	public abstract void onMultipartPost(HttpServletRequest request, HttpServletResponse response);
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.
