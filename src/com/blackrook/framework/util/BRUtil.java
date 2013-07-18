@@ -40,7 +40,7 @@ public final class BRUtil implements BRUtilTables
 		}
 	
 	/**
-	 * Escapes a string so that it can be input safely into a URL string.
+	 * Encodes a string so that it can be input safely into a URL string.
 	 */
 	public static String urlEncode(String inString)
 	{
@@ -50,14 +50,71 @@ public final class BRUtil implements BRUtilTables
 		while (i < inChars.length)
 		{
 			char c = inChars[i];
-			if (c > 255)
-				sb.append(String.format("%%%02x%%%02x", ((short)c) >>> 8, ((short)c) & 0x0ff)); // big endian
-			else if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)))
+			if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)))
 				sb.append(String.format("%%%02x", (short)c));
 			else
 				sb.append(c);
 			i++;
 			}
+		return sb.toString();
+		}
+	
+	/**
+	 * Decodes a URL-encoded string.
+	 */
+	public static String urlDecode(String inString)
+	{
+		StringBuffer sb = new StringBuffer();
+		char[] inChars = inString.toCharArray();
+		char[] chars = new char[2];
+		int x = 0;
+		
+		final int STATE_START = 0;
+		final int STATE_DECODE = 1;
+		int state = STATE_START;
+		
+		int i = 0;
+		while (i < inChars.length)
+		{
+			char c = inChars[i];
+			
+			switch (state)
+			{
+				case STATE_START:
+					if (c == '%')
+					{
+						x = 0;
+						state = STATE_DECODE;
+						}
+					else
+						sb.append(c);
+					break;
+				case STATE_DECODE:
+					chars[x++] = c;
+					if (x == 2)
+					{
+						int v = 0;
+						try {
+							v = Integer.parseInt(new String(chars), 16);
+							sb.append((char)(v & 0x0ff));
+						} catch (NumberFormatException e) {
+							sb.append('%').append(chars[0]).append(chars[1]);
+							}
+						state = STATE_START;
+						}
+					break;
+				}
+			
+			i++;
+			}
+		
+		if (state == STATE_DECODE)
+		{
+			sb.append('%');
+			for (int n = 0; n < x; n++)
+				sb.append(chars[n]);
+			}
+		
 		return sb.toString();
 		}
 	

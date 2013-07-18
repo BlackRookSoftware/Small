@@ -17,7 +17,7 @@ import com.blackrook.framework.util.BRUtil;
 /**
  * Parser for multipart form requests.
  * @author Matthew Tropiano
- * TODO: Finish: decode field names better. Read data better.
+ * TODO: Finish: Read data better.
  */
 public class MultipartParser implements Iterable<MultipartParser.Part>
 {
@@ -152,7 +152,7 @@ public class MultipartParser implements Iterable<MultipartParser.Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.name = BRUtil.convertFromHTMLEntities(value.substring(1, value.length() - 1));
+						part.name = BRUtil.urlDecode(value.substring(1, value.length() - 1));
 					}
 				else
 					part.name = value;
@@ -165,7 +165,7 @@ public class MultipartParser implements Iterable<MultipartParser.Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.fileName = BRUtil.convertFromHTMLEntities(value.substring(1, value.length() - 1));
+						part.fileName = BRUtil.urlDecode(value.substring(1, value.length() - 1));
 					}
 				else
 					part.fileName = value;
