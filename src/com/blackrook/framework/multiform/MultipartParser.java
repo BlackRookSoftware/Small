@@ -47,7 +47,7 @@ public class MultipartParser implements Iterable<MultipartParser.Part>
 		partList = new List<MultipartParser.Part>();
 		charset = "ISO-8859-1";
 		String contentType = request.getContentType();
-
+		
 		HeaderParser parser = new HeaderParser(contentType);
 		while (parser.hasTokens())
 		{
@@ -324,8 +324,27 @@ public class MultipartParser implements Iterable<MultipartParser.Part>
 			
 			return sb.toString();
 			}
+		}
+
+	/**
+	 * Special scanner for multipart form data.
+	 */
+	private class Scanner
+	{
+		private StringBuffer charBuffer;
+		private DataList dataBuffer;
+		private InputStreamReader reader;
+		
+		Scanner(InputStream in) throws UnsupportedEncodingException
+		{
+			this.reader = new InputStreamReader(in, charset);
+			charBuffer = new StringBuffer();
+			dataBuffer = new DataList();
+			}
+		
+		
+		
 		
 		}
-	
 	
 }
