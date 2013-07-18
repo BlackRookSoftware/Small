@@ -18,7 +18,7 @@ import com.blackrook.framework.BRMIMETypes;
  * Utility library for common or useful functions.
  * @author Matthew Tropiano
  */
-public final class BRUtil
+public final class BRUtil implements BRUtilTables
 {
 	/** MIME Type Map. */
 	private static BRMIMETypes MIME_TYPE_MAP = new BRMIMETypes();
@@ -42,7 +42,7 @@ public final class BRUtil
 	/**
 	 * Escapes a string so that it can be input safely into a URL string.
 	 */
-	public static String urlEscape(String inString)
+	public static String urlEncode(String inString)
 	{
 		StringBuffer sb = new StringBuffer();
 		char[] inChars = inString.toCharArray();
@@ -58,6 +58,102 @@ public final class BRUtil
 				sb.append(c);
 			i++;
 			}
+		return sb.toString();
+		}
+	
+	/**
+	 * Converts a String to an HTML-safe string.
+	 * @param input the input string to convert.
+	 * @return the converted string.
+	 */
+	public static final String convertToHTMLEntities(String input)
+	{
+		StringBuilder sb = new StringBuilder();
+		char[] chars = input.toCharArray();
+		
+		for (int i = 0; i < chars.length; i++)
+		{
+			char c = chars[i];
+			
+			if (c < 0x0020 || c >= 0x007f)
+				sb.append(String.format("&#x%04x;", c));
+			else if (c == '&')
+				sb.append("&amp;");
+			else if (c == '<')
+				sb.append("&lt;");
+			else if (c == '>')
+				sb.append("&gt;");
+			else if (c == '"')
+				sb.append("&quot;");
+			else if (c == '\'')
+				sb.append("&apos;");
+			else
+				sb.append(c);
+			}
+		
+		return sb.toString();
+		}
+	
+	/**
+	 * Converts a String with HTML entities in it to one without.
+	 * @param input the input string to convert.
+	 * @return the converted string.
+	 */
+	public static final String convertFromHTMLEntities(String input)
+	{
+		StringBuilder sb = new StringBuilder();
+		StringBuilder entity = new StringBuilder();
+		char[] chars = input.toCharArray();
+		
+		final int STATE_STRING = 0;
+		final int STATE_ENTITY = 1;
+		int state = STATE_STRING;
+		
+		for (int i = 0; i < chars.length; i++)
+		{
+			char c = chars[i];
+			
+			switch (state)
+			{
+				case STATE_STRING:
+					if (c == '&')
+					{
+						entity.delete(0, entity.length());
+						state = STATE_ENTITY;
+						}
+					else
+						sb.append(c);
+					break;
+				case STATE_ENTITY:
+					if (c == ';')
+					{
+						String e = entity.toString();
+						if (e.startsWith("#x"))
+						{
+							int n = Integer.parseInt(e.substring(2), 16);
+							sb.append((char)n);
+							}
+						else if (e.startsWith("#"))
+						{
+							int n = Integer.parseInt(e.substring(1), 10);
+							sb.append((char)n);
+							}
+						else if (ENTITY_NAME_MAP.containsKey(e))
+							sb.append(ENTITY_NAME_MAP.get(e));
+						else
+							sb.append(e);
+						
+						state = STATE_STRING;
+						}
+					else
+						entity.append(c);
+					break;
+				}
+			}
+		
+		if (state == STATE_ENTITY)
+			sb.append('&').append(entity.toString());
+		
 		return sb.toString();
 		}
 
@@ -502,5 +598,5 @@ public final class BRUtil
 	{
 		throw new BRFrameworkException(t);
 		}
-
+	
 }

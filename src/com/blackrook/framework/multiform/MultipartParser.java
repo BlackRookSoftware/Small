@@ -5,19 +5,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
 
 import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.DataList;
 import com.blackrook.commons.list.List;
+import com.blackrook.framework.util.BRUtil;
 
 /**
  * Parser for multipart form requests.
  * @author Matthew Tropiano
- * TODO: Finish.
+ * TODO: Finish: decode field names better. Read data better.
  */
-public class MultipartParser
+public class MultipartParser implements Iterable<MultipartParser.Part>
 {
 	/** Content type boundary piece. */
 	private static final String PIECE_BOUNDARY = "boundary=";
@@ -52,7 +54,7 @@ public class MultipartParser
 			String piece = parser.nextToken();
 			if (piece.startsWith(PIECE_BOUNDARY))
 				boundary = piece.substring(PIECE_BOUNDARY.length());
-			if (piece.startsWith(PIECE_CHARSET))
+			else if (piece.startsWith(PIECE_CHARSET))
 				charset = piece.substring(PIECE_CHARSET.length());
 			}
 		
@@ -119,8 +121,7 @@ public class MultipartParser
 						else
 						{
 							// if we previously read data, and didn't find the boundary, must have been a newline.
-							if (data.size() > 0)
-								data.append(NEWLINE_BYTES);
+							// if (data.size() > 0) data.append(NEWLINE_BYTES);
 							data.append(line.getBytes(charset));
 							}
 						break;
@@ -128,7 +129,6 @@ public class MultipartParser
 				
 				//System.out.println("[["+line+"]]");
 				}
-			
 			
 		} catch (IOException e) {
 			throw new MultipartParserException("Could not read request body.", e);
@@ -138,7 +138,7 @@ public class MultipartParser
 		}
 	
 	// Parses the disposition header.
-	private void parseDisposition(String line, Part part)
+	private void parseDisposition(String line, Part part) throws MultipartParserException
 	{
 		HeaderParser hp = new HeaderParser(line.substring(HEADER_DISPOSITION.length()));
 		while (hp.hasTokens())
@@ -147,7 +147,28 @@ public class MultipartParser
 			if (token.startsWith("name="))
 			{
 				String value = token.substring("name=".length());
-				// TODO: Finish.
+				if (value.startsWith("\""))
+				{
+					if (!value.endsWith("\""))
+						throw new MultipartParserException("Missing closing quote in header disposition.");
+					else
+						part.name = BRUtil.convertFromHTMLEntities(value.substring(1, value.length() - 1));
+					}
+				else
+					part.name = value;
+				}
+			else if (token.startsWith("filename="))
+			{
+				String value = token.substring("filename=".length());
+				if (value.startsWith("\""))
+				{
+					if (!value.endsWith("\""))
+						throw new MultipartParserException("Missing closing quote in header disposition.");
+					else
+						part.fileName = BRUtil.convertFromHTMLEntities(value.substring(1, value.length() - 1));
+					}
+				else
+					part.fileName = value;
 				}
 			}
 		
@@ -168,6 +189,12 @@ public class MultipartParser
 	{
 		return request.getContentType().toLowerCase().startsWith("multipart/");
 		}
+
+	@Override
+	public Iterator<Part> iterator()
+	{
+		return partList.iterator();
+		}
 	
 	/**
 	 * Multipart part.
@@ -180,8 +207,6 @@ public class MultipartParser
 		private String fileName;
 		/** Part content type. */
 		private String contentType;
-		/** Part length. */
-		private int length;
 		/** Data. */
 		private byte[] data;
 		
@@ -211,7 +236,7 @@ public class MultipartParser
 
 		public int getLength()
 		{
-			return length;
+			return data.length;
 			}
 
 		public byte[] getData()
