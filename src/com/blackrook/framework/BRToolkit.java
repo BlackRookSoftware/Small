@@ -755,12 +755,12 @@ public final class BRToolkit
 	/**
 	 * Controller entry.
 	 */
-	public static class ControllerEntry
+	static class ControllerEntry
 	{
 		private String className;
 		private String threadPoolName;
 		
-		public ControllerEntry(String className, String threadPoolName)
+		ControllerEntry(String className, String threadPoolName)
 		{
 			this.className = className;
 			this.threadPoolName = threadPoolName;

@@ -50,6 +50,11 @@ public class Part
 
 	/**
 	 * Returns a handle to this file, or null if not a file.
+	 * <p>
+	 * <b>NOTE: You cannot guarantee that this file handle will be valid after the 
+	 * handled request, as it may be deleted after the controller processes the POST!</b>
+	 * <p>
+	 * If you need to keep this file around, it should be copied to another file!
 	 * @see #isFile()
 	 */
 	public File getFile()

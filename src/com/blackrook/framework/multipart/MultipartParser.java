@@ -170,8 +170,6 @@ public class MultipartParser implements Iterable<Part>
 						}
 						break;
 					}
-				
-				//System.out.println("[["+line+"]]");
 				}
 			
 		} catch (IOException e) {

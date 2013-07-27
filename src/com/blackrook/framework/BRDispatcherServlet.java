@@ -55,7 +55,10 @@ public final class BRDispatcherServlet extends HttpServlet
 			// clean up files.
 			for (Part part : parser.getPartList())
 				if (part.isFile())
-					part.getFile().delete();
+				{
+					File tempFile = part.getFile();
+					tempFile.delete();
+					}
 			}
 		else
 			servlet.onPost(request, response);
