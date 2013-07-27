@@ -221,24 +221,5 @@
 	classsuffix="Controller"  
 	/>
 
-<!-- 
-	Multipart Temp Path
-	===================
-	
-	This XML Structure defines the temporary directory for the files in a
-	multipart request gets written to. When the handle to this file
-	disappears, this file gets deleted, but that is up to the JVM.
-	
-	path			The path of the temporary directory.
-					Default is the system temp directory.
-
--->
-
-<!--
-<multiparttemp 
-	path="./temp" 
-	/>
--->
-
 </config>
 	

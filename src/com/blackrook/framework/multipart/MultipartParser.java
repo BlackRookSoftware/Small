@@ -19,7 +19,6 @@ import com.blackrook.framework.util.BRUtil;
 /**
  * Parser for multipart form requests.
  * @author Matthew Tropiano
- * TODO: Finish: Read data better.
  */
 public class MultipartParser implements Iterable<Part>
 {
@@ -77,11 +76,10 @@ public class MultipartParser implements Iterable<Part>
 		String endBoundary = startBoundary + "--";
 		byte[] START_BOUNDARY_BYTES = startBoundary.getBytes(charset);
 
-		final int STATE_START = 0;
 		final int STATE_HEADER = 1;
 		final int STATE_DATA = 2;
 		final int STATE_END = 3;
-		int state = STATE_START;
+		int state = STATE_HEADER;
 		
 		File outFile = null; 
 		Part currentPart = null;
@@ -94,10 +92,9 @@ public class MultipartParser implements Iterable<Part>
 			String line = null;
 
 			currentPart = new Part();
+			partList.add(currentPart);
 			line = scanLine(sis);
-			if (line.equals(startBoundary))
-				state = STATE_HEADER;
-			else
+			if (!line.equals(startBoundary))
 				throw new MultipartParserException("Unexpected beginning of multipart form. Submission is malformed.");
 
 			while (state != STATE_END)
@@ -117,6 +114,7 @@ public class MultipartParser implements Iterable<Part>
 							{
 								state = STATE_DATA;
 								outFile = generateTempFile(outputDir);
+								currentPart.file = outFile;
 								out = new FileOutputStream(outFile);
 								}
 							else
@@ -125,16 +123,26 @@ public class MultipartParser implements Iterable<Part>
 								if (line == null)
 									throw new MultipartParserException("Unexpected end of multipart form. Submission is malformed.");
 
+								boolean loop = true;
 								currentPart.value = line;
-								if (line.equals(startBoundary))
+								while (loop)
 								{
-									state = STATE_HEADER;
-									currentPart = new Part();
+									line = scanLine(sis);
+									if (line.equals(startBoundary))
+									{
+										state = STATE_HEADER;
+										currentPart = new Part();
+										partList.add(currentPart);
+										loop = false;
+										}
+									else if (line.equals(endBoundary))
+									{
+										state = STATE_END;
+										loop = false;
+										}
+									else
+										currentPart.value += "\n" + line;
 									}
-								else if (line.equals(endBoundary))
-									state = STATE_END;
-								else
-									currentPart.value += line;
 								}
 							}
 						else if (line.startsWith(startBoundary))
@@ -146,7 +154,6 @@ public class MultipartParser implements Iterable<Part>
 					{
 						scanDataUntilBoundary(sis, out, START_BOUNDARY_BYTES);
 						out.close();
-						currentPart.file = null;
 						out = null;
 						outFile = null;
 						line = scanLine(sis);
@@ -156,6 +163,7 @@ public class MultipartParser implements Iterable<Part>
 						{
 							state = STATE_HEADER;
 							currentPart = new Part();
+							partList.add(currentPart);
 							}
 						else
 							throw new MultipartParserException("Data terminated with bad boundary. Submission is malformed.");
@@ -180,6 +188,14 @@ public class MultipartParser implements Iterable<Part>
 	public static boolean isMultipart(HttpServletRequest request)
 	{
 		return request.getContentType().toLowerCase().startsWith("multipart/");
+		}
+
+	/**
+	 * Returns all of the parts parsed by this parser.
+	 */
+	public List<Part> getPartList()
+	{
+		return partList;
 		}
 
 	// Parses the disposition header.
@@ -279,6 +295,7 @@ public class MultipartParser implements Iterable<Part>
 					out.write(startBoundary, 0, match);
 					match = 0;
 					nlmatch = 0;
+					out.write(b);
 					}
 				}
 			else if (nlmatch > 0)
@@ -290,6 +307,7 @@ public class MultipartParser implements Iterable<Part>
 				else
 				{
 					out.write(NEWLINE_BYTES, 0, nlmatch);
+					out.write(b);
 					nlmatch = 0;
 					}
 				}

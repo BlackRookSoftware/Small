@@ -17,6 +17,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.commons.Common;
+import com.blackrook.commons.list.List;
+import com.blackrook.framework.multipart.Part;
 
 /**
  * Root control servlet for the Black Rook J2EE Framework.
@@ -222,8 +224,9 @@ public abstract class BRController
 	 * All servlets that do not implement this method should return status 405, Method Not Supported.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
+	 * @param partList the list of parts parsed out of the request.
 	 */
-	public abstract void onMultipartPost(HttpServletRequest request, HttpServletResponse response);
+	public abstract void onMultipartPost(HttpServletRequest request, HttpServletResponse response, List<Part> partList);
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.

@@ -1,10 +1,15 @@
 package com.blackrook.framework;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.framework.multipart.MultipartParser;
+import com.blackrook.framework.multipart.MultipartParserException;
+import com.blackrook.framework.multipart.Part;
 
 /**
  * The main dispatcher servlet for the controller portion of the framework.
@@ -35,7 +40,23 @@ public final class BRDispatcherServlet extends HttpServlet
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else if (MultipartParser.isMultipart(request))
-			servlet.onMultipartPost(request, response);
+		{
+			MultipartParser parser = null;
+			try {
+				parser = new MultipartParser(request, new File(System.getProperty("java.io.tmpdir")));
+			} catch (UnsupportedEncodingException e) {
+				sendCode(response, 500, "The encoding type for the POST request is not supported.");
+			} catch (MultipartParserException e) {
+				sendCode(response, 500, "The server could not parse the multiform request.");
+				}
+			
+			servlet.onMultipartPost(request, response, parser.getPartList());
+			
+			// clean up files.
+			for (Part part : parser.getPartList())
+				if (part.isFile())
+					part.getFile().delete();
+			}
 		else
 			servlet.onPost(request, response);
 		}
