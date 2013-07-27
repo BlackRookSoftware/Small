@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.framework.multiform.MultipartParser;
+import com.blackrook.framework.multipart.MultipartParser;
 
 /**
  * The main dispatcher servlet for the controller portion of the framework.

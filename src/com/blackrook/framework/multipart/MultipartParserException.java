@@ -1,4 +1,4 @@
-package com.blackrook.framework.multiform;
+package com.blackrook.framework.multipart;
 
 /**
  * Exception thrown when a multiform request is not parsed properly.
