@@ -168,6 +168,34 @@
 	/>
 
 <!-- 
+	Filters
+	===========
+	
+	These next XML structures declare filters.
+	
+	Each filter is declared in a "filter" tag, and have the following 
+	attributes:
+	
+	pathprefix		The prefix path of the filter. If the submitted path is
+					starts with this, this filter will be used.
+
+	class			The fully-qualified classname of the class to instantiate
+					for this filter.
+	
+	threadpool		The name of the thread pool to use. If not specified, the
+					value is "default".
+	
+-->
+
+<!--
+<filter 
+	pathprefix="admin/" 
+	class="com.blackrook.framework.controller.BRCommonFilter" 
+	threadpool="default" 
+	/>
+-->
+
+<!-- 
 	Controller Root
 	===============
 	

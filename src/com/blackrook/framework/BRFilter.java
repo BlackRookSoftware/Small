@@ -1,48 +1,50 @@
 package com.blackrook.framework;
 
 import java.io.IOException;
+import java.util.Random;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.commons.Common;
 import com.blackrook.framework.util.BRUtil;
 
 /**
  * The root filter.
  * @author Matthew Tropiano
  */
-public abstract class BRFilter implements Filter
+public abstract class BRFilter
 {
-	@Override
-	public final void init(FilterConfig config) throws ServletException
+	/** Lag simulator seed. */
+	private Random randomLagSimulator;
+	/** Default Servlet Thread Pool. */
+	private String defaultThreadPool;
+	
+	/** Default constructor. */
+	protected BRFilter()
 	{
-		BRToolkit.createToolkit(config.getServletContext());
-		onInit(config);
-		}
-
-	@Override
-	public final void destroy()
-	{
-		onDestroy();
-		}
-
-	@Override
-	public final void doFilter(ServletRequest request, 
-		ServletResponse response, FilterChain chain) throws IOException, ServletException
-	{
-		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse)
-			doHTTPFilter((HttpServletRequest)request, (HttpServletResponse)response, chain);
-		else
-			doOtherFilter(request, response, chain);
+		randomLagSimulator = new Random();
+		defaultThreadPool = BRToolkit.DEFAULT_POOL_NAME;
 		}
 	
+	/**
+	 * Sets the name of the default thread pool that this controller uses.
+	 */
+	final void setDefaultThreadPool(String servletDefaultThreadPool)
+	{
+		this.defaultThreadPool = servletDefaultThreadPool;
+		}
+
+	/**
+	 * Gets the name of the default thread pool that this controller uses.
+	 */
+	public final String getDefaultThreadPool()
+	{
+		return defaultThreadPool;
+		}
+
 	/**
 	 * Gets the Black Rook Framework Toolkit.
 	 */
@@ -60,51 +62,12 @@ public abstract class BRFilter implements Filter
 		}
 
 	/**
-	 * Initializes this filter.
-	 * Does nothing unless overridden.
-	 * @param config the filter configuration context.
+	 * Simulates latency on a response, for testing.
+	 * Just calls {@link Common#sleep(long)} and varies the input value.
 	 */
-	public void onInit(FilterConfig config)
+	protected final void simulateLag(int millis)
 	{
-		// Do nothing.
-		}
-	
-	/**
-	 * Does the same thing as {@link #destroy()}, named <code>onDestroy</code> for
-	 * consistency's sake.
-	 * Does nothing unless overridden.
-	 */
-	public void onDestroy()
-	{
-		// Do nothing.
-		}
-	
-	/**
-	 * Called to figure out the stuff to do from an HTTP request.
-	 * Just calls <code>chain.doFilter(request, response)</code> unless overridden.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @param chain the rest of the filter chain.
-	 * @throws ServletException if a servlet exception occurs in this filter. 
-	 * @throws IOException  if an I/O exception occurs in this filter.
-	 */
-	public void doHTTPFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException
-	{
-		chain.doFilter(request, response);
-		}
-
-	/**
-	 * Called to figure out the stuff to do from a non-HTTP request.
-	 * Just calls <code>chain.doFilter(request, response)</code> unless overridden.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @param chain the rest of the filter chain.
-	 * @throws ServletException if a servlet exception occurs in this filter. 
-	 * @throws IOException  if an I/O exception occurs in this filter.
-	 */
-	public void doOtherFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException
-	{
-		chain.doFilter(request, response);
+		Common.sleep(randomLagSimulator.nextInt(millis));
 		}
 
 	/**
@@ -134,6 +97,29 @@ public abstract class BRFilter implements Filter
 		} catch (Exception e) {
 			BRUtil.throwException(e);
 			}
+		}
+
+	/**
+	 * Attempts to grab an available thread from the servlet's default 
+	 * thread pool and starts a task that can be monitored by the caller.
+	 * @param task the task to run.
+	 * @return a framework task encapsulation for monitoring the task.
+	 */
+	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
+	{
+		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
+		}
+
+	/**
+	 * Attempts to grab an available thread from the servlet's default 
+	 * thread pool and starts a runnable encapsulated as a 
+	 * BRFrameworkTask that can be monitored by the caller.
+	 * @param runnable the runnable to run.
+	 * @return a framework task encapsulation for monitoring the task.
+	 */
+	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
+	{
+		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
 		}
 
 	/**
@@ -193,4 +179,18 @@ public abstract class BRFilter implements Filter
 			BRUtil.throwException(e);
 			}
 		}
+
+	/**
+	 * Called to figure out the stuff to do from an HTTP request.
+	 * Returns true unless overridden.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 * @param chain the rest of the filter chain.
+	 * @throws ServletException if a servlet exception occurs in this filter. 
+	 * @throws IOException  if an I/O exception occurs in this filter.
+	 * @return true to continue the filter chain, false otherwise.
+	 */
+	public abstract boolean onFilter(HttpServletRequest request, HttpServletResponse response);
+
+
 }

@@ -23,6 +23,7 @@ import javax.servlet.ServletContext;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.list.List;
 import com.blackrook.db.DBConnectionPool;
 import com.blackrook.db.DBUtils;
@@ -38,6 +39,7 @@ import com.blackrook.sync.ThreadPool;
  * The main manager class through which all things are
  * pooled and lent out to servlets that request it. 
  * @author Matthew Tropiano
+ * TODO: Handle filter system.
  */
 public final class BRToolkit
 {
@@ -61,7 +63,11 @@ public final class BRToolkit
 	public static final String XML_CONTROLLERROOT_EXTENSION= "extension";
 	public static final String XML_CONTROLLERROOT_PREFIX = "classprefix";
 	public static final String XML_CONTROLLERROOT_SUFFIX = "classsuffix";
-
+	public static final String XML_FILTER = "filter";
+	public static final String XML_FILTER_NAME = "path";
+	public static final String XML_FILTER_CLASS = "class";
+	public static final String XML_FILTER_THREADPOOL = "threadpool";
+	
 	public static final String SQL_TYPE_MYSQL = "mysql";
 	public static final String SQL_TYPE_SQLITE = "sqlite";
 	public static final String XML_SQL = "connectionpool";
@@ -85,11 +91,11 @@ public final class BRToolkit
 	private HashMap<String, String> queryCache;
 	/** List of query resolvers. */
 	private List<BRQueryResolver> queryResolvers;
+
 	/** The controllers that were instantiated. */
 	private HashMap<String, BRController> controllerCache;
 	/** List of controller entries. */
 	private HashMap<String, ControllerEntry> controllerEntries;
-
 	/** Controller root package. */
 	private String controllerRootPackage;
 	/** Controller root extension to ignore. */
@@ -98,6 +104,11 @@ public final class BRToolkit
 	private String controllerRootPrefix;
 	/** Controller root suffix. */
 	private String controllerRootSuffix;
+
+	/** The filters that were instantiated. */
+	private HashedQueueMap<String, BRFilter> filterCache;
+	/** List of filter entries. */
+	private HashedQueueMap<String, FilterEntry> filterEntries;
 	
 	/** Database connection pool. */
 	private HashMap<String, DBConnectionPool> connectionPool;
@@ -204,6 +215,9 @@ public final class BRToolkit
 		threadPool = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
 		controllerCache = new HashMap<String, BRController>();
 		controllerEntries = new HashMap<String, ControllerEntry>();
+		filterCache = new HashedQueueMap<String, BRFilter>();
+		filterEntries = new HashedQueueMap<String, FilterEntry>();
+		
 		realAppPath = context.getRealPath(".");
 		
 		XMLStruct xml = null;
@@ -570,6 +584,51 @@ public final class BRToolkit
 		}
 	
 	/**
+	 * Returns a filter for a path.
+	 * @param path the path of the filter.
+	 * @return a filter instance to call or null for no filter.
+	 */
+	BRFilter[] getFilters(String path)
+	{
+		BRFilter[] out = getFiltersUsingDefinitions(path);
+		if (out != null)
+			return out;
+		
+		return null;
+		}
+
+	// Get filtesr using path definitions.
+	private BRFilter[] getFiltersUsingDefinitions(String path)
+	{
+		return new BRFilter[]{};
+		}
+
+	// Creates a controller by its controller entry.
+	// TODO: Rewrite to use a better search-first filter.
+	private BRFilter instantiateFilterByEntry(FilterEntry entry)
+	{			
+		Class<?> filterClass = null;
+		try {
+			filterClass = Class.forName(entry.className);
+		} catch (ClassNotFoundException e) {
+			throw new BRFrameworkException("Class in controller declaration could not be found: "+entry.className);
+			}
+		
+		BRFilter out = null;
+		
+		try {
+			out = (BRFilter)BRUtil.getBean(filterClass);
+		} catch (ClassCastException e) {
+			throw new BRFrameworkException("Class in filter declaration is not an instance of BRFilter: "+entry.className);
+		} catch (Exception e) {
+			throw new BRFrameworkException("Class in filter declaration could not be instantiated: "+entry.className);
+			}
+		
+		out.setDefaultThreadPool(entry.threadPoolName);
+		return out;
+		}
+
+	/**
 	 * Gets the path to a view by keyword.
 	 * @return the associated path or null if not found. 
 	 */
@@ -767,4 +826,18 @@ public final class BRToolkit
 			}
 		}
 	
+	/**
+	 * Filter entry.
+	 */
+	static class FilterEntry
+	{
+		private String className;
+		private String threadPoolName;
+		
+		FilterEntry(String className, String threadPoolName)
+		{
+			this.className = className;
+			this.threadPoolName = threadPoolName;
+			}
+		}
 }
