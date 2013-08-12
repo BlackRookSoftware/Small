@@ -244,6 +244,8 @@ public final class BRToolkit
 						initializeController(struct);
 					else if (struct.isName(XML_CONTROLLERROOT))
 						initializeControllerRoot(struct);
+					else if (struct.isName(XML_FILTER))
+						initializeFilter(struct);
 					}
 				}
 		} catch (Exception e) {
@@ -435,6 +437,23 @@ public final class BRToolkit
 			throw new BRFrameworkException("Controller root declaration must specify a root package.");
 		
 		controllerRootPackage = pkg;
+		}
+
+	/**
+	 * Initializes a filter.
+	 */
+	private void initializeFilter(XMLStruct struct)
+	{
+		String name = struct.getAttribute(XML_FILTER_NAME);
+		String className = struct.getAttribute(XML_FILTER_CLASS);
+		String threadPoolName = struct.getAttribute(XML_FILTER_THREADPOOL, "default");
+
+		if (name == null)
+			throw new BRFrameworkException("Filter in declaration does not have a name.");
+		if (className == null)
+			throw new BRFrameworkException("Filter \""+name+"\" does not declare a class.");
+		
+		filterEntries.enqueue(name, new FilterEntry(className, threadPoolName));
 		}
 
 	/**
@@ -772,23 +791,6 @@ public final class BRToolkit
 		}
 
 	/**
-	 * Attempts to grab an available thread from a thread pool and starts a runnable
-	 * encapsulated as a BRFrameworkTask that can be monitored by the caller.
-	 * @param poolname the thread pool to use.
-	 * @param runnable the runnable to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	public BRFrameworkTask spawnRunnablePooled(String poolname, Runnable runnable)
-	{
-		BRFrameworkTask task = new BRRunnableTask(runnable);
-		ThreadPool<BRFrameworkTask> pool = threadPool.get(poolname);
-		if (pool == null)
-			throw new BRFrameworkException("Thread pool \""+poolname+"\" does not exist.");
-		pool.execute(task);
-		return task;
-		}
-
-	/**
 	 * Opens an input stream to a resource using a path relative to the
 	 * application context path. 
 	 * Outside users should not be able to access this!
@@ -809,6 +811,29 @@ public final class BRToolkit
 	public String getApplicationFilePath(String relativepath)
 	{
 		return realAppPath + "/" + relativepath;
+		}
+	
+	/**
+	 * Logs a message out via the servlet context.
+	 * @param message the formatted message to log.
+	 * @param args the arguments for the formatted message.
+	 * @see String#format(String, Object...)
+	 */
+	public void log(String message, Object ... args)
+	{
+		servletContext.log(String.format(message + "\n", args));
+		}
+	
+	/**
+	 * Logs a message out via the servlet context.
+	 * @param throwable the throwable to 
+	 * @param message the formatted message to log.
+	 * @param args the arguments for the formatted message.
+	 * @see String#format(String, Object...)
+	 */
+	public void log(Throwable throwable, String message, Object ... args)
+	{
+		servletContext.log(String.format(message + "\n", args), throwable);
 		}
 	
 	/**

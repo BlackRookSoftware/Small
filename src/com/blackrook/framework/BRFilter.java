@@ -111,22 +111,10 @@ public abstract class BRFilter
 		}
 
 	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a runnable encapsulated as a 
-	 * BRFrameworkTask that can be monitored by the caller.
-	 * @param runnable the runnable to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
-	{
-		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
-		}
-
-	/**
 	 * Includes the output of a view in the response.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
-	 * @param key target view key taken from the mapping XMLs.
+	 * @param key target view key to be resolved.
 	 */
 	public final void includeView(HttpServletRequest request, HttpServletResponse response, String key)
 	{
@@ -155,7 +143,7 @@ public abstract class BRFilter
 	 * Surreptitiously forwards the request to a view.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
-	 * @param key target view key taken from the mapping XMLs.
+	 * @param key target view key to be resolved.
 	 */
 	public final void sendToView(HttpServletRequest request, HttpServletResponse response, String key)
 	{
@@ -182,6 +170,8 @@ public abstract class BRFilter
 
 	/**
 	 * Called to figure out the stuff to do from an HTTP request.
+	 * Usually, this filter checks if some conditions are satisfied before continuing on to the next
+	 * filter. If conditions are met, this should perform its necessary funtions and return true. If not, return false.
 	 * Returns true unless overridden.
 	 * @param request servlet request object.
 	 * @param response servlet response object.

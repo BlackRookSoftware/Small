@@ -182,18 +182,6 @@ public abstract class BRController
 		}
 
 	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a runnable encapsulated as a 
-	 * BRFrameworkTask that can be monitored by the caller.
-	 * @param runnable the runnable to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnRunnable(Runnable runnable)
-	{
-		return getToolkit().spawnRunnablePooled(defaultThreadPool, runnable);
-		}
-
-	/**
 	 * Simulates latency on a response, for testing.
 	 * Just calls {@link Common#sleep(long)} and varies the input value.
 	 */
