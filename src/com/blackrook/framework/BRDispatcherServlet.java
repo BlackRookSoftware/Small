@@ -1,15 +1,26 @@
 package com.blackrook.framework;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.xml.sax.SAXException;
+
 import com.blackrook.framework.multipart.MultipartParser;
 import com.blackrook.framework.multipart.MultipartParserException;
 import com.blackrook.framework.multipart.Part;
+import com.blackrook.framework.util.RFCParser;
+import com.blackrook.lang.json.JSONConversionException;
+import com.blackrook.lang.json.JSONObject;
+import com.blackrook.lang.json.JSONReader;
+import com.blackrook.lang.xml.XMLStruct;
+import com.blackrook.lang.xml.XMLStructFactory;
 
 /**
  * The main dispatcher servlet for the controller portion of the framework.
@@ -39,6 +50,28 @@ public final class BRDispatcherServlet extends HttpServlet
 		BRController servlet = getControllerUsingPath(path);
 		if (servlet == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
+		else if (isJSON(request))
+		{
+			try {
+				servlet.onJSON(request, response, readJSON(request));
+			} catch (UnsupportedEncodingException e) {
+				sendCode(response, 500, "The encoding type for the POST request is not supported.");
+			} catch (JSONConversionException e) {
+				sendCode(response, 500, "JSON request was malformed.");
+			} catch (IOException e) {
+				sendCode(response, 500, "Could not read from request.");
+				}
+			}
+		else if (isXML(request))
+		{
+			try {
+				servlet.onXML(request, response, readXML(request));
+			} catch (SAXException e) {
+				sendCode(response, 500, "XML request was malformed.");
+			} catch (IOException e) {
+				sendCode(response, 500, "Could not read from request.");
+				}
+			}
 		else if (MultipartParser.isMultipart(request))
 		{
 			MultipartParser parser = null;
@@ -50,7 +83,7 @@ public final class BRDispatcherServlet extends HttpServlet
 				sendCode(response, 500, "The server could not parse the multiform request.");
 				}
 			
-			servlet.onMultipartPost(request, response, parser.getPartList());
+			servlet.onMultipart(request, response, parser.getPartList());
 			
 			// clean up files.
 			for (Part part : parser.getPartList())
@@ -150,6 +183,82 @@ public final class BRDispatcherServlet extends HttpServlet
 	private final void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
+		}
+
+	/**
+	 * Reads XML data from the request and returns an XMLStruct.
+	 */
+	private XMLStruct readXML(HttpServletRequest request) throws SAXException, IOException
+	{
+		XMLStruct xml = null;
+		ServletInputStream sis = request.getInputStream();
+		try {
+			xml = XMLStructFactory.readXML(sis);
+		} catch (IOException e) {
+			throw e;
+		} catch (SAXException e) {
+			throw e;
+		} finally {
+			sis.close();
+			}
+		
+		return xml;
+		}
+	
+	/**
+	 * Checks if the request is XML-formatted.
+	 * @param request the request object.
+	 * @return true if so, false if not.
+	 */
+	private boolean isXML(HttpServletRequest request)
+	{
+		String type = request.getContentType();
+		return type.startsWith("application/xml") 
+			|| type.startsWith("application/xop+xml")
+			|| type.startsWith("application/rss+xml")
+			;
+		}
+
+	/**
+	 * Reads JSON data from the request and returns a JSONObject.
+	 */
+	private JSONObject readJSON(HttpServletRequest request) throws UnsupportedEncodingException, JSONConversionException, IOException
+	{
+		String contentType = request.getContentType();
+		RFCParser parser = new RFCParser(contentType);
+		String charset = "UTF-8";
+		while (parser.hasTokens())
+		{
+			String nextToken = parser.nextToken();
+			if (nextToken.startsWith("charset="))
+				charset = nextToken.substring("charset=".length()).trim();
+			}
+
+		JSONObject jsonObject = null;
+		ServletInputStream sis = request.getInputStream();
+		try {
+			jsonObject = JSONReader.readJSON(new InputStreamReader(sis, charset));
+		} catch (UnsupportedEncodingException e) {
+			throw e;
+		} catch (JSONConversionException e) {
+			throw e;
+		} catch (IOException e) {
+			throw e;
+		} finally {
+			sis.close();
+			}
+		
+		return jsonObject;
+		}
+	
+	/**
+	 * Checks if the request is JSON-formatted.
+	 * @param request the request object.
+	 * @return true if so, false if not.
+	 */
+	private boolean isJSON(HttpServletRequest request)
+	{
+		return request.getContentType().startsWith("application/json");
 		}
 
 }

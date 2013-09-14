@@ -74,28 +74,6 @@
 />
 -->
 
-<!--
-
-	Thread Pool Definitions
-	=======================
-
-	Thread Pools are defined in "threadpool" tags, and have
-	the following attributes:
-	
-	name			The name of the pool. This is the key used to identify this 
-					pool in the framework. All uses of this pool are through 
-					this key. Default is "default".
-	
-	size			The number of worker threads to spawn.
-					Default is 10.
-
--->
-
-<threadpool 
-	name="default" 
-	size="10" 
-/>
-	
 <!-- 
 	View Resolvers
 	==============
@@ -156,15 +134,11 @@
 	class			The fully-qualified classname of the class to instantiate
 					for this controller.
 	
-	threadpool		The name of the thread pool to use. If not specified, the
-					value is "default".
-	
 -->
 
 <controller 
 	path="common.view" 
 	class="com.blackrook.framework.controller.BRCommonController" 
-	threadpool="default" 
 	/>
 
 <!-- 
@@ -182,16 +156,12 @@
 	class			The fully-qualified classname of the class to instantiate
 					for this filter.
 	
-	threadpool		The name of the thread pool to use. If not specified, the
-					value is "default".
-	
 -->
 
 <!--
 <filter 
 	pathprefix="admin/" 
 	class="com.blackrook.framework.controller.BRCommonFilter" 
-	threadpool="default" 
 	/>
 -->
 

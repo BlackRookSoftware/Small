@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
 import com.blackrook.framework.util.BRUtil;
+import com.blackrook.framework.util.RFCParser;
 
 /**
  * Parser for multipart form requests.
@@ -62,7 +63,7 @@ public class MultipartParser implements Iterable<Part>
 				
 		String contentType = request.getContentType();
 		
-		HeaderParser parser = new HeaderParser(contentType);
+		RFCParser parser = new RFCParser(contentType);
 		while (parser.hasTokens())
 		{
 			String piece = parser.nextToken();
@@ -185,7 +186,7 @@ public class MultipartParser implements Iterable<Part>
 	 */
 	public static boolean isMultipart(HttpServletRequest request)
 	{
-		return request.getContentType().toLowerCase().startsWith("multipart/");
+		return request.getContentType().startsWith("multipart/");
 		}
 
 	/**
@@ -199,7 +200,7 @@ public class MultipartParser implements Iterable<Part>
 	// Parses the disposition header.
 	private void parseDisposition(String line, Part part) throws MultipartParserException
 	{
-		HeaderParser hp = new HeaderParser(line.substring(HEADER_DISPOSITION.length()));
+		RFCParser hp = new RFCParser(line.substring(HEADER_DISPOSITION.length()));
 		while (hp.hasTokens())
 		{
 			String token = hp.nextToken();
@@ -320,77 +321,6 @@ public class MultipartParser implements Iterable<Part>
 	public Iterator<Part> iterator()
 	{
 		return partList.iterator();
-		}
-	
-	/**
-	 * Header parser.
-	 */
-	private static class HeaderParser
-	{
-		/** Characters. */
-		private char[] characters;
-		/** Current position. */
-		private int position;
-		
-		/**
-		 * Creates a new header content parser.
-		 * @param data the line to parse.
-		 */
-		HeaderParser(String data)
-		{
-			characters = data.trim().toCharArray();
-			position = 0;
-			}
-		
-		/**
-		 * Returns true if this has tokens left.
-		 */
-		public boolean hasTokens()
-		{
-			return position < characters.length;
-			}
-		
-		/**
-		 * Returns the next token.
-		 */
-		public String nextToken()
-		{
-			final int STATE_INIT = 0;
-			final int STATE_TOKEN = 1;
-			
-			StringBuilder sb = new StringBuilder();
-			int state = STATE_INIT;
-			boolean good = true;
-			
-			char c = characters[position];
-			while (good && position < characters.length)
-			{
-				c = characters[position];
-				switch (state)
-				{
-					case STATE_INIT:
-						if (!Character.isWhitespace(c))
-							state = STATE_TOKEN;
-						else
-							position++;
-						break;
-					case STATE_TOKEN:
-						if (c == ';')
-						{
-							position++;
-							good = false;
-							}
-						else
-						{
-							sb.append(c);
-							position++;
-							}
-						break;
-					}
-				}
-			
-			return sb.toString();
-			}
 		}
 
 }

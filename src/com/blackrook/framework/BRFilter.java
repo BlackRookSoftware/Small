@@ -19,32 +19,13 @@ public abstract class BRFilter
 {
 	/** Lag simulator seed. */
 	private Random randomLagSimulator;
-	/** Default Servlet Thread Pool. */
-	private String defaultThreadPool;
 	
 	/** Default constructor. */
 	protected BRFilter()
 	{
 		randomLagSimulator = new Random();
-		defaultThreadPool = BRToolkit.DEFAULT_POOL_NAME;
 		}
 	
-	/**
-	 * Sets the name of the default thread pool that this controller uses.
-	 */
-	final void setDefaultThreadPool(String servletDefaultThreadPool)
-	{
-		this.defaultThreadPool = servletDefaultThreadPool;
-		}
-
-	/**
-	 * Gets the name of the default thread pool that this controller uses.
-	 */
-	public final String getDefaultThreadPool()
-	{
-		return defaultThreadPool;
-		}
-
 	/**
 	 * Gets the Black Rook Framework Toolkit.
 	 */
@@ -97,17 +78,6 @@ public abstract class BRFilter
 		} catch (Exception e) {
 			BRUtil.throwException(e);
 			}
-		}
-
-	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a task that can be monitored by the caller.
-	 * @param task the task to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
-	{
-		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
 		}
 
 	/**

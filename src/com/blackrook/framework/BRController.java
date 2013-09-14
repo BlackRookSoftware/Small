@@ -19,6 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
 import com.blackrook.framework.multipart.Part;
+import com.blackrook.lang.json.JSONObject;
+import com.blackrook.lang.xml.XMLStruct;
 
 /**
  * Root control servlet for the Black Rook J2EE Framework.
@@ -30,32 +32,13 @@ public abstract class BRController
 {
 	/** Lag simulator seed. */
 	private Random randomLagSimulator;
-	/** Default Servlet Thread Pool. */
-	private String defaultThreadPool;
 	
 	/** Default constructor. */
 	protected BRController()
 	{
 		randomLagSimulator = new Random();
-		defaultThreadPool = BRToolkit.DEFAULT_POOL_NAME;
 		}
 	
-	/**
-	 * Sets the name of the default thread pool that this controller uses.
-	 */
-	final void setDefaultThreadPool(String servletDefaultThreadPool)
-	{
-		this.defaultThreadPool = servletDefaultThreadPool;
-		}
-
-	/**
-	 * Gets the name of the default thread pool that this controller uses.
-	 */
-	public final String getDefaultThreadPool()
-	{
-		return defaultThreadPool;
-		}
-
 	/**
 	 * Gets the Black Rook Framework Toolkit.
 	 */
@@ -171,17 +154,6 @@ public abstract class BRController
 		}
 
 	/**
-	 * Attempts to grab an available thread from the servlet's default 
-	 * thread pool and starts a task that can be monitored by the caller.
-	 * @param task the task to run.
-	 * @return a framework task encapsulation for monitoring the task.
-	 */
-	protected final BRFrameworkTask spawnTask(BRFrameworkTask task)
-	{
-		return getToolkit().spawnTaskPooled(defaultThreadPool, task);
-		}
-
-	/**
 	 * Simulates latency on a response, for testing.
 	 * Just calls {@link Common#sleep(long)} and varies the input value.
 	 */
@@ -208,13 +180,33 @@ public abstract class BRController
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a POST request call 
-	 * and it contains a multiform request.
+	 * and it contains a multipart request.
 	 * All servlets that do not implement this method should return status 405, Method Not Supported.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 * @param partList the list of parts parsed out of the request.
 	 */
-	public abstract void onMultipartPost(HttpServletRequest request, HttpServletResponse response, List<Part> partList);
+	public abstract void onMultipart(HttpServletRequest request, HttpServletResponse response, List<Part> partList);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a POST request call 
+	 * and it contains a JSON content request.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 * @param json the parsed JSON request.
+	 */
+	public abstract void onJSON(HttpServletRequest request, HttpServletResponse response, JSONObject json);
+
+	/**
+	 * The entry point for all Black Rook Framework Servlets on a POST request call 
+	 * and it contains an XML content request.
+	 * All servlets that do not implement this method should return status 405, Method Not Supported.
+	 * @param request servlet request object.
+	 * @param response servlet response object.
+	 * @param xml the parsed XML request.
+	 */
+	public abstract void onXML(HttpServletRequest request, HttpServletResponse response, XMLStruct xml);
 
 	/**
 	 * The entry point for all Black Rook Framework Servlets on a HEAD request call.

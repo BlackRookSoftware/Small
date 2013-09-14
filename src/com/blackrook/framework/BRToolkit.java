@@ -57,16 +57,14 @@ public final class BRToolkit
 	public static final String XML_CONTROLLER = "controller";
 	public static final String XML_CONTROLLER_NAME = "path";
 	public static final String XML_CONTROLLER_CLASS = "class";
-	public static final String XML_CONTROLLER_THREADPOOL = "threadpool";
+	public static final String XML_FILTER = "filter";
+	public static final String XML_FILTER_NAME = "path";
+	public static final String XML_FILTER_CLASS = "class";
 	public static final String XML_CONTROLLERROOT = "controllerroot";
 	public static final String XML_CONTROLLERROOT_PACKAGE = "package";
 	public static final String XML_CONTROLLERROOT_EXTENSION= "extension";
 	public static final String XML_CONTROLLERROOT_PREFIX = "classprefix";
 	public static final String XML_CONTROLLERROOT_SUFFIX = "classsuffix";
-	public static final String XML_FILTER = "filter";
-	public static final String XML_FILTER_NAME = "path";
-	public static final String XML_FILTER_CLASS = "class";
-	public static final String XML_FILTER_THREADPOOL = "threadpool";
 	
 	public static final String SQL_TYPE_MYSQL = "mysql";
 	public static final String SQL_TYPE_SQLITE = "sqlite";
@@ -79,9 +77,6 @@ public final class BRToolkit
 	public static final String XML_SQL_PORT = "port";
 	public static final String XML_SQL_DB = "database";
 	public static final String XML_SQL_CONNECTIONS = "connections";
-	public static final String XML_THREADS = "threadpool";
-	public static final String XML_THREADS_NAME = "name";
-	public static final String XML_THREADS_SIZE = "size";
 
 	/** The cache map for JSP pages. */
 	private HashMap<String, String> viewCache;
@@ -95,7 +90,7 @@ public final class BRToolkit
 	/** The controllers that were instantiated. */
 	private HashMap<String, BRController> controllerCache;
 	/** List of controller entries. */
-	private HashMap<String, ControllerEntry> controllerEntries;
+	private HashMap<String, String> controllerEntries;
 	/** Controller root package. */
 	private String controllerRootPackage;
 	/** Controller root extension to ignore. */
@@ -108,12 +103,10 @@ public final class BRToolkit
 	/** The filters that were instantiated. */
 	private HashedQueueMap<String, BRFilter> filterCache;
 	/** List of filter entries. */
-	private HashedQueueMap<String, FilterEntry> filterEntries;
+	private HashedQueueMap<String, String> filterEntries;
 	
 	/** Database connection pool. */
 	private HashMap<String, DBConnectionPool> connectionPool;
-	/** Thread pool. */
-	private HashMap<String, ThreadPool<BRFrameworkTask>> threadPool;
 
 	/** Servlet context. */
 	private ServletContext servletContext;
@@ -163,14 +156,6 @@ public final class BRToolkit
 		}
 	
 	/**
-	 * Returns a list of thread pool names.
-	 */
-	String[] getThreadPoolNames()
-	{
-		return getKeys(threadPool);
-		}
-	
-	/**
 	 * Returns a list of connection pool names.
 	 */
 	String[] getConnectionPoolNames()
@@ -212,11 +197,10 @@ public final class BRToolkit
 		queryCache = new CaseInsensitiveHashMap<String>(25);
 		queryResolvers = new List<BRQueryResolver>(25);
 		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
-		threadPool = new CaseInsensitiveHashMap<ThreadPool<BRFrameworkTask>>();
 		controllerCache = new HashMap<String, BRController>();
-		controllerEntries = new HashMap<String, ControllerEntry>();
+		controllerEntries = new HashMap<String, String>();
 		filterCache = new HashedQueueMap<String, BRFilter>();
-		filterEntries = new HashedQueueMap<String, FilterEntry>();
+		filterEntries = new HashedQueueMap<String, String>();
 		
 		realAppPath = context.getRealPath(".");
 		
@@ -234,8 +218,6 @@ public final class BRToolkit
 				{
 					if (struct.isName(XML_SQL))
 						initializeSQL(struct);
-					else if (struct.isName(XML_THREADS))
-						initializeThreadPool(struct);
 					else if (struct.isName(XML_VIEW))
 						initializeViewResolver(struct);
 					else if (struct.isName(XML_QUERY))
@@ -397,30 +379,19 @@ public final class BRToolkit
 		}
 
 	/**
-	 * Initializes a thread pool.
-	 */
-	private void initializeThreadPool(XMLStruct struct)
-	{
-		String name = struct.getAttribute(XML_THREADS_NAME, "default");
-		int size = struct.getAttributeInt(XML_THREADS_SIZE, 10);
-		threadPool.put(name, new ThreadPool<BRFrameworkTask>(name, size));
-		}
-
-	/**
 	 * Initializes a controller.
 	 */
 	private void initializeController(XMLStruct struct)
 	{
 		String name = struct.getAttribute(XML_CONTROLLER_NAME);
 		String className = struct.getAttribute(XML_CONTROLLER_CLASS);
-		String threadPoolName = struct.getAttribute(XML_CONTROLLER_THREADPOOL, "default");
 
 		if (name == null)
 			throw new BRFrameworkException("Controller in declaration does not have a name.");
 		if (className == null)
 			throw new BRFrameworkException("Controller \""+name+"\" does not declare a class.");
 		
-		controllerEntries.put(name, new ControllerEntry(className, threadPoolName));
+		controllerEntries.put(name, className);
 		}
 
 	/**
@@ -446,14 +417,13 @@ public final class BRToolkit
 	{
 		String name = struct.getAttribute(XML_FILTER_NAME);
 		String className = struct.getAttribute(XML_FILTER_CLASS);
-		String threadPoolName = struct.getAttribute(XML_FILTER_THREADPOOL, "default");
 
 		if (name == null)
 			throw new BRFrameworkException("Filter in declaration does not have a name.");
 		if (className == null)
 			throw new BRFrameworkException("Filter \""+name+"\" does not declare a class.");
 		
-		filterEntries.enqueue(name, new FilterEntry(className, threadPoolName));
+		filterEntries.enqueue(name, className);
 		}
 
 	/**
@@ -464,16 +434,6 @@ public final class BRToolkit
 	DBConnectionPool getConnectionPool(String key)
 	{
 		return connectionPool.get(key);
-		}
-	
-	/**
-	 * Returns a thread pool by key name.
-	 * @param key the name of the thread pool.
-	 * @return the thread pool connected to the key or null if none are attached to that name.
-	 */
-	ThreadPool<BRFrameworkTask> getThreadPool(String key)
-	{
-		return threadPool.get(key);
 		}
 	
 	/**
@@ -516,12 +476,12 @@ public final class BRToolkit
 	// Creates a controller by its controller entry.
 	private BRController instantiateControllerByEntry(String path)
 	{			
-		ControllerEntry entry = controllerEntries.get(path);
+		String className = controllerEntries.get(path);
 		Class<?> controllerClass = null;
 		try {
-			controllerClass = Class.forName(entry.className);
+			controllerClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw new BRFrameworkException("Class in controller declaration could not be found: "+entry.className);
+			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 			}
 		
 		BRController out = null;
@@ -529,12 +489,11 @@ public final class BRToolkit
 		try {
 			out = (BRController)BRUtil.getBean(controllerClass);
 		} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+entry.className);
+			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
 		} catch (Exception e) {
-			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+entry.className);
+			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+className);
 			}
 		
-		out.setDefaultThreadPool(entry.threadPoolName);
 		return out;
 		}
 	
@@ -624,13 +583,13 @@ public final class BRToolkit
 
 	// Creates a controller by its controller entry.
 	// TODO: Rewrite to use a better search-first filter.
-	private BRFilter instantiateFilterByEntry(FilterEntry entry)
+	private BRFilter instantiateFilterByEntry(String className)
 	{			
 		Class<?> filterClass = null;
 		try {
-			filterClass = Class.forName(entry.className);
+			filterClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw new BRFrameworkException("Class in controller declaration could not be found: "+entry.className);
+			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 			}
 		
 		BRFilter out = null;
@@ -638,12 +597,11 @@ public final class BRToolkit
 		try {
 			out = (BRFilter)BRUtil.getBean(filterClass);
 		} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in filter declaration is not an instance of BRFilter: "+entry.className);
+			throw new BRFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
 		} catch (Exception e) {
-			throw new BRFrameworkException("Class in filter declaration could not be instantiated: "+entry.className);
+			throw new BRFrameworkException("Class in filter declaration could not be instantiated: "+className);
 			}
 		
-		out.setDefaultThreadPool(entry.threadPoolName);
 		return out;
 		}
 
@@ -775,22 +733,6 @@ public final class BRToolkit
 		}
 
 	/**
-	 * Attempts to grab an available thread from a thread pool and starts a task
-	 * that can be monitored by the caller.
-	 * @param poolname the thread pool to use.
-	 * @param task the task to run.
-	 * @return the task that was passed into this method.
-	 */
-	public BRFrameworkTask spawnTaskPooled(String poolname, BRFrameworkTask task)
-	{
-		ThreadPool<BRFrameworkTask> pool = threadPool.get(poolname);
-		if (pool == null)
-			throw new BRFrameworkException("Thread pool \""+poolname+"\" does not exist.");
-		pool.execute(task);
-		return task;
-		}
-
-	/**
 	 * Opens an input stream to a resource using a path relative to the
 	 * application context path. 
 	 * Outside users should not be able to access this!
@@ -836,33 +778,4 @@ public final class BRToolkit
 		servletContext.log(String.format(message + "\n", args), throwable);
 		}
 	
-	/**
-	 * Controller entry.
-	 */
-	static class ControllerEntry
-	{
-		private String className;
-		private String threadPoolName;
-		
-		ControllerEntry(String className, String threadPoolName)
-		{
-			this.className = className;
-			this.threadPoolName = threadPoolName;
-			}
-		}
-	
-	/**
-	 * Filter entry.
-	 */
-	static class FilterEntry
-	{
-		private String className;
-		private String threadPoolName;
-		
-		FilterEntry(String className, String threadPoolName)
-		{
-			this.className = className;
-			this.threadPoolName = threadPoolName;
-			}
-		}
 }

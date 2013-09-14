@@ -16,6 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import com.blackrook.commons.list.List;
 import com.blackrook.framework.BRController;
 import com.blackrook.framework.multipart.Part;
+import com.blackrook.lang.json.JSONObject;
+import com.blackrook.lang.xml.XMLStruct;
 
 /**
  * Base servlet for all entry points into Black Rook Framework servlets.
@@ -44,9 +46,21 @@ public class BRCommonController extends BRController
 		}
 
 	@Override
-	public void onMultipartPost(HttpServletRequest request, HttpServletResponse response, List<Part> partList)
+	public void onMultipart(HttpServletRequest request, HttpServletResponse response, List<Part> partList)
 	{
-		sendCode(response, 405, "Servlet does not support multipart POST requests.");
+		sendCode(response, 405, "Servlet does not support this method.");
+		}
+
+	@Override
+	public void onJSON(HttpServletRequest request, HttpServletResponse response, JSONObject json)
+	{
+		sendCode(response, 405, "Servlet does not support this method.");
+		}
+
+	@Override
+	public void onXML(HttpServletRequest request, HttpServletResponse response, XMLStruct xml)
+	{
+		sendCode(response, 405, "Servlet does not support this method.");
 		}
 
 	@Override
