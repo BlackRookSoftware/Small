@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.blackrook.framework;
 
+import java.io.IOException;
 import java.util.Random;
 
 import javax.servlet.ServletContext;
@@ -20,6 +21,7 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
 import com.blackrook.framework.multipart.Part;
 import com.blackrook.lang.json.JSONObject;
+import com.blackrook.lang.json.JSONWriter;
 import com.blackrook.lang.xml.XMLStruct;
 
 /**
@@ -113,6 +115,22 @@ public abstract class BRController
 			}
 		}
 
+	/**
+	 * Sends back JSON to the client.
+	 * The "Content-Type" portion of the header is changed to "application/json".
+	 * @param response the servlet response to write to.
+	 * @param jsonObject the JSON Object to write to the request.
+	 */
+	public final void sendJSON(HttpServletResponse response, JSONObject jsonObject)
+	{
+		response.setHeader("Content-Type", "application/json");
+		try {
+			JSONWriter.writeJSON(jsonObject, response.getWriter());
+		} catch (IOException e) {
+			throwException(e);
+			}
+		}
+	
 	/**
 	 * Sends request to the error page with a status code.
 	 * @param response servlet response object.
