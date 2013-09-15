@@ -13,12 +13,13 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.framework.BRFrameworkException;
 import com.blackrook.framework.BRMIMETypes;
+import com.blackrook.lang.util.EntityTables;
 
 /**
  * Utility library for common or useful functions.
  * @author Matthew Tropiano
  */
-public final class BRUtil implements BRUtilTables
+public final class BRUtil implements EntityTables
 {
 	/** MIME Type Map. */
 	private static BRMIMETypes MIME_TYPE_MAP = new BRMIMETypes();
