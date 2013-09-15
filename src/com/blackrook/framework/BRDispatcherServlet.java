@@ -55,9 +55,9 @@ public final class BRDispatcherServlet extends HttpServlet
 			try {
 				servlet.onJSON(request, response, readJSON(request));
 			} catch (UnsupportedEncodingException e) {
-				sendCode(response, 500, "The encoding type for the POST request is not supported.");
+				sendCode(response, 400, "The encoding type for the POST request is not supported.");
 			} catch (JSONConversionException e) {
-				sendCode(response, 500, "JSON request was malformed.");
+				sendCode(response, 400, "JSON request was malformed.");
 			} catch (IOException e) {
 				sendCode(response, 500, "Could not read from request.");
 				}
@@ -67,7 +67,7 @@ public final class BRDispatcherServlet extends HttpServlet
 			try {
 				servlet.onXML(request, response, readXML(request));
 			} catch (SAXException e) {
-				sendCode(response, 500, "XML request was malformed.");
+				sendCode(response, 400, "XML request was malformed.");
 			} catch (IOException e) {
 				sendCode(response, 500, "Could not read from request.");
 				}
@@ -78,7 +78,7 @@ public final class BRDispatcherServlet extends HttpServlet
 			try {
 				parser = new MultipartParser(request, new File(System.getProperty("java.io.tmpdir")));
 			} catch (UnsupportedEncodingException e) {
-				sendCode(response, 500, "The encoding type for the POST request is not supported.");
+				sendCode(response, 400, "The encoding type for the POST request is not supported.");
 			} catch (MultipartParserException e) {
 				sendCode(response, 500, "The server could not parse the multiform request.");
 				}
