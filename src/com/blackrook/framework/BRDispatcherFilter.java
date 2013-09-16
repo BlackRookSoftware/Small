@@ -11,6 +11,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.framework.filter.BRFilter;
+
 /**
  * Main dispatcher for filter portion of framework.
  * @author Matthew Tropiano

@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -17,16 +15,16 @@ import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 
 /**
- * The root filter.
+ * Describes the abilities of the control components of the
+ * Black Rook Simple Servlet Framework.
  * @author Matthew Tropiano
  */
-public abstract class BRFilter
+public abstract class BRControlComponent
 {
 	/** Lag simulator seed. */
 	private Random randomLagSimulator;
 	
-	/** Default constructor. */
-	protected BRFilter()
+	protected BRControlComponent()
 	{
 		randomLagSimulator = new Random();
 		}
@@ -34,17 +32,18 @@ public abstract class BRFilter
 	/**
 	 * Gets the Black Rook Framework Toolkit.
 	 */
-	public final BRToolkit getToolkit()
+	protected final BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
 		}
 
 	/**
-	 * Gets the servlet context.
+	 * Simulates latency on a response, for testing.
+	 * Just calls {@link Common#sleep(long)} and varies the input value.
 	 */
-	public final ServletContext getServletContext()
+	protected final void simulateLag(int millis)
 	{
-		return getToolkit().getServletContext();
+		Common.sleep(randomLagSimulator.nextInt(millis));
 		}
 
 	/**
@@ -272,26 +271,6 @@ public abstract class BRFilter
 		throw new BRFrameworkException(t);
 		}
 
-	/**
-	 * Simulates latency on a response, for testing.
-	 * Just calls {@link Common#sleep(long)} and varies the input value.
-	 */
-	protected final void simulateLag(int millis)
-	{
-		Common.sleep(randomLagSimulator.nextInt(millis));
-		}
 
-	/**
-	 * Called to figure out the stuff to do from an HTTP request.
-	 * Usually, this filter checks if some conditions are satisfied before continuing on to the next
-	 * filter. If conditions are met, this should perform its necessary functions and return true. If not, return false.
-	 * Returns true unless overridden.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @return true to continue the filter chain, false otherwise.
-	 * @throws ServletException if a servlet exception occurs in this filter. 
-	 * @throws IOException  if an I/O exception occurs in this filter.
-	 */
-	public abstract boolean onFilter(HttpServletRequest request, HttpServletResponse response);
-
+	
 }

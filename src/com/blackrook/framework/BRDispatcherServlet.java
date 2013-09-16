@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import com.blackrook.framework.controller.BRController;
 import com.blackrook.framework.multipart.MultipartParser;
 import com.blackrook.framework.multipart.MultipartParserException;
 import com.blackrook.framework.multipart.Part;
