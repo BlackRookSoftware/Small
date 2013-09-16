@@ -576,10 +576,10 @@ public final class BRToolkit
 		return null;
 		}
 
-	// Get filtesr using path definitions.
+	// Get filters using path definitions.
 	private BRFilter[] getFiltersUsingDefinitions(String path)
 	{
-		return new BRFilter[]{};
+		return null;
 		}
 
 	// Creates a controller by its controller entry.
