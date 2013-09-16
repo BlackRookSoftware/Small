@@ -167,7 +167,7 @@ public final class BRToolkit
 	/**
 	 * Returns servlet context that constructed this.
 	 */
-	ServletContext getServletContext()
+	public ServletContext getServletContext()
 	{
 		return servletContext;
 		}

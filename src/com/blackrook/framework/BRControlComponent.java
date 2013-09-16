@@ -13,6 +13,8 @@ import com.blackrook.commons.Common;
 import com.blackrook.framework.util.BRUtil;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
+import com.blackrook.lang.xml.XMLStruct;
+import com.blackrook.lang.xml.XMLWriter;
 
 /**
  * Describes the abilities of the control components of the
@@ -98,6 +100,22 @@ public abstract class BRControlComponent extends BRToolkitUser
 		response.setHeader("Content-Type", "application/json");
 		try {
 			JSONWriter.writeJSON(jsonObject, response.getWriter());
+		} catch (IOException e) {
+			throwException(e);
+			}
+		}
+
+	/**
+	 * Sends back XML to the client.
+	 * The "Content-Type" portion of the header is changed to "application/json".
+	 * @param response the servlet response to write to.
+	 * @param xml the XML structure to write to the request.
+	 */
+	protected final void sendXML(HttpServletResponse response, XMLStruct xml)
+	{
+		response.setHeader("Content-Type", "application/json");
+		try {
+			(new XMLWriter()).writeXML(xml, response.getWriter());
 		} catch (IOException e) {
 			throwException(e);
 			}
