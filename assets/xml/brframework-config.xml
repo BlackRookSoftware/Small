@@ -138,7 +138,7 @@
 
 <controller 
 	path="common.view" 
-	class="com.blackrook.framework.controller.BRCommonController" 
+	class="com.blackrook.framework.controller.BRController" 
 	/>
 
 <!-- 
@@ -161,7 +161,7 @@
 <!--
 <filter 
 	pathprefix="admin/" 
-	class="com.blackrook.framework.controller.BRCommonFilter" 
+	class="com.blackrook.framework.filter.BRFilter" 
 	/>
 -->
 

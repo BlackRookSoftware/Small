@@ -1,6 +1,5 @@
 package com.blackrook.framework;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
@@ -49,14 +48,6 @@ public abstract class BRTag extends BodyTagSupport
 	public final BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
-		}
-
-	/**
-	 * Gets the servlet context.
-	 */
-	public final ServletContext getServletContext()
-	{
-		return getToolkit().getServletContext();
 		}
 
 	@Override

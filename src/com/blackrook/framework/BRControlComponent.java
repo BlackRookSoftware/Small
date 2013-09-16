@@ -19,7 +19,7 @@ import com.blackrook.lang.json.JSONWriter;
  * Black Rook Simple Servlet Framework.
  * @author Matthew Tropiano
  */
-public abstract class BRControlComponent
+public abstract class BRControlComponent extends BRToolkitUser
 {
 	/** Lag simulator seed. */
 	private Random randomLagSimulator;
@@ -29,23 +29,6 @@ public abstract class BRControlComponent
 		randomLagSimulator = new Random();
 		}
 	
-	/**
-	 * Gets the Black Rook Framework Toolkit.
-	 */
-	protected final BRToolkit getToolkit()
-	{
-		return BRToolkit.INSTANCE;
-		}
-
-	/**
-	 * Simulates latency on a response, for testing.
-	 * Just calls {@link Common#sleep(long)} and varies the input value.
-	 */
-	protected final void simulateLag(int millis)
-	{
-		Common.sleep(randomLagSimulator.nextInt(millis));
-		}
-
 	/**
 	 * Includes the output of a view in the response.
 	 * @param request servlet request object.
@@ -271,6 +254,14 @@ public abstract class BRControlComponent
 		throw new BRFrameworkException(t);
 		}
 
-
+	/**
+	 * Pauses the current thread for up to <code>maxMillis</code>
+	 * milliseconds, used for simulating lag.
+	 * For debugging and testing only!
+	 */
+	protected final void simulateLag(long maxMillis)
+	{
+		Common.sleep(randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 :maxMillis));
+		}
 	
 }

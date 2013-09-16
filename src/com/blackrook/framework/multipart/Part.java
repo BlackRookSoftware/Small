@@ -19,7 +19,6 @@ public class Part
 	/** Part value. */
 	String value;
 
-	
 	Part() {}
 	
 	/**

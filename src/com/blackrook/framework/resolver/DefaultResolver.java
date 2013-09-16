@@ -8,14 +8,14 @@ import java.io.InputStreamReader;
 import com.blackrook.commons.Common;
 import com.blackrook.framework.BRFrameworkException;
 import com.blackrook.framework.BRQueryResolver;
-import com.blackrook.framework.BRToolkit;
+import com.blackrook.framework.BRToolkitUser;
 import com.blackrook.framework.BRViewResolver;
 
 /**
  * Default resolver for all things. 
  * @author Matthew Tropiano
  */
-public class DefaultResolver implements BRQueryResolver, BRViewResolver
+public class DefaultResolver extends BRToolkitUser implements BRQueryResolver, BRViewResolver
 {
 	/** Always returns false. */
 	@Override
@@ -42,7 +42,7 @@ public class DefaultResolver implements BRQueryResolver, BRViewResolver
 	{
 		StringBuffer sb = new StringBuffer();
 		String src = "/WEB-INF/sql/" + keyword + ".sql";
-		File f = BRToolkit.INSTANCE.getApplicationFile(src); 
+		File f = getToolkit().getApplicationFile(src); 
 		FileInputStream in = null;
 		BufferedReader br = null;
 		try {

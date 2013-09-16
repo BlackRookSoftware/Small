@@ -8,6 +8,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/CommonsLang"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CommonsSync"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/DB"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MySQLConnector"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

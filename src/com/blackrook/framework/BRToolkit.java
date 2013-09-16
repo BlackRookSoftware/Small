@@ -116,7 +116,7 @@ public final class BRToolkit
 	private String realAppPath = null;
 
 	/** Singleton toolkit instance. */
-	public static BRToolkit INSTANCE = null;
+	static BRToolkit INSTANCE = null;
 
 	/**
 	 * Gets a file that is on the application path. 
