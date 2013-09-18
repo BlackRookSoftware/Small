@@ -113,7 +113,7 @@ public abstract class BRControlComponent extends BRToolkitUser
 	 */
 	protected final void sendXML(HttpServletResponse response, XMLStruct xml)
 	{
-		response.setHeader("Content-Type", "application/json");
+		response.setHeader("Content-Type", "application/xml");
 		try {
 			(new XMLWriter()).writeXML(xml, response.getWriter());
 		} catch (IOException e) {
