@@ -63,7 +63,7 @@ public final class BRToolkit
 	public static final String XML_FILTER_CLASS = "class";
 	public static final String XML_CONTROLLERROOT = "controllerroot";
 	public static final String XML_CONTROLLERROOT_PACKAGE = "package";
-	public static final String XML_CONTROLLERROOT_EXTENSION= "extension";
+	public static final String XML_CONTROLLERROOT_EXTENSION = "extension";
 	public static final String XML_CONTROLLERROOT_PREFIX = "classprefix";
 	public static final String XML_CONTROLLERROOT_SUFFIX = "classsuffix";
 	

@@ -23,6 +23,11 @@ import com.blackrook.lang.xml.XMLWriter;
  */
 public abstract class BRControlComponent extends BRToolkitUser
 {
+	/** MIME type for JSON */
+	public static final String CONTENT_MIME_TYPE_JSON = "application/json";
+	/** MIME type for XML */
+	public static final String CONTENT_MIME_TYPE_XML = "application/xml";
+	
 	/** Lag simulator seed. */
 	private Random randomLagSimulator;
 	
@@ -97,9 +102,26 @@ public abstract class BRControlComponent extends BRToolkitUser
 	 */
 	protected final void sendJSON(HttpServletResponse response, JSONObject jsonObject)
 	{
-		response.setHeader("Content-Type", "application/json");
+		response.setHeader("Content-Type", CONTENT_MIME_TYPE_JSON);
 		try {
 			JSONWriter.writeJSON(jsonObject, response.getWriter());
+		} catch (IOException e) {
+			throwException(e);
+			}
+		}
+
+	/**
+	 * Sends back a JSON-ified object to the client.
+	 * Works best with POJOs and simple beans.
+	 * The "Content-Type" portion of the header is changed to "application/json".
+	 * @param response the servlet response to write to.
+	 * @param object the Object to write to the request, which then is .
+	 */
+	protected final void sendJSON(HttpServletResponse response, Object object)
+	{
+		response.setHeader("Content-Type", CONTENT_MIME_TYPE_JSON);
+		try {
+			JSONWriter.writeJSON(JSONObject.create(object), response.getWriter());
 		} catch (IOException e) {
 			throwException(e);
 			}
@@ -113,7 +135,7 @@ public abstract class BRControlComponent extends BRToolkitUser
 	 */
 	protected final void sendXML(HttpServletResponse response, XMLStruct xml)
 	{
-		response.setHeader("Content-Type", "application/xml");
+		response.setHeader("Content-Type", CONTENT_MIME_TYPE_XML);
 		try {
 			(new XMLWriter()).writeXML(xml, response.getWriter());
 		} catch (IOException e) {
