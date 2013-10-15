@@ -1,5 +1,6 @@
 package com.blackrook.framework.util;
 
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -10,9 +11,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.blackrook.commons.Common;
+import com.blackrook.commons.ObjectPair;
+import com.blackrook.commons.Reflect;
+import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.framework.BRFrameworkException;
 import com.blackrook.framework.BRMIMETypes;
+import com.blackrook.lang.json.JSONConversionException;
+import com.blackrook.lang.reflect.TypeProfile;
+import com.blackrook.lang.reflect.TypeProfile.MethodSignature;
 import com.blackrook.lang.util.EntityTables;
 
 /**
@@ -295,11 +302,17 @@ public final class BRUtil implements EntityTables
 			return null;
 		
 		Object obj = session.getAttribute(name);
-		if (obj == null)
+		if (obj == null && create)
 		{
 			try {
-				obj = create ? clazz.newInstance() : null;
-				session.setAttribute(name, obj);
+				synchronized (session)
+				{
+					if ((obj = session.getAttribute(name)) == null)
+					{
+						obj = clazz.newInstance();
+						session.setAttribute(name, obj);
+						}
+					}
 			} catch (Exception e) {
 				throwException(e);
 				}
@@ -321,7 +334,7 @@ public final class BRUtil implements EntityTables
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz)
 	{
-		return getApplicationBean(context, clazz, "$$"+clazz.getPackage().getName()+"."+clazz.getName(), true);
+		return getApplicationBean(context, clazz, "$$"+clazz.getCanonicalName(), true);
 		}
 
 	/**
@@ -350,11 +363,17 @@ public final class BRUtil implements EntityTables
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz, String name, boolean create)
 	{
 		Object obj = context.getAttribute(name);
-		if (obj == null)
+		if (obj == null && create)
 		{
 			try {
-				obj = create ? clazz.newInstance() : null;
-				context.setAttribute(name, obj);
+				synchronized (context)
+				{
+					if ((obj = context.getAttribute(name)) == null)
+					{
+						obj = clazz.newInstance();
+						context.setAttribute(name, obj);
+						}
+					}
 			} catch (Exception e) {
 				throwException(e);
 				}
@@ -403,24 +422,28 @@ public final class BRUtil implements EntityTables
 	 */
 	public static <T> T getBean(Class<T> clazz, String name, boolean create)
 	{
-		Object obj = null;
-		synchronized (SINGLETON_MAP) 
+		Object obj = SINGLETON_MAP.get(name);
+		if (obj == null && create)
 		{
-			obj = SINGLETON_MAP.get(name);
-			if (obj == null)
+			synchronized (SINGLETON_MAP) 
 			{
-				try {
-					obj = create ? clazz.newInstance() : null;
-					SINGLETON_MAP.put(name, obj);
-				} catch (Exception e) {
-					throwException(e);
+				obj = SINGLETON_MAP.get(name);
+				if (obj == null)
+				{
+					try {
+						obj = clazz.newInstance();
+						SINGLETON_MAP.put(name, obj);
+					} catch (Exception e) {
+						throwException(e);
+						}
 					}
 				}
 			}
 	
 		if (obj == null)
 			return null;
-		return clazz.cast(obj);
+		else
+			return clazz.cast(obj);
 		}
 
 	/**
@@ -446,6 +469,24 @@ public final class BRUtil implements EntityTables
 	public static boolean getParameterExist(HttpServletRequest request, String paramName)
 	{
 		return request.getParameter(paramName) != null;
+		}
+
+	/**
+	 * Convenience method that calls <code>session.getAttribute(attribName)</code> 
+	 * and returns true if it exists, false otherwise.
+	 */
+	public static boolean getAttributeExist(HttpSession session, String attribName)
+	{
+		return session.getAttribute(attribName) != null;
+		}
+
+	/**
+	 * Convenience method that calls <code>context.getAttribute(attribName)</code> 
+	 * and returns true if it exists, false otherwise.
+	 */
+	public static boolean getAttributeExist(ServletContext context, String attribName)
+	{
+		return context.getAttribute(attribName) != null;
 		}
 
 	/**
@@ -644,6 +685,211 @@ public final class BRUtil implements EntityTables
 			}
 		
 		return out;
+		}
+	
+	/**
+	 * Sets the fields on an object, using its public fields and setters, using the
+	 * servlet request as a source. If this method finds fields on the request whose runtime types do not match,
+	 * namely Strings to primitives or boxed primitives, an attempt is made to convert them.
+	 * <p>
+	 * For instance, if there is an attribute in the request called "color", its value
+	 * will be applied via the public field "color" or the setter "setColor()". Public
+	 * fields take precedence over setters.
+	 * <p>
+	 * This method does not just merely look in the request scope.
+	 * If an attribute cannot be found in the Request, the Session is searched next, followed by
+	 * the Application. If that fails, it is ignored.
+	 * @param request the servlet request.
+	 * @param target the target object.
+	 */
+	public static final void setModelFields(HttpServletRequest request, Object target)
+	{
+		HttpSession session = request.getSession();
+		ServletContext context = session != null ? session.getServletContext() : null;
+		
+		TypeProfile<?> profile = TypeProfile.getTypeProfile((Class<?>)target.getClass());
+		Hash<String> foundFields = new Hash<String>();
+		
+		for (ObjectPair<String, Field> pair : profile.getPublicFields())
+		{
+			String fieldName = pair.getKey();
+			Field field = pair.getValue();
+			if (getParameterExist(request, fieldName))
+			{
+				if (field.getType() != String.class)
+					Reflect.setField(target, fieldName, getConvertedModelObject(fieldName, getParameterString(request, fieldName), field.getType()));
+				else
+					Reflect.setField(target, fieldName, getParameterString(request, fieldName));
+				foundFields.put(fieldName);
+				}
+			else if (session != null && getAttributeExist(session, fieldName))
+			{
+				Object objval = session.getAttribute(fieldName);
+				if (field.getType() == objval.getClass())
+					Reflect.setField(target, fieldName, objval);
+				else
+					throw new BRFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
+				foundFields.put(fieldName);
+				}
+			else if (context != null && getAttributeExist(context, fieldName))
+			{
+				Object objval = context.getAttribute(fieldName);
+				if (field.getType() == objval.getClass())
+					Reflect.setField(target, fieldName, objval);
+				else
+					throw new BRFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
+				foundFields.put(fieldName);
+				}
+			}
+		
+		for (ObjectPair<String, MethodSignature> pair : profile.getSetterMethods())
+		{
+			String fieldName = pair.getKey();
+			if (foundFields.contains(fieldName))
+				continue;
+			
+			MethodSignature signature = pair.getValue();
+			if (getParameterExist(request, fieldName))
+			{
+				if (signature.getType() != String.class)
+					Reflect.invokeBlind(signature.getMethod(), target, getConvertedModelObject(fieldName, getParameterString(request, fieldName), signature.getType()));
+				else
+					Reflect.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName), signature.getType());
+				}
+			else if (session != null && getAttributeExist(session, fieldName))
+			{
+				Object objval = session.getAttribute(fieldName);
+				if (signature.getType() == objval.getClass())
+					Reflect.invokeBlind(signature.getMethod(), target, objval);
+				else
+					throw new BRFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
+				}
+			else if (context != null && getAttributeExist(context, fieldName))
+			{
+				Object objval = context.getAttribute(fieldName);
+				if (signature.getType() == objval.getClass())
+					Reflect.invokeBlind(signature.getMethod(), target, objval);
+				else
+					throw new BRFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
+				}
+			}
+		}
+	
+	// Converts values.
+	private static Object getConvertedModelObject(String name, Object source, Class<?> type)
+	{
+		if (type == String.class)
+			return source != null ? String.valueOf(source) : null;
+		
+		if (source instanceof Boolean)
+		{
+			boolean b = (Boolean)source;
+			if (type == Boolean.TYPE)
+				return b;
+			else if (type == Boolean.class)
+				return b;
+			else if (type == Byte.TYPE)
+				return (byte)(b ? 1 : 0);
+			else if (type == Byte.class)
+				return (byte)(b ? 1 : 0);
+			else if (type == Short.TYPE)
+				return (short)(b ? 1 : 0);
+			else if (type == Short.class)
+				return (short)(b ? 1 : 0);
+			else if (type == Integer.TYPE)
+				return (b ? 1 : 0);
+			else if (type == Integer.class)
+				return (b ? 1 : 0);
+			else if (type == Float.TYPE)
+				return (b ? 1f : 0f);
+			else if (type == Float.class)
+				return (b ? 1f : 0f);
+			else if (type == Long.TYPE)
+				return (b ? 1L : 0L);
+			else if (type == Long.class)
+				return (b ? 1L : 0L);
+			else if (type == Double.TYPE)
+				return (b ? 1.0 : 0.0);
+			else if (type == Double.class)
+				return (b ? 1.0 : 0.0);
+			else
+				throw new BRFrameworkException("Member "+name+" is boolean typed; target is not boolean typed.");
+			}
+		else if (source instanceof Number)
+		{
+			Number n = (Number)source;
+			
+			if (type == Boolean.TYPE)
+				return (n.doubleValue() != 0.0);
+			else if (type == Boolean.class)
+				return (!Double.isNaN(n.doubleValue()) && n.doubleValue() != 0.0);
+			else if (type == Byte.TYPE)
+				return n.byteValue();
+			else if (type == Byte.class)
+				return n.byteValue();
+			else if (type == Short.TYPE)
+				return n.shortValue();
+			else if (type == Short.class)
+				return n.shortValue();
+			else if (type == Integer.TYPE)
+				return n.intValue();
+			else if (type == Integer.class)
+				return n.intValue();
+			else if (type == Float.TYPE)
+				return n.floatValue();
+			else if (type == Float.class)
+				return n.floatValue();
+			else if (type == Long.TYPE)
+				return n.longValue();
+			else if (type == Long.class)
+				return n.longValue();
+			else if (type == Double.TYPE)
+				return n.doubleValue();
+			else if (type == Double.class)
+				return n.doubleValue();
+			else if (type == String.class)
+				return n.doubleValue();
+			else
+				throw new JSONConversionException("Cannot convert attribute "+name+".");
+			}
+		else if (source instanceof String)
+		{
+			String s = (String)source;
+			if (type == Boolean.TYPE)
+				return Common.parseBoolean(s);
+			else if (type == Boolean.class)
+				return Common.parseBoolean(s);
+			else if (type == Byte.TYPE)
+				return Common.parseByte(s);
+			else if (type == Byte.class)
+				return Common.parseByte(s);
+			else if (type == Short.TYPE)
+				return Common.parseShort(s);
+			else if (type == Short.class)
+				return Common.parseShort(s);
+			else if (type == Integer.TYPE)
+				return Common.parseInt(s);
+			else if (type == Integer.class)
+				return Common.parseInt(s);
+			else if (type == Float.TYPE)
+				return Common.parseFloat(s);
+			else if (type == Float.class)
+				return Common.parseFloat(s);
+			else if (type == Long.TYPE)
+				return Common.parseLong(s);
+			else if (type == Long.class)
+				return Common.parseLong(s);
+			else if (type == Double.TYPE)
+				return Common.parseDouble(s);
+			else if (type == Double.class)
+				return Common.parseDouble(s);
+			else if (type == String.class)
+				return s;
+			else
+				throw new JSONConversionException("Cannot convert attribute "+name+".");
+			}
+		
+		throw new JSONConversionException("Cannot convert attribute "+name+".");
 		}
 	
 	/**
