@@ -1,5 +1,6 @@
 package com.blackrook.framework.util;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -17,7 +18,6 @@ import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.framework.BRFrameworkException;
 import com.blackrook.framework.BRMIMETypes;
-import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.reflect.TypeProfile;
 import com.blackrook.lang.reflect.TypeProfile.MethodSignature;
 import com.blackrook.lang.util.EntityTables;
@@ -131,7 +131,7 @@ public final class BRUtil implements EntityTables
 	 * @param input the input string to convert.
 	 * @return the converted string.
 	 */
-	public static final String convertToHTMLEntities(String input)
+	public static String convertToHTMLEntities(String input)
 	{
 		StringBuilder sb = new StringBuilder();
 		char[] chars = input.toCharArray();
@@ -164,7 +164,7 @@ public final class BRUtil implements EntityTables
 	 * @param input the input string to convert.
 	 * @return the converted string.
 	 */
-	public static final String convertFromHTMLEntities(String input)
+	public static String convertFromHTMLEntities(String input)
 	{
 		StringBuilder sb = new StringBuilder();
 		StringBuilder entity = new StringBuilder();
@@ -463,12 +463,12 @@ public final class BRUtil implements EntityTables
 		}
 	
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and returns true if it exists, false otherwise.
+	 * Convenience method that checks if a parameter exists on a request. 
+	 * Returns true if it exists, false otherwise.
 	 */
 	public static boolean getParameterExist(HttpServletRequest request, String paramName)
 	{
-		return request.getParameter(paramName) != null;
+		return request.getParameterValues(paramName) != null && request.getParameterValues(paramName).length > 0;
 		}
 
 	/**
@@ -697,12 +697,15 @@ public final class BRUtil implements EntityTables
 	 * fields take precedence over setters.
 	 * <p>
 	 * This method does not just merely look in the request scope.
-	 * If an attribute cannot be found in the Request, the Session is searched next, followed by
+	 * If a parameter cannot be found in the Request, the Session attributes are searched next, followed by
 	 * the Application. If that fails, it is ignored.
 	 * @param request the servlet request.
 	 * @param target the target object.
+	 * @return the passed in object.
+	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
+	 * (best to use public classes in these cases).
 	 */
-	public static final void setModelFields(HttpServletRequest request, Object target)
+	public static <T extends Object> T setModelFields(HttpServletRequest request, T target)
 	{
 		HttpSession session = request.getSession();
 		ServletContext context = session != null ? session.getServletContext() : null;
@@ -716,10 +719,29 @@ public final class BRUtil implements EntityTables
 			Field field = pair.getValue();
 			if (getParameterExist(request, fieldName))
 			{
-				if (field.getType() != String.class)
-					Reflect.setField(target, fieldName, getConvertedModelObject(fieldName, getParameterString(request, fieldName), field.getType()));
+				Class<?> setterType = field.getType();
+				if (Reflect.isArray(setterType))
+				{
+					String[] values = request.getParameterValues(fieldName);
+					Class<?> arrayType = Reflect.getArrayType(setterType);
+					Object newArray = Array.newInstance(arrayType, values.length);
+					
+					for (int i = 0; i < values.length; i++)
+					{
+						if (arrayType != String.class)
+							Array.set(newArray, i, getConvertedModelObject(fieldName, getParameterString(request, fieldName), arrayType));
+						else
+							Array.set(newArray, i, getParameterString(request, fieldName));
+						}
+					Reflect.setField(target, fieldName, newArray);
+					}
 				else
-					Reflect.setField(target, fieldName, getParameterString(request, fieldName));
+				{
+					if (setterType != String.class)
+						Reflect.setField(target, fieldName, getConvertedModelObject(fieldName, getParameterString(request, fieldName), setterType));
+					else
+						Reflect.setField(target, fieldName, getParameterString(request, fieldName));
+					}
 				foundFields.put(fieldName);
 				}
 			else if (session != null && getAttributeExist(session, fieldName))
@@ -751,10 +773,29 @@ public final class BRUtil implements EntityTables
 			MethodSignature signature = pair.getValue();
 			if (getParameterExist(request, fieldName))
 			{
-				if (signature.getType() != String.class)
-					Reflect.invokeBlind(signature.getMethod(), target, getConvertedModelObject(fieldName, getParameterString(request, fieldName), signature.getType()));
+				Class<?> setterType = signature.getType();
+				if (Reflect.isArray(setterType))
+				{
+					String[] values = request.getParameterValues(fieldName);
+					Class<?> arrayType = Reflect.getArrayType(setterType);
+					Object newArray = Array.newInstance(arrayType, values.length);
+					
+					for (int i = 0; i < values.length; i++)
+					{
+						if (arrayType != String.class)
+							Array.set(newArray, i, getConvertedModelObject(fieldName, values[i], arrayType));
+						else
+							Array.set(newArray, i, getParameterString(request, fieldName));
+						}
+					Reflect.invokeBlind(signature.getMethod(), target, newArray);
+					}
 				else
-					Reflect.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName), signature.getType());
+				{
+					if (setterType != String.class)
+						Reflect.invokeBlind(signature.getMethod(), target, getConvertedModelObject(fieldName, getParameterString(request, fieldName), setterType));
+					else
+						Reflect.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName));
+					}
 				}
 			else if (session != null && getAttributeExist(session, fieldName))
 			{
@@ -773,6 +814,8 @@ public final class BRUtil implements EntityTables
 					throw new BRFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
 				}
 			}
+		
+		return target;
 		}
 	
 	// Converts values.
@@ -850,7 +893,7 @@ public final class BRUtil implements EntityTables
 			else if (type == String.class)
 				return n.doubleValue();
 			else
-				throw new JSONConversionException("Cannot convert attribute "+name+".");
+				throw new BRFrameworkException("Cannot convert attribute "+name+".");
 			}
 		else if (source instanceof String)
 		{
@@ -886,10 +929,10 @@ public final class BRUtil implements EntityTables
 			else if (type == String.class)
 				return s;
 			else
-				throw new JSONConversionException("Cannot convert attribute "+name+".");
+				throw new BRFrameworkException("Cannot convert attribute "+name+".");
 			}
 		
-		throw new JSONConversionException("Cannot convert attribute "+name+".");
+		throw new BRFrameworkException("Cannot convert attribute "+name+".");
 		}
 	
 	/**
@@ -898,7 +941,7 @@ public final class BRUtil implements EntityTables
 	 * which is a {@link RuntimeException}.
 	 * @param t the {@link Throwable} to encapsulate and throw.
 	 */
-	public static final void throwException(Throwable t)
+	public static void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
 		}
