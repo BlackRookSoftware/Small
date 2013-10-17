@@ -688,6 +688,29 @@ public final class BRUtil implements EntityTables
 		}
 	
 	/**
+	 * Sets the fields on a new instance of an object, using its public fields and setters, using the
+	 * servlet request as a source. If this method finds fields on the request whose runtime types do not match,
+	 * namely Strings to primitives or boxed primitives, an attempt is made to convert them.
+	 * <p>
+	 * For instance, if there is an attribute in the request called "color", its value
+	 * will be applied via the public field "color" or the setter "setColor()". Public
+	 * fields take precedence over setters.
+	 * <p>
+	 * This method does not just merely look in the request scope.
+	 * If a parameter cannot be found in the Request, the Session attributes are searched next, followed by
+	 * the Application. If that fails, it is ignored.
+	 * @param request the servlet request.
+	 * @param type the type to instantiate.
+	 * @return the new object with fields set using the model.
+	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
+	 * (best to use public classes in these cases), or if the object cannot be instantiated.
+	 */
+	public static <T extends Object> T setModelFields(HttpServletRequest request, Class<T> type)
+	{
+		return setModelFields(request, Reflect.create(type));
+		}
+	
+	/**
 	 * Sets the fields on an object, using its public fields and setters, using the
 	 * servlet request as a source. If this method finds fields on the request whose runtime types do not match,
 	 * namely Strings to primitives or boxed primitives, an attempt is made to convert them.
