@@ -233,12 +233,32 @@ public final class BRUtil implements EntityTables
 		}
 
 	/**
-	 * Gets and auto-casts an object bean stored at the session level.
+	 * Gets and auto-casts an object bean stored at the request level.
+	 * The bean is created and stored if it doesn't exist.
+	 * The name used is the fully-qualified class name prefixed with "$$".
+	 * @param request the source request object.
+	 * @param name the attribute name.
+	 * @param clazz the class type of the object that should be returned.
+	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
+	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz)
+	{
+		String className = clazz.getCanonicalName(); 
+		if ((className = clazz.getCanonicalName()) == null)
+			throw new IllegalArgumentException("Class provided has no type!");
+		return getRequestBean(request, clazz, "$$"+className, true);
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the request level.
 	 * The bean is created and stored if it doesn't exist.
 	 * @param request the source request object.
 	 * @param name the attribute name.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
@@ -257,10 +277,10 @@ public final class BRUtil implements EntityTables
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
 	{
 		Object obj = request.getAttribute(name);
-		if (obj == null)
+		if (obj == null && create)
 		{
 			try {
-				obj = create ? clazz.newInstance() : null;
+				obj = clazz.newInstance();
 				request.setAttribute(name, obj);
 			} catch (Exception e) {
 				throwException(e);
@@ -270,6 +290,25 @@ public final class BRUtil implements EntityTables
 		if (obj == null)
 			return null;
 		return clazz.cast(obj);
+		}
+
+	/**
+	 * Gets and auto-casts an object bean stored at the session level.
+	 * The bean is created and stored if it doesn't exist.
+	 * The name used is the fully-qualified class name prefixed with "$$".
+	 * @param request the source request object.
+	 * @param clazz the class type of the object that should be returned.
+	 * @param name the attribute name.
+	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
+	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
+	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
+	 */
+	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz)
+	{
+		String className = clazz.getCanonicalName(); 
+		if ((className = clazz.getCanonicalName()) == null)
+			throw new IllegalArgumentException("Class provided has no type!");
+		return getSessionBean(request, clazz, "$$"+className, true);
 		}
 
 	/**
@@ -326,15 +365,19 @@ public final class BRUtil implements EntityTables
 	/**
 	 * Gets and auto-casts an object bean stored at the application level.
 	 * The bean is created and stored if it doesn't exist.
-	 * The name used is the fully-qualified class name.
+	 * The name used is the fully-qualified class name prefixed with "$$".
 	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the application scope.
+	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz)
 	{
-		return getApplicationBean(context, clazz, "$$"+clazz.getCanonicalName(), true);
+		String className = clazz.getCanonicalName(); 
+		if ((className = clazz.getCanonicalName()) == null)
+			throw new IllegalArgumentException("Class provided has no type!");
+		return getApplicationBean(context, clazz, "$$"+className, true);
 		}
 
 	/**
@@ -356,7 +399,7 @@ public final class BRUtil implements EntityTables
 	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
-	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param create if true, instantiate this class in the application's servlet context (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -401,6 +444,7 @@ public final class BRUtil implements EntityTables
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
+	 * The bean is created and stored if it doesn't exist.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
@@ -416,7 +460,7 @@ public final class BRUtil implements EntityTables
 	 * accessible always, and not attached to a servlet context.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
-	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param create if true, instantiate this class (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -878,6 +922,8 @@ public final class BRUtil implements EntityTables
 				return (b ? 1.0 : 0.0);
 			else if (type == Double.class)
 				return (b ? 1.0 : 0.0);
+			else if (type == String.class)
+				return String.valueOf(b);
 			else
 				throw new BRFrameworkException("Member "+name+" is boolean typed; target is not boolean typed.");
 			}
@@ -914,7 +960,7 @@ public final class BRUtil implements EntityTables
 			else if (type == Double.class)
 				return n.doubleValue();
 			else if (type == String.class)
-				return n.doubleValue();
+				return String.valueOf(n);
 			else
 				throw new BRFrameworkException("Cannot convert attribute "+name+".");
 			}
