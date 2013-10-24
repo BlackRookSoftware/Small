@@ -444,63 +444,6 @@ public final class BRToolkit
 	 */
 	BRControllerEntry getController(String path)
 	{
-		BRControllerEntry out = getControllerEntryUsingDefinitions(path);
-		if (out != null)
-			return out;
-		
-		return getControllerEntryUsingRoot(path);
-		}
-	
-	// Get controller using path definitions.
-	private BRControllerEntry getControllerEntryUsingDefinitions(String path)
-	{
-		if (controllerCache.containsKey(path))
-			return controllerCache.get(path);
-		
-		if (!controllerEntries.containsKey(path))
-			return null;
-			
-		synchronized (controllerCache)
-		{
-			// in case a thread already completed it.
-			if (controllerCache.containsKey(path))
-				return controllerCache.get(path);
-			
-			BRControllerEntry out = instantiateControllerByEntry(path);
-			
-			// add to cache and return.
-			controllerCache.put(path, out);
-			return out;
-			}
-		}
-	
-	// Creates a controller by its controller entry.
-	private BRControllerEntry instantiateControllerByEntry(String path)
-	{			
-		String className = controllerEntries.get(path);
-		Class<?> controllerClass = null;
-		try {
-			controllerClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
-			}
-		
-		BRControllerEntry out = null;
-		
-		try {
-			out = new BRControllerEntry(controllerClass, controllerRootMethodPrefix);
-		} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
-		} catch (Exception e) {
-			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+className);
-			}
-		
-		return out;
-		}
-	
-	// Get controller using root definition.
-	private BRControllerEntry getControllerEntryUsingRoot(String path)
-	{
 		if (Common.isEmpty(path))
 			return null;
 		else if (controllerCache.containsKey(path))
@@ -518,10 +461,9 @@ public final class BRToolkit
 			controllerCache.put(path, out);
 			return out;
 			}
-
 		}
 	
-	// Instantiates a controller via rot resolver.
+	// Instantiates a controller via root resolver.
 	private BRControllerEntry instantiateControllerByRoot(String path)
 	{
 		String className = getClassNameForController(path);
