@@ -17,7 +17,7 @@ import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.framework.BRFrameworkException;
-import com.blackrook.framework.BRMIMETypes;
+import com.blackrook.framework.types.BRMIMETypes;
 import com.blackrook.lang.reflect.TypeProfile;
 import com.blackrook.lang.reflect.TypeProfile.MethodSignature;
 import com.blackrook.lang.util.EntityTables;

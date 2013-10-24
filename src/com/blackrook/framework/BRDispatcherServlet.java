@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
@@ -12,7 +13,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
-import com.blackrook.framework.controller.BRController;
+import com.blackrook.commons.Reflect;
+import com.blackrook.framework.annotation.RequestMethod;
 import com.blackrook.framework.multipart.MultipartParser;
 import com.blackrook.framework.multipart.MultipartParserException;
 import com.blackrook.framework.multipart.Part;
@@ -36,11 +38,18 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
-		BRController servlet = getControllerUsingPath(path);
-		if (servlet == null)
+		BRControllerEntry entry = getControllerUsingPath(path);
+		if (entry == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
-			servlet.onGet(request, response);
+		{
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.GET, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
+			else
+				entry.getInstance().onGet(page, request, response);
+			}
 		}
 
 	@Override
@@ -48,30 +57,52 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
-		BRController servlet = getControllerUsingPath(path);
-		if (servlet == null)
+		BRControllerEntry entry = getControllerUsingPath(path);
+		if (entry == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else if (isJSON(request))
 		{
+			JSONObject json = null;
 			try {
-				servlet.onJSON(request, response, readJSON(request));
+				json = readJSON(request);
 			} catch (UnsupportedEncodingException e) {
 				sendCode(response, 400, "The encoding type for the POST request is not supported.");
+				return;
 			} catch (JSONConversionException e) {
 				sendCode(response, 400, "JSON request was malformed.");
+				return;
 			} catch (IOException e) {
 				sendCode(response, 500, "Could not read from request.");
+				return;
 				}
+
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.POST_JSON, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, json);
+			else
+				entry.getInstance().onJSON(page, request, response, json);
 			}
 		else if (isXML(request))
 		{
+			XMLStruct xmlStruct = null;
+			
 			try {
-				servlet.onXML(request, response, readXML(request));
+				xmlStruct = readXML(request);
 			} catch (SAXException e) {
 				sendCode(response, 400, "XML request was malformed.");
+				return;
 			} catch (IOException e) {
 				sendCode(response, 500, "Could not read from request.");
+				return;
 				}
+
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.POST_XML, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, xmlStruct);
+			else
+				entry.getInstance().onXML(page, request, response, xmlStruct);
 			}
 		else if (MultipartParser.isMultipart(request))
 		{
@@ -84,18 +115,35 @@ public final class BRDispatcherServlet extends HttpServlet
 				sendCode(response, 500, "The server could not parse the multiform request.");
 				}
 			
-			servlet.onMultipart(request, response, parser.getPartList());
+			Part[] parts = new Part[parser.getPartList().size()];
+			parser.getPartList().toArray(parts);
 			
-			// clean up files.
-			for (Part part : parser.getPartList())
-				if (part.isFile())
-				{
-					File tempFile = part.getFile();
-					tempFile.delete();
-					}
+			try {
+				String page = getPage(request);
+				Method m = entry.getMethodUsingPath(RequestMethod.POST_MULTIPART, page);
+				if (m != null)
+					Reflect.invokeBlind(m, entry.getInstance(), page, request, response, parts);
+				else
+					entry.getInstance().onMultipart(page, request, response, parts);
+			} finally {
+				// clean up files.
+				for (Part part : parts)
+					if (part.isFile())
+					{
+						File tempFile = part.getFile();
+						tempFile.delete();
+						}
+				}
 			}
 		else
-			servlet.onPost(request, response);
+		{
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.POST, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
+			else
+				entry.getInstance().onPost(page, request, response);
+			}
 		}
 	
 	@Override
@@ -103,11 +151,18 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
-		BRController servlet = getControllerUsingPath(path);
-		if (servlet == null)
+		BRControllerEntry entry = getControllerUsingPath(path);
+		if (entry == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
-			servlet.onHead(request,response);
+		{
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.HEAD, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
+			else
+				entry.getInstance().onHead(page, request, response);
+			}
 		}
 	
 	@Override
@@ -115,11 +170,18 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
-		BRController servlet = getControllerUsingPath(path);
-		if (servlet == null)
+		BRControllerEntry entry = getControllerUsingPath(path);
+		if (entry == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
-			servlet.onPut(request,response);
+		{
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.PUT, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
+			else
+				entry.getInstance().onPut(page, request, response);
+			}
 		}
 	
 	@Override
@@ -127,13 +189,34 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
-		BRController servlet = getControllerUsingPath(path);
-		if (servlet == null)
+		BRControllerEntry entry = getControllerUsingPath(path);
+		if (entry == null)
 			sendCode(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
-			servlet.onDelete(request,response);
+		{
+			String page = getPage(request);
+			Method m = entry.getMethodUsingPath(RequestMethod.DELETE, page);
+			if (m != null)
+				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
+			else
+				entry.getInstance().onDelete(page, request, response);
+			}
 		}
 
+	/**
+	 * Get the base page parsed out of the request URI.
+	 */
+	private final String getPage(HttpServletRequest request)
+	{
+		String requestURI = request.getRequestURI();
+		int slashIndex = requestURI.lastIndexOf('/');
+		int endIndex = requestURI.indexOf('?');
+		if (endIndex >= 0)
+			return requestURI.substring(slashIndex + 1, endIndex);
+		else
+			return requestURI.substring(slashIndex + 1); 
+		}
+	
 	/**
 	 * Get the base path parsed out of the request URI.
 	 */
@@ -141,9 +224,9 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		String requestURI = request.getRequestURI();
 		int contextPathLen = request.getContextPath().length();
-		int queryIndex = requestURI.indexOf('?');
-		if (queryIndex >= 0)
-			return requestURI.substring(contextPathLen, queryIndex);
+		int slashIndex = requestURI.lastIndexOf('/');
+		if (slashIndex >= 0)
+			return requestURI.substring(contextPathLen, slashIndex);
 		else
 			return requestURI.substring(contextPathLen); 
 		}
@@ -155,7 +238,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	 * This servlet sends a 404 back if this happens.
 	 * @throws BRFrameworkException if a huge error occurred.
 	 */
-	private final BRController getControllerUsingPath(String uriPath)
+	private final BRControllerEntry getControllerUsingPath(String uriPath)
 	{
 		return BRToolkit.INSTANCE.getController(uriPath);
 		}

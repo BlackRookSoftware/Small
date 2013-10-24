@@ -120,28 +120,6 @@
 
 
 <!-- 
-	Controllers
-	===========
-	
-	These next XML structures declare controllers.
-	
-	Each controller is declared in a "controller" tag, and have the following
-	attributes:
-	
-	path			The path of the controller according to the submitted path
-					to the BRDispatcherServlet.
-
-	class			The fully-qualified classname of the class to instantiate
-					for this controller.
-	
--->
-
-<controller 
-	path="common.view" 
-	class="com.blackrook.framework.controller.BRController" 
-	/>
-
-<!-- 
 	Filters
 	===========
 	
@@ -178,20 +156,20 @@
 	
 	Controllers are resolved as follows (examples), if the tag is: 
 	<controllerroot 
-		package="com.blackrook.controller" 
-		extension="view"  
-		classprefix=""  
-		classsuffix="Controller"  
+		package="com.example.controller" 
+		prefix=""  
+		suffix="Controller"
+		methodprefix="call"  
 		/>
 	
-	/index.view
-	com.example.controller.IndexController
+	/index/get.view
+	com.example.controller.IndexController.callGet(...)
 
-	/somePage.view
-	com.example.controller.SomePageController
+	/someOther/index.view
+	com.example.controller.SomeOtherController.callIndex(...)
 
-	/admin/index.view
-	com.example.controller.admin.IndexController
+	/admin/index/index.view
+	com.example.controller.admin.IndexController.callIndex(...)
 	
 	................................
 
@@ -201,22 +179,23 @@
 	
 	package			The classpath of the root package.
 	
-	extension		The extension to ignore, if any. This should match the
-					BRDispatcherServlet URL pattern.
-					Default is "view", if unspecified. 
-	
-	classprefix		The prefix prepended to the controller name.
+	prefix			The prefix prepended to the controller name.
 					Default is "", if unspecified. 
 	
-	classsuffix		The suffix appended to the controller name.
-					Default is "Controller", if unspecified. 
+	suffix			The suffix appended to the controller name.
+					Default is "Controller", if unspecified.
+	
+	methodprefix	The prefix added to the request page for the
+					true method to invoke for the request type.
+					Default is "call", if unspecified.
+	 
 -->
 
 <controllerroot 
 	package="com.add.path.here" 
-	extension="view"  
-	classprefix=""  
-	classsuffix="Controller"  
+	prefix=""  
+	suffix="Controller"
+	methodprefix="call"  
 	/>
 
 </config>

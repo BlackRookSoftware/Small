@@ -26,11 +26,11 @@ import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.list.List;
 import com.blackrook.db.DBConnectionPool;
-import com.blackrook.db.DBUtils;
+import com.blackrook.db.DBConnector;
+import com.blackrook.db.DBUtil;
 import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
 import com.blackrook.db.sqlite.SQLiteUtils;
-import com.blackrook.framework.controller.BRController;
 import com.blackrook.framework.filter.BRFilter;
 import com.blackrook.framework.util.BRUtil;
 import com.blackrook.lang.xml.XMLStruct;
@@ -63,9 +63,9 @@ public final class BRToolkit
 	public static final String XML_FILTER_CLASS = "class";
 	public static final String XML_CONTROLLERROOT = "controllerroot";
 	public static final String XML_CONTROLLERROOT_PACKAGE = "package";
-	public static final String XML_CONTROLLERROOT_EXTENSION = "extension";
-	public static final String XML_CONTROLLERROOT_PREFIX = "classprefix";
-	public static final String XML_CONTROLLERROOT_SUFFIX = "classsuffix";
+	public static final String XML_CONTROLLERROOT_PREFIX = "prefix";
+	public static final String XML_CONTROLLERROOT_SUFFIX = "suffix";
+	public static final String XML_CONTROLLERROOT_METHODPREFIX = "methodprefix";
 	
 	public static final String SQL_TYPE_MYSQL = "mysql";
 	public static final String SQL_TYPE_SQLITE = "sqlite";
@@ -79,6 +79,14 @@ public final class BRToolkit
 	public static final String XML_SQL_DB = "database";
 	public static final String XML_SQL_CONNECTIONS = "connections";
 
+	/** Singleton toolkit instance. */
+	static BRToolkit INSTANCE = null;
+
+	/** Servlet context. */
+	private ServletContext servletContext;
+	/** Application context path. */
+	private String realAppPath;
+
 	/** The cache map for JSP pages. */
 	private HashMap<String, String> viewCache;
 	/** List of view resolvers. */
@@ -88,35 +96,27 @@ public final class BRToolkit
 	/** List of query resolvers. */
 	private List<BRQueryResolver> queryResolvers;
 
-	/** The controllers that were instantiated. */
-	private HashMap<String, BRController> controllerCache;
 	/** List of controller entries. */
 	private HashMap<String, String> controllerEntries;
 	/** Controller root package. */
 	private String controllerRootPackage;
-	/** Controller root extension to ignore. */
-	private String controllerRootExtension;
 	/** Controller root prefix. */
 	private String controllerRootPrefix;
 	/** Controller root suffix. */
 	private String controllerRootSuffix;
+	/** Controller root method prefix. */
+	private String controllerRootMethodPrefix;
 
-	/** The filters that were instantiated. */
-	private HashedQueueMap<String, BRFilter> filterCache;
 	/** List of filter entries. */
 	private HashedQueueMap<String, String> filterEntries;
 	
+	/** The controllers that were instantiated. */
+	private HashMap<String, BRControllerEntry> controllerCache;
+	/** The filters that were instantiated. */
+	private HashedQueueMap<String, BRFilter> filterCache;
+
 	/** Database connection pool. */
 	private HashMap<String, DBConnectionPool> connectionPool;
-
-	/** Servlet context. */
-	private ServletContext servletContext;
-	
-	/** Application context path. */
-	private String realAppPath = null;
-
-	/** Singleton toolkit instance. */
-	static BRToolkit INSTANCE = null;
 
 	/**
 	 * Gets a file that is on the application path. 
@@ -198,7 +198,7 @@ public final class BRToolkit
 		queryCache = new CaseInsensitiveHashMap<String>(25);
 		queryResolvers = new List<BRQueryResolver>(25);
 		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
-		controllerCache = new HashMap<String, BRController>();
+		controllerCache = new HashMap<String, BRControllerEntry>();
 		controllerEntries = new HashMap<String, String>();
 		filterCache = new HashedQueueMap<String, BRFilter>();
 		filterEntries = new HashedQueueMap<String, String>();
@@ -262,7 +262,7 @@ public final class BRToolkit
 	private DBConnectionPool initializeMYSQL(XMLStruct struct)
 	{
 		DBConnectionPool pool = null;
-		DBUtils dbu = null;
+		DBConnector dbu = null;
 		String user = null;
 		String password = null;
 				
@@ -297,7 +297,7 @@ public final class BRToolkit
 	private DBConnectionPool initializeSQLite(XMLStruct struct)
 	{
 		DBConnectionPool pool = null;
-		DBUtils dbu = null;
+		DBConnector dbu = null;
 		
 		String db = struct.getAttribute(XML_SQL_DB);
 		if (db.trim().length() == 0)
@@ -401,10 +401,10 @@ public final class BRToolkit
 	private void initializeControllerRoot(XMLStruct struct)
 	{
 		String pkg = struct.getAttribute(XML_CONTROLLERROOT_PACKAGE).trim();
-		controllerRootExtension = struct.getAttribute(XML_CONTROLLERROOT_EXTENSION, "view").trim();
 		controllerRootPrefix = struct.getAttribute(XML_CONTROLLERROOT_PREFIX, "").trim();
 		controllerRootSuffix = struct.getAttribute(XML_CONTROLLERROOT_SUFFIX, "Controller").trim();
-
+		controllerRootMethodPrefix = struct.getAttribute(XML_CONTROLLERROOT_METHODPREFIX, "call").trim();
+		
 		if (pkg == null)
 			throw new BRFrameworkException("Controller root declaration must specify a root package.");
 		
@@ -442,17 +442,17 @@ public final class BRToolkit
 	 * @param path the path of the controller.
 	 * @return a controller instance to call or null to trigger a 404.
 	 */
-	BRController getController(String path)
+	BRControllerEntry getController(String path)
 	{
-		BRController out = getControllerUsingDefinitions(path);
+		BRControllerEntry out = getControllerEntryUsingDefinitions(path);
 		if (out != null)
 			return out;
 		
-		return getControllerUsingRoot(path);
+		return getControllerEntryUsingRoot(path);
 		}
 	
 	// Get controller using path definitions.
-	private BRController getControllerUsingDefinitions(String path)
+	private BRControllerEntry getControllerEntryUsingDefinitions(String path)
 	{
 		if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
@@ -466,7 +466,7 @@ public final class BRToolkit
 			if (controllerCache.containsKey(path))
 				return controllerCache.get(path);
 			
-			BRController out = instantiateControllerByEntry(path);
+			BRControllerEntry out = instantiateControllerByEntry(path);
 			
 			// add to cache and return.
 			controllerCache.put(path, out);
@@ -475,7 +475,7 @@ public final class BRToolkit
 		}
 	
 	// Creates a controller by its controller entry.
-	private BRController instantiateControllerByEntry(String path)
+	private BRControllerEntry instantiateControllerByEntry(String path)
 	{			
 		String className = controllerEntries.get(path);
 		Class<?> controllerClass = null;
@@ -485,10 +485,10 @@ public final class BRToolkit
 			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 			}
 		
-		BRController out = null;
+		BRControllerEntry out = null;
 		
 		try {
-			out = (BRController)BRUtil.getBean(controllerClass);
+			out = new BRControllerEntry(controllerClass, controllerRootMethodPrefix);
 		} catch (ClassCastException e) {
 			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
 		} catch (Exception e) {
@@ -499,9 +499,11 @@ public final class BRToolkit
 		}
 	
 	// Get controller using root definition.
-	private BRController getControllerUsingRoot(String path)
+	private BRControllerEntry getControllerEntryUsingRoot(String path)
 	{
-		if (controllerCache.containsKey(path))
+		if (Common.isEmpty(path))
+			return null;
+		else if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
 		
 		synchronized (controllerCache)
@@ -510,7 +512,7 @@ public final class BRToolkit
 			if (controllerCache.containsKey(path))
 				return controllerCache.get(path);
 			
-			BRController out = instantiateControllerByRoot(path);
+			BRControllerEntry out = instantiateControllerByRoot(path);
 
 			// add to cache and return.
 			controllerCache.put(path, out);
@@ -520,13 +522,20 @@ public final class BRToolkit
 		}
 	
 	// Instantiates a controller via rot resolver.
-	private BRController instantiateControllerByRoot(String path)
+	private BRControllerEntry instantiateControllerByRoot(String path)
 	{
 		String className = getClassNameForController(path);
-		BRController out = null;
+		Class<?> controllerClass = null;
+		try {
+			controllerClass = Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
+			}
+		
+		BRControllerEntry out = null;
 		
 		try {
-			out = (BRController)BRUtil.getBean(Class.forName(className));
+			out = new BRControllerEntry(controllerClass, controllerRootMethodPrefix);
 		} catch (ClassCastException e) {
 			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
 		} catch (Exception e) {
@@ -554,10 +563,7 @@ public final class BRToolkit
 			}
 		cls = dirs[dirs.length - 1];
 		
-		int extIndex = controllerRootExtension.length() > 0 ? cls.indexOf("."+controllerRootExtension) : -1;
-		
-		cls = cls.substring(0, 1).toUpperCase() + (extIndex >= 0 ? cls.substring(1, extIndex) : cls.substring(1));
-		cls = controllerRootPrefix + cls + controllerRootSuffix;
+		cls = controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
 		
 		return pkg + cls;
 		}
@@ -678,7 +684,7 @@ public final class BRToolkit
 		try {
 			DBConnectionPool pool = connectionPool.get(poolname);
 			conn = pool.getAvailableConnection();
-			result = DBUtils.doQuery(conn, query, parameters);
+			result = DBUtil.doQuery(conn, query, parameters);
 			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
@@ -721,7 +727,7 @@ public final class BRToolkit
 			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		try {
 			conn = pool.getAvailableConnection();
-			result = DBUtils.doQueryUpdate(conn, query, parameters);
+			result = DBUtil.doQueryUpdate(conn, query, parameters);
 			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
