@@ -2,12 +2,21 @@ package com.blackrook.framework;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Iterator;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.framework.annotation.RequestEntry;
 import com.blackrook.framework.annotation.RequestMethod;
 import com.blackrook.framework.controller.BRController;
+import com.blackrook.framework.filter.BRFilter;
+import com.blackrook.framework.multipart.Part;
 import com.blackrook.framework.util.BRUtil;
+import com.blackrook.lang.json.JSONObject;
+import com.blackrook.lang.xml.XMLStruct;
 
 /**
  * Creates a controller profile to assist in re-calling controllers by
@@ -22,6 +31,8 @@ class BRControllerEntry
 	private BRController instance;
 	/** Method map. */
 	private HashMap<RequestMethod, HashMap<String, Method>> methodMap;
+	/** Filter list. */
+	private Queue<BRFilter> filterQueue;
 	
 	/**
 	 * Creates the controller profile for a {@link BRController} class.
@@ -31,6 +42,7 @@ class BRControllerEntry
 	 */
 	BRControllerEntry(Class<?> clazz, String methodPrefix)
 	{
+		this.filterQueue = new Queue<BRFilter>();
 		this.controllerClass = clazz;
 		this.methodMap = new HashMap<RequestMethod, HashMap<String,Method>>();
 		
@@ -113,14 +125,83 @@ class BRControllerEntry
 			return page; 
 		}
 	
+	/**
+	 * Adds a filter to this controller.
+	 */
+	public void addFilter(BRFilter filter)
+	{
+		filterQueue.add(filter);
+		}
 
+	/**
+	 * Calls filters attached to a controller.
+	 * @return true if all filters were passed successfully.
+	 */
+	public boolean callFilters(String file, HttpServletRequest request, HttpServletResponse response)
+	{
+		Iterator<BRFilter> it = filterQueue.iterator();
+		boolean go = true;
+		while (go && it.hasNext())
+			go = it.next().onFilter(file, request, response);
+		return go;
+		}
+
+	/**
+	 * Calls filters attached to a controller.
+	 * @return true if all filters were passed successfully.
+	 */
+	public boolean callFilters(String file, HttpServletRequest request, HttpServletResponse response, Part[] parts)
+	{
+		Iterator<BRFilter> it = filterQueue.iterator();
+		boolean go = true;
+		while (go && it.hasNext())
+			go = it.next().onFilterMultipart(file, request, response, parts);
+		
+		return go;
+		}
+
+	/**
+	 * Calls filters attached to a controller.
+	 * @return true if all filters were passed successfully.
+	 */
+	public boolean callFilters(String file, HttpServletRequest request, HttpServletResponse response, JSONObject json)
+	{
+		Iterator<BRFilter> it = filterQueue.iterator();
+		boolean go = true;
+		while (go && it.hasNext())
+			go = it.next().onFilterJSON(file, request, response, json);
+		
+		return go;
+		}
+
+	/**
+	 * Calls filters attached to a controller.
+	 * @return true if all filters were passed successfully.
+	 */
+	public boolean callFilters(String file, HttpServletRequest request, HttpServletResponse response, XMLStruct xml)
+	{
+		Iterator<BRFilter> it = filterQueue.iterator();
+		boolean go = true;
+		while (go && it.hasNext())
+			go = it.next().onFilterXML(file, request, response, xml);
+		
+		return go;
+		}
+
+	/**
+	 * Returns the class type of this controller.
+	 */
 	public Class<?> getControllerClass()
 	{
 		return controllerClass;
 		}
-	
+
+	/**
+	 * Returns the instantiated controller.
+	 */
 	public BRController getInstance()
 	{
 		return instance;
 		}
+
 }

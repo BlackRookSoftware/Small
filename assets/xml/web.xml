@@ -8,14 +8,3 @@
 	<servlet-name>BRDispatcherServlet</servlet-name>
 	<url-pattern>*.view</url-pattern>
 </servlet-mapping>
-
-<!-- Required Filters -->
-
-<filter>
-	<filter-name>BRDispatcherFilter</filter-name>
-	<filter-class>com.blackrook.framework.BRDispatcherFilter</filter-class>
-</filter>
-<filter-mapping>
-	<filter-name>BRDispatcherFilter</filter-name>
-	<url-pattern>*.view</url-pattern>
-</filter-mapping>

@@ -44,6 +44,9 @@ public final class BRDispatcherServlet extends HttpServlet
 		else
 		{
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.GET, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
@@ -77,6 +80,9 @@ public final class BRDispatcherServlet extends HttpServlet
 				}
 
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response, json))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.POST_JSON, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, json);
@@ -98,6 +104,9 @@ public final class BRDispatcherServlet extends HttpServlet
 				}
 
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response, xmlStruct))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.POST_XML, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, xmlStruct);
@@ -120,6 +129,9 @@ public final class BRDispatcherServlet extends HttpServlet
 			
 			try {
 				String page = getPage(request);
+				if (!entry.callFilters(page, request, response, parts))
+					return;
+				
 				Method m = entry.getMethodUsingPath(RequestMethod.POST_MULTIPART, page);
 				if (m != null)
 					Reflect.invokeBlind(m, entry.getInstance(), page, request, response, parts);
@@ -138,6 +150,9 @@ public final class BRDispatcherServlet extends HttpServlet
 		else
 		{
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.POST, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
@@ -157,6 +172,9 @@ public final class BRDispatcherServlet extends HttpServlet
 		else
 		{
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.HEAD, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
@@ -176,6 +194,9 @@ public final class BRDispatcherServlet extends HttpServlet
 		else
 		{
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.PUT, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
@@ -195,6 +216,9 @@ public final class BRDispatcherServlet extends HttpServlet
 		else
 		{
 			String page = getPage(request);
+			if (!entry.callFilters(page, request, response))
+				return;
+			
 			Method m = entry.getMethodUsingPath(RequestMethod.DELETE, page);
 			if (m != null)
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);

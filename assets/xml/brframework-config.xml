@@ -120,26 +120,32 @@
 
 
 <!-- 
-	Filters
-	===========
+	Filter Paths
+	============
 	
 	These next XML structures declare filters.
 	
-	Each filter is declared in a "filter" tag, and have the following 
+	Each filter is declared in a "filterpath" tag, and have the following 
 	attributes:
 	
-	pathprefix		The prefix path of the filter. If the submitted path is
-					starts with this, this filter will be used.
+	package			The base package that a controller needs to be under in 
+					order for this filter to be called. If another filter
+					path is defined under a declared path, that definition
+					takes precedence.
 
-	class			The fully-qualified classname of the class to instantiate
-					for this filter.
+	classes			The list of comma (or space, or both) separated classes
+					to call (in order) before the controller is called. The
+					classes must extend com.blackrook.framework.BRFilter.
+					If any of the filters return false (via onFilter(...)),
+					the filter chain is stopped. If all return true, the
+					controller is called.
 	
 -->
 
 <!--
-<filter 
-	pathprefix="admin/" 
-	class="com.blackrook.framework.filter.BRFilter" 
+<filterpath 
+	package="com.add.path.here" 
+	classes="com.blackrook.framework.filter.BRFilter" 
 	/>
 -->
 
