@@ -194,7 +194,10 @@
 	methodprefix	The prefix added to the request page for the
 					true method to invoke for the request type.
 					Default is "call", if unspecified.
-	 
+					
+	indexclass		The controller class to call if the request URL
+					does not have folders past the application folder
+					in the path (just file).
 -->
 
 <controllerroot 
@@ -202,6 +205,7 @@
 	prefix=""  
 	suffix="Controller"
 	methodprefix="call"  
+	indexclass=""  
 	/>
 
 </config>

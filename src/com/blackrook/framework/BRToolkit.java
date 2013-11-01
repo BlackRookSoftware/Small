@@ -39,7 +39,6 @@ import com.blackrook.lang.xml.XMLStructFactory;
  * The main manager class through which all things are
  * pooled and lent out to servlets that request it. 
  * @author Matthew Tropiano
- * TODO: Handle filter system.
  */
 public final class BRToolkit
 {
@@ -62,6 +61,7 @@ public final class BRToolkit
 	private static final String XML_CONTROLLERROOT_PREFIX = "prefix";
 	private static final String XML_CONTROLLERROOT_SUFFIX = "suffix";
 	private static final String XML_CONTROLLERROOT_METHODPREFIX = "methodprefix";
+	private static final String XML_CONTROLLERROOT_INDEXCONTROLLERCLASS = "indexclass";
 	
 	private static final String SQL_TYPE_MYSQL = "mysql";
 	private static final String SQL_TYPE_SQLITE = "sqlite";
@@ -100,6 +100,8 @@ public final class BRToolkit
 	private String controllerRootSuffix;
 	/** Controller root method prefix. */
 	private String controllerRootMethodPrefix;
+	/** Controller root index controller. */
+	private String controllerRootIndexClass;
 	/** Map of package to filter classes. */
 	private HashMap<String, String[]> filterEntries;
 
@@ -355,9 +357,7 @@ public final class BRToolkit
 	 */
 	BRControllerEntry getController(String path)
 	{
-		if (Common.isEmpty(path))
-			return null;
-		else if (controllerCache.containsKey(path))
+		if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
 		
 		synchronized (controllerCache)
@@ -368,6 +368,9 @@ public final class BRToolkit
 			
 			BRControllerEntry out = instantiateController(path);
 	
+			if (out == null)
+				return null;
+			
 			// add to cache and return.
 			controllerCache.put(path, out);
 			return out;
@@ -601,6 +604,7 @@ public final class BRToolkit
 		controllerRootPrefix = struct.getAttribute(XML_CONTROLLERROOT_PREFIX, "").trim();
 		controllerRootSuffix = struct.getAttribute(XML_CONTROLLERROOT_SUFFIX, "Controller").trim();
 		controllerRootMethodPrefix = struct.getAttribute(XML_CONTROLLERROOT_METHODPREFIX, "call").trim();
+		controllerRootIndexClass = struct.getAttribute(XML_CONTROLLERROOT_INDEXCONTROLLERCLASS).trim();
 		
 		if (pkg == null)
 			throw new BRFrameworkException("Controller root declaration must specify a root package.");
@@ -630,11 +634,16 @@ public final class BRToolkit
 	private BRControllerEntry instantiateController(String path)
 	{
 		String className = getClassNameForController(path);
+		
+		if (className == null)
+			return null;
+		
 		Class<?> controllerClass = null;
 		try {
 			controllerClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
+			return null;
+			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 			}
 		
 		BRControllerEntry out = null;
@@ -677,7 +686,7 @@ public final class BRToolkit
 		try {
 			filterClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
+			throw new BRFrameworkException("Class in filter declaration could not be found: "+className);
 			}
 		
 		BRFilter out = null;
@@ -698,22 +707,38 @@ public final class BRToolkit
 	{
 		String pkg = controllerRootPackage + ".";
 		String cls = "";
-		String[] dirs = path.substring(1).split("[/]+");
-		if (dirs.length > 1)
+		
+		if (Common.isEmpty(path))
 		{
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < dirs.length - 1; i++)
-			{
-				sb.append(dirs[i]);
-				sb.append('.');
-				}
-			pkg += sb.toString();
+			if (controllerRootIndexClass == null)
+				return null;
+			cls = controllerRootIndexClass;
+			return cls;
 			}
-		cls = dirs[dirs.length - 1];
-		
-		cls = controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
-		
-		return pkg + cls;
+		else
+		{
+			String[] dirs = path.substring(1).split("[/]+");
+			if (dirs.length > 1)
+			{
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < dirs.length - 1; i++)
+				{
+					sb.append(dirs[i]);
+					sb.append('.');
+					}
+				pkg += sb.toString();
+
+				}
+
+			cls = dirs[dirs.length - 1];
+			cls = pkg + controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
+			
+			// if class is index folder without using root URL, do not permit use.
+			if (cls.equals(controllerRootIndexClass))
+				return null;
+
+			return cls;
+			}
 		}
 	
 	// Get filters using path definitions.
