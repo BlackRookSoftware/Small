@@ -160,6 +160,7 @@ public final class BRToolkit
 	 * @param path the path to the resource to open.
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
 	 */
+	@SuppressWarnings("resource")
 	public InputStream getResourceAsStream(String path) throws IOException
 	{
 		File inFile = getApplicationFile(path);
