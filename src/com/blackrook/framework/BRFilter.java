@@ -1,9 +1,8 @@
-package com.blackrook.framework.filter;
+package com.blackrook.framework;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.framework.BRControlComponent;
 import com.blackrook.framework.multipart.Part;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.xml.XMLStruct;

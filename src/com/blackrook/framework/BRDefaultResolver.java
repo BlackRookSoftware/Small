@@ -1,4 +1,4 @@
-package com.blackrook.framework.resolver;
+package com.blackrook.framework;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,15 +8,19 @@ import java.io.InputStreamReader;
 import com.blackrook.commons.Common;
 import com.blackrook.framework.BRFrameworkException;
 import com.blackrook.framework.BRQueryResolver;
-import com.blackrook.framework.BRToolkitUser;
 import com.blackrook.framework.BRViewResolver;
 
 /**
  * Default resolver for all things. 
  * @author Matthew Tropiano
  */
-public class DefaultResolver extends BRToolkitUser implements BRQueryResolver, BRViewResolver
+public class BRDefaultResolver implements BRQueryResolver, BRViewResolver
 {
+	private BRToolkit getToolkit()
+	{
+		return BRToolkit.INSTANCE;
+		}
+	
 	/** Always returns false. */
 	@Override
 	public boolean dontCacheView(String keyword)

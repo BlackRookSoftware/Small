@@ -21,7 +21,7 @@ import com.blackrook.lang.xml.XMLWriter;
  * Black Rook Simple Servlet Framework.
  * @author Matthew Tropiano
  */
-public abstract class BRControlComponent extends BRToolkitUser
+public abstract class BRControlComponent
 {
 	/** MIME type for JSON */
 	public static final String CONTENT_MIME_TYPE_JSON = "application/json";
@@ -34,6 +34,11 @@ public abstract class BRControlComponent extends BRToolkitUser
 	protected BRControlComponent()
 	{
 		randomLagSimulator = new Random();
+		}
+	
+	private BRToolkit getToolkit()
+	{
+		return BRToolkit.INSTANCE;
 		}
 	
 	/**

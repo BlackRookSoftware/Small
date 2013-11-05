@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.framework.controller.BRController;
+import com.blackrook.framework.BRController;
 
 /**
  * Public methods with this annotation on {@link BRController} objects are

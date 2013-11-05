@@ -93,7 +93,7 @@
 -->
 
 <viewresolver 
-	class="com.blackrook.framework.resolver.DefaultViewResolver" 
+	class="com.blackrook.framework.BRDefaultResolver" 
 	/>
 
 <!-- 
@@ -115,7 +115,7 @@
 -->
 
 <queryresolver 
-	class="com.blackrook.framework.resolver.DefaultResolver" 
+	class="com.blackrook.framework.BRDefaultResolver" 
 	/>
 
 

@@ -31,7 +31,6 @@ import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
 import com.blackrook.db.sqlite.SQLiteUtils;
 import com.blackrook.framework.BRTransaction.Level;
-import com.blackrook.framework.filter.BRFilter;
 import com.blackrook.framework.util.BRUtil;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;

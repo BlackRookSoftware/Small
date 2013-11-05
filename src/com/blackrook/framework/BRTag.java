@@ -42,14 +42,6 @@ public abstract class BRTag extends BodyTagSupport
 		EndResponse(int eval) {this.eval = eval;}
 		}
 	
-	/**
-	 * Gets the Black Rook Framework Toolkit.
-	 */
-	public final BRToolkit getToolkit()
-	{
-		return BRToolkit.INSTANCE;
-		}
-
 	@Override
 	public final int doStartTag() throws JspException 
 	{

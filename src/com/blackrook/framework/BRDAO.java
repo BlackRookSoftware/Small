@@ -33,7 +33,7 @@ public abstract class BRDAO
 	/**
 	 * Gets the Black Rook Framework Toolkit.
 	 */
-	public final BRToolkit getToolkit()
+	private BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
 		}
