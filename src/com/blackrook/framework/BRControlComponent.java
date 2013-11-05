@@ -42,6 +42,38 @@ public abstract class BRControlComponent
 		}
 	
 	/**
+	 * Gets a file that is on the application path. 
+	 * @param path the path to the file to get.
+	 * @return a file representing the specified resource or null if it couldn't be found.
+	 */
+	public File getApplicationFile(String path)
+	{
+		return getToolkit().getApplicationFile(path);
+		}
+
+	/**
+	 * Gets a file path that is on the application path. 
+	 * @param relativepath the relative path to the file to get.
+	 * @return a file representing the specified resource or null if it couldn't be found.
+	 */
+	public String getApplicationFilePath(String relativepath)
+	{
+		return getToolkit().getApplicationFilePath(relativepath);
+		}
+
+	/**
+	 * Opens an input stream to a resource using a path relative to the
+	 * application context path. 
+	 * Outside users should not be able to access this!
+	 * @param path the path to the resource to open.
+	 * @return an open input stream to the specified resource or null if it couldn't be opened.
+	 */
+	public InputStream getResourceAsStream(String path) throws IOException
+	{
+		return getToolkit().getResourceAsStream(path);
+		}
+
+	/**
 	 * Includes the output of a view in the response.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
@@ -308,5 +340,7 @@ public abstract class BRControlComponent
 	{
 		Common.sleep(randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 :maxMillis));
 		}
+	
+	
 	
 }
