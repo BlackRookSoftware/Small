@@ -18,7 +18,7 @@ import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.xml.XMLStruct;
 
 /**
- * Controller type for all controller entry type.
+ * Controller type for all controller entry points.
  * @author Matthew Tropiano
  */
 public abstract class BRController extends BRControlComponent

@@ -8,7 +8,7 @@ import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.xml.XMLStruct;
 
 /**
- * All filters.
+ * All filters are extensions of this class.
  * @author Matthew Tropiano
  */
 public abstract class BRFilter extends BRControlComponent
