@@ -2,6 +2,7 @@ package com.blackrook.framework;
 
 import com.blackrook.db.QueryResult;
 import com.blackrook.framework.BRToolkit;
+import com.blackrook.framework.BRTransaction.Level;
 
 /**
  * Data access object for submitting database queries.
@@ -55,15 +56,29 @@ public abstract class BRDAO
 		}
 
 	/**
+	 * Generates a transaction for multiple queries in one set.
+	 * This transaction performs all of its queries through one connection.
+	 * The connection is held by this transaction until it is finished via {@link BRTransaction#finish()}.
+	 * @param transactionLevel the isolation level of the transaction.
+	 * @return a {@link BRTransaction} object to handle a contiguous transaction.
+	 * @throws BRFrameworkException if the transaction could not be created.
+	 */
+	protected BRTransaction startTransaction(Level transactionLevel)
+	{
+		return getToolkit().startTransaction(defaultSQLPool, transactionLevel);
+		}
+	
+	/**
 	 * Attempts to grab an available connection from the default 
 	 * servlet connection pool and performs a query.
-	 * @param query the query (by key) to execute.
+	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the ResultSet returned.
+	 * @return the QueryResult returned.
+	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	protected final QueryResult doQuery(String query, Object ... parameters)
+	protected final QueryResult doQuery(String queryKey, Object ... parameters)
 	{
-		return getToolkit().doQueryPooled(defaultSQLPool, query, parameters);
+		return getToolkit().doQueryPooled(defaultSQLPool, queryKey, parameters);
 		}
 
 	/**
@@ -72,7 +87,8 @@ public abstract class BRDAO
 	 * is a literal query - NOT a key that references a query.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the ResultSet returned.
+	 * @return the QueryResult returned.
+	 * @throws BRFrameworkException if the query causes an error.
 	 */
 	protected final QueryResult doQueryInline(String query, Object ... parameters)
 	{
@@ -82,13 +98,14 @@ public abstract class BRDAO
 	/**
 	 * Attempts to grab an available connection from the default 
 	 * servlet connection pool and performs an update query.
-	 * @param query the query statement to execute.
+	 * @param queryKey the query statement to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
+	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	protected final QueryResult doUpdateQuery(String query, Object ... parameters)
+	protected final QueryResult doUpdateQuery(String queryKey, Object ... parameters)
 	{
-		return getToolkit().doUpdateQueryPooled(defaultSQLPool, query, parameters);
+		return getToolkit().doUpdateQueryPooled(defaultSQLPool, queryKey, parameters);
 		}
 
 	/**
@@ -97,7 +114,8 @@ public abstract class BRDAO
 	 * is a literal query - NOT a key that references a query.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the ResultSet returned.
+	 * @return the QueryResult returned.
+	 * @throws BRFrameworkException if the query causes an error.
 	 */
 	protected final QueryResult doUpdateQueryInline(String query, Object ... parameters)
 	{

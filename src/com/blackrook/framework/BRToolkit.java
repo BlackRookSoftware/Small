@@ -30,6 +30,7 @@ import com.blackrook.db.DBUtil;
 import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
 import com.blackrook.db.sqlite.SQLiteUtils;
+import com.blackrook.framework.BRTransaction.Level;
 import com.blackrook.framework.filter.BRFilter;
 import com.blackrook.framework.util.BRUtil;
 import com.blackrook.lang.xml.XMLStruct;
@@ -210,91 +211,6 @@ public final class BRToolkit
 		}
 
 	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param queryKey the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 */
-	public QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doQueryPooledInline(poolname, query, parameters);
-		}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * Assumes that the query passed is an actual query and not a lookup key.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param query the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 */
-	public QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
-	{
-		Connection conn = null;
-		QueryResult result = null;		
-		try {
-			DBConnectionPool pool = connectionPool.get(poolname);
-			conn = pool.getAvailableConnection();
-			result = DBUtil.doQuery(conn, query, parameters);
-			conn.close(); // should release
-		} catch (SQLException e) {
-			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
-			}
-		return result;
-		}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs an update query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param queryKey the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 */
-	public QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doUpdateQueryPooledInline(poolname, query, parameters);
-		}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param query the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 */
-	public QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
-	{
-		Connection conn = null;
-		QueryResult result = null;
-		DBConnectionPool pool = connectionPool.get(poolname);
-		if (pool == null)
-			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
-		try {
-			conn = pool.getAvailableConnection();
-			result = DBUtil.doQueryUpdate(conn, query, parameters);
-			conn.close(); // should release
-		} catch (SQLException e) {
-			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
-			}
-		return result;
-		}
-
-	/**
 	 * Logs a message out via the servlet context.
 	 * @param message the formatted message to log.
 	 * @param args the arguments for the formatted message.
@@ -317,6 +233,122 @@ public final class BRToolkit
 		servletContext.log(String.format(message + "\n", args), throwable);
 		}
 
+	/**
+	 * Generates a transaction for multiple queries in one set.
+	 * This transaction performs all of its queries through one connection.
+	 * The connection is held by this transaction until it is finished via {@link BRTransaction#finish()}.
+	 * @param poolname the name of the connection pool to use.
+	 * @param transactionLevel the isolation level of the transaction.
+	 * @return a {@link BRTransaction} object to handle a contiguous transaction.
+	 * @throws BRFrameworkException if the transaction could not be created.
+	 */
+	BRTransaction startTransaction(String poolname, Level transactionLevel)
+	{
+		DBConnectionPool pool = connectionPool.get(poolname);
+		if (pool == null)
+			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
+		
+		Connection connection = null;
+		try {
+			connection = pool.getAvailableConnection();
+		} catch (InterruptedException e) {
+			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+			}
+		
+		return new BRTransaction(this, connection, transactionLevel);
+		}
+	
+	/**
+	 * Attempts to grab an available connection from the pool and performs a query.
+	 * @param poolname the SQL connection pool name to use.
+	 * @param queryKey the query statement to execute (by key).
+	 * @param parameters list of parameters for parameterized queries.
+	 * @return the update result returned (usually number of rows affected).
+	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 */
+	QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
+	{
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
+		return doQueryPooledInline(poolname, query, parameters);
+		}
+
+	/**
+	 * Attempts to grab an available connection from the pool and performs a query.
+	 * Assumes that the query passed is an actual query and not a lookup key.
+	 * @param poolname the SQL connection pool name to use.
+	 * @param query the query statement to execute.
+	 * @param parameters list of parameters for parameterized queries.
+	 * @return the update result returned (usually number of rows affected).
+	 * @throws BRFrameworkException if the query causes an error.
+	 */
+	QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
+	{
+		Connection conn = null;
+		QueryResult result = null;		
+		try {
+			DBConnectionPool pool = connectionPool.get(poolname);
+			if (pool == null)
+				throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
+			conn = pool.getAvailableConnection();
+			result = DBUtil.doQuery(conn, query, parameters);
+			conn.close(); // should release
+		} catch (SQLException e) {
+			throw new BRFrameworkException(e);
+		} catch (InterruptedException e) {
+			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+		} finally {
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
+			}
+		return result;
+		}
+
+	/**
+	 * Attempts to grab an available connection from the pool and performs an update query.
+	 * @param poolname the SQL connection pool name to use.
+	 * @param queryKey the query statement to execute (by key).
+	 * @param parameters list of parameters for parameterized queries.
+	 * @return the update result returned (usually number of rows affected).
+	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 */
+	QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
+	{
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
+		return doUpdateQueryPooledInline(poolname, query, parameters);
+		}
+
+	/**
+	 * Attempts to grab an available connection from the pool and performs a query.
+	 * @param poolname the SQL connection pool name to use.
+	 * @param query the query statement to execute.
+	 * @param parameters list of parameters for parameterized queries.
+	 * @return the update result returned (usually number of rows affected).
+	 * @throws BRFrameworkException if the query causes an error.
+	 */
+	QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
+	{
+		Connection conn = null;
+		QueryResult result = null;
+		DBConnectionPool pool = connectionPool.get(poolname);
+		if (pool == null)
+			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
+		try {
+			conn = pool.getAvailableConnection();
+			result = DBUtil.doQueryUpdate(conn, query, parameters);
+			conn.close(); // should release
+		} catch (SQLException e) {
+			throw new BRFrameworkException(e);
+		} catch (InterruptedException e) {
+			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+		} finally {
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
+			}
+		return result;
+		}
+	
 	/**
 	 * Returns a list of view names.
 	 */
@@ -680,7 +712,6 @@ public final class BRToolkit
 		}
 	
 	// Creates a filter by its entry.
-	// TODO: Rewrite to use a better search-first filter.
 	private BRFilter instantiateFilter(String className)
 	{			
 		Class<?> filterClass = null;
