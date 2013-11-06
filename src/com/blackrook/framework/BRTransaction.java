@@ -11,9 +11,8 @@ import com.blackrook.db.QueryResult;
  * A transaction object that holds a connection that guarantees an isolation level
  * of some kind. Queries can be made through this object until it has been released. 
  * <p>
- * This object's {@link #finalize()} method attempts to finish the transaction if it hasn't already
- * been finished. If this happens, the results of this transaction my be undefined or
- * will vary depending on SQL implementation.
+ * This object's {@link #finalize()} method attempts to roll back the transaction if it hasn't already
+ * been finished.
  * @author Matthew Tropiano
  */
 public final class BRTransaction
@@ -132,7 +131,7 @@ public final class BRTransaction
 	
 	/**
 	 * Commits the actions completed so far in this transaction.
-	 * This is also called
+	 * This is also called during {@link #finish()}.
 	 * @throws IllegalStateException if this transaction was already finished.
 	 * @throws BRFrameworkException if this causes a database error.
 	 */
@@ -296,7 +295,7 @@ public final class BRTransaction
 	protected void finalize() throws Throwable
 	{
 		if (!isFinished())
-			finish();
+			rollback();
 		super.finalize();
 		}
 	

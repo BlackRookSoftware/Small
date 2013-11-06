@@ -52,7 +52,7 @@ public abstract class BRTag extends BodyTagSupport
 		}
 
 	@Override
-	public int doEndTag() throws JspException
+	public final int doEndTag() throws JspException
 	{
 		return onEnd(
 			(HttpServletRequest)pageContext.getRequest(),
