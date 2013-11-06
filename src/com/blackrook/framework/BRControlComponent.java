@@ -46,7 +46,7 @@ public abstract class BRControlComponent
 	 * @param path the path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	public File getApplicationFile(String path)
+	protected final File getApplicationFile(String path)
 	{
 		return getToolkit().getApplicationFile(path);
 		}
@@ -56,7 +56,7 @@ public abstract class BRControlComponent
 	 * @param relativepath the relative path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	public String getApplicationFilePath(String relativepath)
+	protected final String getApplicationFilePath(String relativepath)
 	{
 		return getToolkit().getApplicationFilePath(relativepath);
 		}
@@ -68,7 +68,7 @@ public abstract class BRControlComponent
 	 * @param path the path to the resource to open.
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
 	 */
-	public InputStream getResourceAsStream(String path) throws IOException
+	protected final InputStream getResourceAsStream(String path) throws IOException
 	{
 		return getToolkit().getResourceAsStream(path);
 		}
