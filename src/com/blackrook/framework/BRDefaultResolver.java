@@ -11,7 +11,7 @@ import com.blackrook.framework.BRQueryResolver;
 import com.blackrook.framework.BRViewResolver;
 
 /**
- * Default resolver for all things. 
+ * Default resolver for queries and views. 
  * @author Matthew Tropiano
  */
 public class BRDefaultResolver implements BRQueryResolver, BRViewResolver
