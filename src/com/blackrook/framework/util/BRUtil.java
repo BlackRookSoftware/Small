@@ -496,11 +496,10 @@ public final class BRUtil implements EntityTables
 	 * @return a HashMap containing a map of parameter to String value of parameter. 
 	 * The parameters in the map are ones that match the prefix.
 	 */
-	@SuppressWarnings("unchecked")
-	public static HashMap<String, String> getParameters(HttpServletRequest request, String prefix)
+	public static HashMap<String, String[]> getParameters(HttpServletRequest request, String prefix)
 	{
-		HashMap<String, String> out = new HashMap<String, String>();
-		for (Map.Entry<String, String> entry : ((Map<String, String>)request.getParameterMap()).entrySet())
+		HashMap<String, String[]> out = new HashMap<String, String[]>();
+		for (Map.Entry<String, String[]> entry : ((Map<String, String[]>)request.getParameterMap()).entrySet())
 			if (entry.getKey().startsWith(prefix))
 				out.put(entry.getKey(), entry.getValue());
 		return out;
