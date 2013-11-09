@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,9 +36,14 @@ public final class BRDispatcherServlet extends HttpServlet
 	private static final long serialVersionUID = 4733160851384500294L;
 
 	@Override
-	public final void doGet(HttpServletRequest request, HttpServletResponse response)
+	public void init(ServletConfig config) throws ServletException
 	{
 		BRToolkit.createToolkit(getServletContext());
+		}
+	
+	@Override
+	public final void doGet(HttpServletRequest request, HttpServletResponse response)
+	{
 		String path = getPath(request);
 		BRControllerEntry entry = getControllerUsingPath(path);
 		if (entry == null)
@@ -58,7 +65,6 @@ public final class BRDispatcherServlet extends HttpServlet
 	@Override
 	public final void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
-		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
 		BRControllerEntry entry = getControllerUsingPath(path);
 		if (entry == null)
@@ -164,7 +170,6 @@ public final class BRDispatcherServlet extends HttpServlet
 	@Override
 	public final void doHead(HttpServletRequest request, HttpServletResponse response)
 	{
-		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
 		BRControllerEntry entry = getControllerUsingPath(path);
 		if (entry == null)
@@ -186,7 +191,6 @@ public final class BRDispatcherServlet extends HttpServlet
 	@Override
 	public final void doPut(HttpServletRequest request, HttpServletResponse response)
 	{
-		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
 		BRControllerEntry entry = getControllerUsingPath(path);
 		if (entry == null)
@@ -208,7 +212,6 @@ public final class BRDispatcherServlet extends HttpServlet
 	@Override
 	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
 	{
-		BRToolkit.createToolkit(getServletContext());
 		String path = getPath(request);
 		BRControllerEntry entry = getControllerUsingPath(path);
 		if (entry == null)

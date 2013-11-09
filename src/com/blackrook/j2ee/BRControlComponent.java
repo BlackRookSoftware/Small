@@ -67,6 +67,7 @@ public abstract class BRControlComponent
 	 * Outside users should not be able to access this!
 	 * @param path the path to the resource to open.
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
+	 * @throws IOException if the stream cannot be opened.
 	 */
 	protected final InputStream getResourceAsStream(String path) throws IOException
 	{
@@ -210,7 +211,7 @@ public abstract class BRControlComponent
 
 	/**
 	 * Sends the contents of a file to the client.
-	 * Via this method, most browsers will be attempt to open the file in-browser,
+	 * Via this method, most browsers will attempt to open the file in-browser,
 	 * as this has no "Content-Disposition" attached to it.
 	 * The file's MIME type is guessed by its extension.
 	 * @param response servlet response object.
@@ -223,7 +224,7 @@ public abstract class BRControlComponent
 
 	/**
 	 * Sends contents of a file to the client.
-	 * Via this method, most browsers will be attempt to open the file in-browser,
+	 * Via this method, most browsers will attempt to open the file in-browser,
 	 * as this has no "Content-Disposition" attached to it.
 	 * @param response servlet response object.
 	 * @param mimeType the MIME Type of the content to send.
