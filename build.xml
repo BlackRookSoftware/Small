@@ -160,11 +160,11 @@
         	doctitle="Black Rook Simple J2EE Framework" 
         	nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" 
         	packagenames="
-        		com.blackrook.framework,
-				com.blackrook.framework.controller,
-				com.blackrook.framework.data,
-    			com.blackrook.framework.filter,
-				com.blackrook.framework.resolver,
+        		com.blackrook.j2ee,
+				com.blackrook.j2ee.annotation,
+				com.blackrook.j2ee.multipart,
+    			com.blackrook.j2ee.types,
+				com.blackrook.j2ee.util,
     			"
         	source="1.6" 
         	sourcepath="${src.dir}" 
