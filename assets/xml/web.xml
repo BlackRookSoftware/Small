@@ -1,9 +1,12 @@
-<!-- Required Servlets -->
+<!-- Black Rook J2EE Framework -->
+
+<listener>
+	<listener-class>com.blackrook.j2ee.BRInitializer</listener-class>
+</listener>
 
 <servlet>
 	<servlet-name>BRDispatcherServlet</servlet-name>
-	<servlet-class>com.blackrook.framework.BRDispatcherServlet</servlet-class>
-	<load-on-startup>1</load-on-startup>
+	<servlet-class>com.blackrook.j2ee.BRDispatcherServlet</servlet-class>
 </servlet>
 <servlet-mapping>
 	<servlet-name>BRDispatcherServlet</servlet-name>

@@ -501,7 +501,7 @@ public final class BRToolkit
 		filterEntries = new HashMap<String, String[]>();
 		filterCache = new HashMap<String, BRFilter>();
 		
-		realAppPath = context.getRealPath(".");
+		realAppPath = context.getRealPath("/");
 		
 		XMLStruct xml = null;
 		InputStream in = null;

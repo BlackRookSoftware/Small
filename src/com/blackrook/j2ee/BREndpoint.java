@@ -70,11 +70,15 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param message the message string to pass back to the connected client.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendText(final Session session, String message) throws IOException
+	protected final void sendText(final Session session, String message)
 	{
-		session.getBasicRemote().sendText(message);
+		try {
+			session.getBasicRemote().sendText(message);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		}
 	
 	/**
@@ -84,11 +88,15 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param message the (partial) message string to pass back to the connected client.
 	 * @param isLast if true, tells the client that this is the final part. if false, it is not the last part.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendTextPartial(final Session session, String message, boolean isLast) throws IOException
+	protected final void sendTextPartial(final Session session, String message, boolean isLast)
 	{
-		session.getBasicRemote().sendText(message, isLast);
+		try {
+			session.getBasicRemote().sendText(message, isLast);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		}
 
 	/**
@@ -96,11 +104,15 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendBinary(final Session session, ByteBuffer buffer) throws IOException
+	protected final void sendBinary(final Session session, ByteBuffer buffer)
 	{
-		session.getBasicRemote().sendBinary(buffer);
+		try {
+			session.getBasicRemote().sendBinary(buffer);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		}
 	
 	/**
@@ -109,11 +121,15 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendBinaryPartial(final Session session, ByteBuffer buffer, boolean isLast) throws IOException
+	protected final void sendBinaryPartial(final Session session, ByteBuffer buffer, boolean isLast)
 	{
-		session.getBasicRemote().sendBinary(buffer, isLast);
+		try {
+			session.getBasicRemote().sendBinary(buffer, isLast);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}			
 		}
 	
 	/**
@@ -123,11 +139,15 @@ public abstract class BREndpoint
 	 * before it is sent. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendBinary(final Session session, byte[] buffer) throws IOException
+	protected final void sendBinary(final Session session, byte[] buffer)
 	{
-		sendBinary(session, ByteBuffer.wrap(buffer));
+		try {
+			sendBinary(session, ByteBuffer.wrap(buffer));
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		}
 	
 	/**
@@ -138,11 +158,15 @@ public abstract class BREndpoint
 	 * before it is sent. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendBinaryPartial(final Session session, byte[] buffer, boolean isLast) throws IOException
+	protected final void sendBinaryPartial(final Session session, byte[] buffer, boolean isLast)
 	{
-		sendBinaryPartial(session, ByteBuffer.wrap(buffer), isLast);
+		try {
+			sendBinaryPartial(session, ByteBuffer.wrap(buffer), isLast);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		}
 	
 	/**
@@ -151,12 +175,16 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final void sendJSON(final Session session, JSONObject object) throws IOException
+	protected final void sendJSON(final Session session, JSONObject object)
 	{
 		StringWriter sw = new StringWriter();
-		JSONWriter.writeJSON(object, sw);
+		try {
+			JSONWriter.writeJSON(object, sw);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		sendText(session, sw.toString());
 		}
 	
@@ -166,14 +194,17 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
-	 * @throws IOException on a send error.
-	 * @throws JSONConversionException if an error occurs during conversion.
+	 * @throws BRFrameworkException on a send error or if an error occurs during conversion.
 	 */
-	protected final void sendJSON(final Session session, Object object) throws IOException
+	protected final void sendJSON(final Session session, Object object)
 	{
-		StringWriter sw = new StringWriter();
-		JSONWriter.writeJSON(JSONObject.create(object), sw);
-		sendText(session, sw.toString());
+		try {
+			StringWriter sw = new StringWriter();
+			JSONWriter.writeJSON(JSONObject.create(object), sw);
+			sendText(session, sw.toString());
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		}
 	
 	/**
@@ -183,19 +214,23 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param in the input stream to read from.
 	 * @param bufferSize the size of the buffer to use during the send.
-	 * @throws IOException on a send or read error.
+	 * @throws BRFrameworkException on a send or read error.
 	 */
-	protected final void sendData(final Session session, InputStream in, int bufferSize) throws IOException
+	protected final void sendData(final Session session, InputStream in, int bufferSize)
 	{
-		ByteBuffer bb = ByteBuffer.allocate(bufferSize);
-		byte[] buffer = new byte[bufferSize];
-		int buf = 0;
-		while ((buf = in.read(buffer)) >= 0)
-		{
-			bb.put(buffer);
-			bb.rewind();
-			sendBinaryPartial(session, buffer, buf < bufferSize);
-			bb.rewind();
+		try {
+			ByteBuffer bb = ByteBuffer.allocate(bufferSize);
+			byte[] buffer = new byte[bufferSize];
+			int buf = 0;
+			while ((buf = in.read(buffer)) >= 0)
+			{
+				bb.put(buffer);
+				bb.rewind();
+				sendBinaryPartial(session, buffer, buf < bufferSize);
+				bb.rewind();
+				}
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
 			}
 		}
 	
@@ -205,16 +240,16 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param file the file to read.
 	 * @param bufferSize the size of the buffer to use during the send.
-	 * @throws IOException on a send or read error.
+	 * @throws BRFrameworkException on a send or read error.
 	 */
-	protected final void sendFileContents(final Session session, File file, int bufferSize) throws IOException
+	protected final void sendFileContents(final Session session, File file, int bufferSize)
 	{
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
 			sendData(session, fis, bufferSize);
 		} catch (IOException e) {
-			throw e;
+			throw new BRFrameworkException(e);
 		} finally {
 			Common.close(fis);
 			}
@@ -225,9 +260,9 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param message the message string to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final Future<Void> sendAsyncText(final Session session, String message) throws IOException
+	protected final Future<Void> sendAsyncText(final Session session, String message)
 	{
 		return session.getAsyncRemote().sendText(message);
 		}
@@ -239,7 +274,7 @@ public abstract class BREndpoint
 	 * @return the {@link Future} object to monitor the sent request after the call.
 	 * @throws IOException on a send error.
 	 */
-	protected final Future<Void> sendAsyncBinary(final Session session, ByteBuffer buffer) throws IOException
+	protected final Future<Void> sendAsyncBinary(final Session session, ByteBuffer buffer)
 	{
 		return session.getAsyncRemote().sendBinary(buffer);
 		}
@@ -251,9 +286,9 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final Future<Void> sendAsyncBinary(final Session session, byte[] buffer) throws IOException
+	protected final Future<Void> sendAsyncBinary(final Session session, byte[] buffer)
 	{
 		return sendAsyncBinary(session, ByteBuffer.wrap(buffer));
 		}
@@ -264,12 +299,16 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws IOException on a send error.
+	 * @throws BRFrameworkException on a send error.
 	 */
-	protected final Future<Void> sendAsyncJSON(final Session session, JSONObject object) throws IOException
+	protected final Future<Void> sendAsyncJSON(final Session session, JSONObject object)
 	{
 		StringWriter sw = new StringWriter();
-		JSONWriter.writeJSON(object, sw);
+		try {
+			JSONWriter.writeJSON(object, sw);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		return sendAsyncText(session, sw.toString());
 		}
 
@@ -279,13 +318,16 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws IOException on a send error.
-	 * @throws JSONConversionException if an error occurs during conversion.
+	 * @throws BRFrameworkException on a send error or if an error occurs during conversion.
 	 */
-	protected final Future<Void> sendAsyncJSON(final Session session, Object object) throws IOException
+	protected final Future<Void> sendAsyncJSON(final Session session, Object object)
 	{
 		StringWriter sw = new StringWriter();
-		JSONWriter.writeJSON(JSONObject.create(object), sw);
+		try {
+			JSONWriter.writeJSON(JSONObject.create(object), sw);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		return sendAsyncText(session, sw.toString());
 		}
 	
