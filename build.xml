@@ -30,7 +30,7 @@
 	<property name="project.appendix" value="BUILD" />
 	<property name="project.versionnumber" value="" />
 	<property name="project.version" value="${project.build.date}-${project.versionnumber}${project.appendix}" />
-	<property name="project.archive" value="blackrook-simpleframework-j2ee" />
+	<property name="project.archive" value="blackrook-j2ee-simpleframework" />
 	
 	<!-- Folders and File Names -->
 	<property name="S" value="${path.separator}" />

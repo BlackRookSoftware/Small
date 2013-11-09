@@ -61,31 +61,9 @@ public abstract class BRTag extends BodyTagSupport
 		}
 	
 	/**
-	 * Called at the start of the tag evaluation.
-	 * @param request the servlet request.
-	 * @param response the servlet response.
-	 * @return a {@link StartResponse}.  
-	 */
-	public StartResponse onStart(HttpServletRequest request, HttpServletResponse response)
-	{
-		return StartResponse.SKIP_BODY;
-		}
-
-	/**
-	 * Called at the end of the tag evaluation.
-	 * @param request the servlet request.
-	 * @param response the servlet response.
-	 * @return an {@link EndResponse}.  
-	 */
-	public EndResponse onEnd(HttpServletRequest request, HttpServletResponse response)
-	{
-		return EndResponse.EVALUATE_PAGE;
-		}
-
-	/**
 	 * Returns the writer for writing directly to the page's output stream. 
 	 */
-	public JspWriter getWriter()
+	public final JspWriter getWriter()
 	{
 		return pageContext.getOut();
 		}
@@ -97,7 +75,7 @@ public abstract class BRTag extends BodyTagSupport
 	 * @return a typecast object on the application scope.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
 	 */
-	public <T> T getPageBean(Class<T> clazz, String name)
+	public final <T> T getPageBean(Class<T> clazz, String name)
 	{
 		return getPageBean(clazz, name, true);
 		}
@@ -111,7 +89,7 @@ public abstract class BRTag extends BodyTagSupport
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
 	 * @throws BRFrameworkException if the object cannot be instantiated for any reason.
 	 */
-	public <T> T getPageBean(Class<T> clazz, String name, boolean create)
+	public final <T> T getPageBean(Class<T> clazz, String name, boolean create)
 	{
 		Object obj = pageContext.getAttribute(name);
 		if (obj == null)
@@ -138,6 +116,30 @@ public abstract class BRTag extends BodyTagSupport
 	public final void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
+		}
+
+	/**
+	 * Called at the start of the tag evaluation.
+	 * Implementors are encouraged to override this method.
+	 * @param request the servlet request.
+	 * @param response the servlet response.
+	 * @return a {@link StartResponse}.  
+	 */
+	public StartResponse onStart(HttpServletRequest request, HttpServletResponse response)
+	{
+		return StartResponse.SKIP_BODY;
+		}
+
+	/**
+	 * Called at the end of the tag evaluation.
+	 * Implementors are encouraged to override this method.
+	 * @param request the servlet request.
+	 * @param response the servlet response.
+	 * @return an {@link EndResponse}.  
+	 */
+	public EndResponse onEnd(HttpServletRequest request, HttpServletResponse response)
+	{
+		return EndResponse.EVALUATE_PAGE;
 		}
 
 
