@@ -11,7 +11,6 @@ import java.util.concurrent.Future;
 import javax.websocket.Session;
 
 import com.blackrook.commons.Common;
-import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 
