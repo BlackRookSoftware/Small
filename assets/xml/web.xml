@@ -3,7 +3,7 @@
 <servlet>
 	<servlet-name>BRDispatcherServlet</servlet-name>
 	<servlet-class>com.blackrook.framework.BRDispatcherServlet</servlet-class>
-	<load-on-startup />
+	<load-on-startup>1</load-on-startup>
 </servlet>
 <servlet-mapping>
 	<servlet-name>BRDispatcherServlet</servlet-name>

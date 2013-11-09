@@ -38,7 +38,8 @@ public final class BRDispatcherServlet extends HttpServlet
 	@Override
 	public void init(ServletConfig config) throws ServletException
 	{
-		BRToolkit.createToolkit(getServletContext());
+		super.init(config);
+		BRToolkit.createToolkit(config.getServletContext());
 		}
 	
 	@Override
