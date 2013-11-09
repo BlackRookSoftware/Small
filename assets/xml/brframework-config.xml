@@ -93,7 +93,7 @@
 -->
 
 <viewresolver 
-	class="com.blackrook.framework.BRDefaultResolver" 
+	class="com.blackrook.j2ee.BRDefaultResolver" 
 	/>
 
 <!-- 
@@ -115,7 +115,7 @@
 -->
 
 <queryresolver 
-	class="com.blackrook.framework.BRDefaultResolver" 
+	class="com.blackrook.j2ee.BRDefaultResolver" 
 	/>
 
 
@@ -135,7 +135,7 @@
 
 	classes			The list of comma (or space, or both) separated classes
 					to call (in order) before the controller is called. The
-					classes must extend com.blackrook.framework.BRFilter.
+					classes must extend com.blackrook.j2ee.BRFilter.
 					If any of the filters return false (via onFilter(...)),
 					the filter chain is stopped. If all return true, the
 					controller is called.
@@ -145,7 +145,7 @@
 <!--
 <filterpath 
 	package="com.add.path.here" 
-	classes="com.blackrook.framework.filter.BRFilter" 
+	classes="com.blackrook.j2ee.filter.BRFilter" 
 	/>
 -->
 
