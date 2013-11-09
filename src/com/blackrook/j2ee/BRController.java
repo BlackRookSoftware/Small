@@ -8,12 +8,12 @@
  * Contributors:
  *     Matt Tropiano - initial API and implementation
  ******************************************************************************/
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.framework.multipart.Part;
+import com.blackrook.j2ee.multipart.Part;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.xml.XMLStruct;
 

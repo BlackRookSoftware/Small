@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,9 +6,9 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
 import com.blackrook.commons.Common;
-import com.blackrook.framework.BRFrameworkException;
-import com.blackrook.framework.BRQueryResolver;
-import com.blackrook.framework.BRViewResolver;
+import com.blackrook.j2ee.BRFrameworkException;
+import com.blackrook.j2ee.BRQueryResolver;
+import com.blackrook.j2ee.BRViewResolver;
 
 /**
  * Default resolver for queries and views. 

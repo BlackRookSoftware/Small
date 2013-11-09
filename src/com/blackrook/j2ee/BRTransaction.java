@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import java.sql.Connection;
 import java.sql.SQLException;

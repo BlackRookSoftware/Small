@@ -8,7 +8,7 @@
  * Contributors:
  *     Matt Tropiano - initial API and implementation
  ******************************************************************************/
-package com.blackrook.framework.types;
+package com.blackrook.j2ee.types;
 
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 

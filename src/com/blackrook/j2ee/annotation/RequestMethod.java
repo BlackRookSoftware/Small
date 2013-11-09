@@ -1,8 +1,9 @@
-package com.blackrook.framework.annotation;
+package com.blackrook.j2ee.annotation;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import com.blackrook.framework.multipart.Part;
+
+import com.blackrook.j2ee.multipart.Part;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.xml.XMLStruct;
 

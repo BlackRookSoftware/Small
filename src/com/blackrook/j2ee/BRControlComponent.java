@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.commons.Common;
-import com.blackrook.framework.util.BRUtil;
+import com.blackrook.j2ee.util.BRUtil;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 import com.blackrook.lang.xml.XMLStruct;

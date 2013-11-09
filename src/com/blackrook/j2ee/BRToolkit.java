@@ -8,7 +8,7 @@
  * Contributors:
  *     Matt Tropiano - initial API and implementation
  ******************************************************************************/
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,8 +30,8 @@ import com.blackrook.db.DBUtil;
 import com.blackrook.db.QueryResult;
 import com.blackrook.db.mysql.MySQLUtils;
 import com.blackrook.db.sqlite.SQLiteUtils;
-import com.blackrook.framework.BRTransaction.Level;
-import com.blackrook.framework.util.BRUtil;
+import com.blackrook.j2ee.BRTransaction.Level;
+import com.blackrook.j2ee.util.BRUtil;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
 

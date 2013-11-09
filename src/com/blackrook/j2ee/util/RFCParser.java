@@ -1,4 +1,4 @@
-package com.blackrook.framework.util;
+package com.blackrook.j2ee.util;
 
 /**
  * Parser for lines that are broken by RFC-standard style text lines.

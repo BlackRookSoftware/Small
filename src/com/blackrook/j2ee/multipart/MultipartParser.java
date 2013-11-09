@@ -1,4 +1,4 @@
-package com.blackrook.framework.multipart;
+package com.blackrook.j2ee.multipart;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
-import com.blackrook.framework.util.BRUtil;
-import com.blackrook.framework.util.RFCParser;
+import com.blackrook.j2ee.util.BRUtil;
+import com.blackrook.j2ee.util.RFCParser;
 
 /**
  * Parser for multipart form requests.

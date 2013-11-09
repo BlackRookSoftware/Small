@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

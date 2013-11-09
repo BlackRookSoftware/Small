@@ -1,4 +1,4 @@
-package com.blackrook.framework.util;
+package com.blackrook.j2ee.util;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -18,8 +18,8 @@ import com.blackrook.commons.TypeProfile;
 import com.blackrook.commons.TypeProfile.MethodSignature;
 import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.framework.BRFrameworkException;
-import com.blackrook.framework.types.BRMIMETypes;
+import com.blackrook.j2ee.BRFrameworkException;
+import com.blackrook.j2ee.types.BRMIMETypes;
 import com.blackrook.lang.util.EntityTables;
 
 /**

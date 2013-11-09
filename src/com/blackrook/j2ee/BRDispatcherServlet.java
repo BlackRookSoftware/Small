@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +14,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import com.blackrook.commons.Reflect;
-import com.blackrook.framework.annotation.RequestMethod;
-import com.blackrook.framework.multipart.MultipartParser;
-import com.blackrook.framework.multipart.MultipartParserException;
-import com.blackrook.framework.multipart.Part;
-import com.blackrook.framework.util.RFCParser;
+import com.blackrook.j2ee.annotation.RequestMethod;
+import com.blackrook.j2ee.multipart.MultipartParser;
+import com.blackrook.j2ee.multipart.MultipartParserException;
+import com.blackrook.j2ee.multipart.Part;
+import com.blackrook.j2ee.util.RFCParser;
 import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONReader;

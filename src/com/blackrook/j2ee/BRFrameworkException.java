@@ -8,7 +8,7 @@
  * Contributors:
  *     Matt Tropiano - initial API and implementation
  ******************************************************************************/
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 /**
  * An exception that is thrown when the framework finds a problem.

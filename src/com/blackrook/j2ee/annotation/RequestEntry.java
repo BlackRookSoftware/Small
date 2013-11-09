@@ -1,11 +1,11 @@
-package com.blackrook.framework.annotation;
+package com.blackrook.j2ee.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.framework.BRController;
+import com.blackrook.j2ee.BRController;
 
 /**
  * Public methods with this annotation on {@link BRController} objects are

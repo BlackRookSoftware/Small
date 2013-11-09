@@ -1,8 +1,8 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import com.blackrook.db.QueryResult;
-import com.blackrook.framework.BRToolkit;
-import com.blackrook.framework.BRTransaction.Level;
+import com.blackrook.j2ee.BRToolkit;
+import com.blackrook.j2ee.BRTransaction.Level;
 
 /**
  * Data access object for submitting database queries.

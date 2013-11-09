@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 /**
  * Classes that implement this interface return a path to a view

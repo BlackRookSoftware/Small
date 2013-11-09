@@ -1,4 +1,4 @@
-package com.blackrook.framework;
+package com.blackrook.j2ee;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.linkedlist.Queue;
-import com.blackrook.framework.annotation.RequestEntry;
-import com.blackrook.framework.annotation.RequestMethod;
-import com.blackrook.framework.multipart.Part;
-import com.blackrook.framework.util.BRUtil;
+import com.blackrook.j2ee.annotation.RequestEntry;
+import com.blackrook.j2ee.annotation.RequestMethod;
+import com.blackrook.j2ee.multipart.Part;
+import com.blackrook.j2ee.util.BRUtil;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.xml.XMLStruct;
 
