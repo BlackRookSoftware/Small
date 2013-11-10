@@ -28,7 +28,6 @@ import com.blackrook.lang.xml.XMLStructFactory;
 /**
  * The main dispatcher servlet for the controller portion of the framework.
  * @author Matthew Tropiano
- * FIXME: Create toolkit on load somehow. http://stackoverflow.com/questions/3289737/load-on-startup-tomcat
  */
 public final class BRDispatcherServlet extends HttpServlet
 {
