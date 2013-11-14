@@ -4,8 +4,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
-import com.blackrook.db.DBUtil;
-import com.blackrook.db.QueryResult;
+import com.blackrook.sql.SQLUtil;
+import com.blackrook.sql.SQLResult;
 
 /**
  * A transaction object that holds a connection that guarantees an isolation level
@@ -225,10 +225,10 @@ public final class BRTransaction
 	 * Performs a query on this transaction.
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	public QueryResult doQuery(String queryKey, Object ... parameters)
+	public SQLResult doQuery(String queryKey, Object ... parameters)
 	{
 		String query = toolkit.getQueryByName(queryKey);
 		if (query == null)
@@ -242,14 +242,14 @@ public final class BRTransaction
 	 * is a literal query - NOT a key that references a query.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query causes an error.
 	 */
-	public QueryResult doQueryInline(String query, Object ... parameters)
+	public SQLResult doQueryInline(String query, Object ... parameters)
 	{
-		QueryResult result = null;
+		SQLResult result = null;
 		try {
-			result = DBUtil.doQuery(connection, query, parameters); 
+			result = SQLUtil.doQuery(connection, query, parameters); 
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
 			}
@@ -338,7 +338,7 @@ public final class BRTransaction
 	 * @param type the class type to instantiate.
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
@@ -434,7 +434,7 @@ public final class BRTransaction
 	 * @param type the class type to instantiate.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
@@ -442,7 +442,7 @@ public final class BRTransaction
 	{
 		T[] result = null;
 		try {
-			result = DBUtil.doQuery(type, connection, query, parameters); 
+			result = SQLUtil.doQuery(type, connection, query, parameters); 
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
 			}
@@ -456,7 +456,7 @@ public final class BRTransaction
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	public QueryResult doUpdateQuery(String queryKey, Object ... parameters)
+	public SQLResult doUpdateQuery(String queryKey, Object ... parameters)
 	{
 		String query = toolkit.getQueryByName(queryKey);
 		if (query == null)
@@ -470,14 +470,14 @@ public final class BRTransaction
 	 * is a literal query - NOT a key that references a query.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query causes an error.
 	 */
-	public QueryResult doUpdateQueryInline(String query, Object ... parameters)
+	public SQLResult doUpdateQueryInline(String query, Object ... parameters)
 	{
-		QueryResult result = null;
+		SQLResult result = null;
 		try {
-			result = DBUtil.doQueryUpdate(connection, query, parameters); 
+			result = SQLUtil.doQueryUpdate(connection, query, parameters); 
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
 			}

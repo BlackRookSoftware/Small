@@ -24,16 +24,14 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
-import com.blackrook.db.DBConnectionPool;
-import com.blackrook.db.DBConnector;
-import com.blackrook.db.DBUtil;
-import com.blackrook.db.QueryResult;
-import com.blackrook.db.mysql.MySQLUtils;
-import com.blackrook.db.sqlite.SQLiteUtils;
 import com.blackrook.j2ee.BRTransaction.Level;
 import com.blackrook.j2ee.util.BRUtil;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
+import com.blackrook.sql.SQLConnectionPool;
+import com.blackrook.sql.SQLConnection;
+import com.blackrook.sql.SQLUtil;
+import com.blackrook.sql.SQLResult;
 
 /**
  * The main manager class through which all things are
@@ -63,16 +61,12 @@ public final class BRToolkit
 	private static final String XML_CONTROLLERROOT_METHODPREFIX = "methodprefix";
 	private static final String XML_CONTROLLERROOT_INDEXCONTROLLERCLASS = "indexclass";
 	
-	private static final String SQL_TYPE_MYSQL = "mysql";
-	private static final String SQL_TYPE_SQLITE = "sqlite";
 	private static final String XML_SQL = "connectionpool";
 	private static final String XML_SQL_NAME = "name";
-	private static final String XML_SQL_TYPE = "type";
+	private static final String XML_SQL_DRIVER = "driver";
+	private static final String XML_SQL_URL = "url";
 	private static final String XML_SQL_USER = "user";
 	private static final String XML_SQL_PASSWORD = "password";
-	private static final String XML_SQL_HOST = "host";
-	private static final String XML_SQL_PORT = "port";
-	private static final String XML_SQL_DB = "database";
 	private static final String XML_SQL_CONNECTIONS = "connections";
 
 	/** Singleton toolkit instance. */
@@ -111,7 +105,7 @@ public final class BRToolkit
 	private HashMap<String, BRFilter> filterCache;
 
 	/** Database connection pool. */
-	private HashMap<String, DBConnectionPool> connectionPool;
+	private HashMap<String, SQLConnectionPool> connectionPool;
 
 	/**
 	 * Constructs a new Toolkit.
@@ -243,7 +237,7 @@ public final class BRToolkit
 	 */
 	BRTransaction startTransaction(String poolname, Level transactionLevel)
 	{
-		DBConnectionPool pool = connectionPool.get(poolname);
+		SQLConnectionPool pool = connectionPool.get(poolname);
 		if (pool == null)
 			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		
@@ -265,7 +259,7 @@ public final class BRToolkit
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	QueryResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
+	SQLResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		String query = getQueryByName(queryKey);
 		if (query == null)
@@ -282,16 +276,16 @@ public final class BRToolkit
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws BRFrameworkException if the query causes an error.
 	 */
-	QueryResult doQueryPooledInline(String poolname, String query, Object ... parameters)
+	SQLResult doQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		Connection conn = null;
-		QueryResult result = null;		
+		SQLResult result = null;		
 		try {
-			DBConnectionPool pool = connectionPool.get(poolname);
+			SQLConnectionPool pool = connectionPool.get(poolname);
 			if (pool == null)
 				throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 			conn = pool.getAvailableConnection();
-			result = DBUtil.doQuery(conn, query, parameters);
+			result = SQLUtil.doQuery(conn, query, parameters);
 			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
@@ -335,11 +329,11 @@ public final class BRToolkit
 		Connection conn = null;
 		T[] result = null;		
 		try {
-			DBConnectionPool pool = connectionPool.get(poolname);
+			SQLConnectionPool pool = connectionPool.get(poolname);
 			if (pool == null)
 				throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 			conn = pool.getAvailableConnection();
-			result = DBUtil.doQuery(type, conn, query, parameters);
+			result = SQLUtil.doQuery(type, conn, query, parameters);
 			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
@@ -359,7 +353,7 @@ public final class BRToolkit
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	QueryResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
+	SQLResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
 	{
 		String query = getQueryByName(queryKey);
 		if (query == null)
@@ -375,16 +369,16 @@ public final class BRToolkit
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws BRFrameworkException if the query causes an error.
 	 */
-	QueryResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
+	SQLResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
 	{
 		Connection conn = null;
-		QueryResult result = null;
-		DBConnectionPool pool = connectionPool.get(poolname);
+		SQLResult result = null;
+		SQLConnectionPool pool = connectionPool.get(poolname);
 		if (pool == null)
 			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
 		try {
 			conn = pool.getAvailableConnection();
-			result = DBUtil.doQueryUpdate(conn, query, parameters);
+			result = SQLUtil.doQueryUpdate(conn, query, parameters);
 			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new BRFrameworkException(e);
@@ -425,7 +419,7 @@ public final class BRToolkit
 	 * @param key the name of the connection pool.
 	 * @return the connection pool connected to the key or null if none are attached to that name.
 	 */
-	DBConnectionPool getConnectionPool(String key)
+	SQLConnectionPool getConnectionPool(String key)
 	{
 		return connectionPool.get(key);
 		}
@@ -496,7 +490,7 @@ public final class BRToolkit
 		viewResolvers = new List<BRViewResolver>(25);
 		queryCache = new CaseInsensitiveHashMap<String>(25);
 		queryResolvers = new List<BRQueryResolver>(25);
-		connectionPool = new CaseInsensitiveHashMap<DBConnectionPool>();
+		connectionPool = new CaseInsensitiveHashMap<SQLConnectionPool>();
 		controllerCache = new HashMap<String, BRControllerEntry>();
 		filterEntries = new HashMap<String, String[]>();
 		filterCache = new HashMap<String, BRFilter>();
@@ -539,82 +533,46 @@ public final class BRToolkit
 	 */
 	private void initializeSQL(XMLStruct struct)
 	{
+		SQLConnectionPool pool = null;
+		SQLConnection dbu = null;
+
 		String name = struct.getAttribute(XML_SQL_NAME, "default");
-		if (name == null || name.trim().length() == 0)
-			throw new BRFrameworkException("Missing <name> key for SQL server pool.");
-		
-		String type = struct.getAttribute(XML_SQL_TYPE);
-		if (SQL_TYPE_MYSQL.equalsIgnoreCase(type))
-			connectionPool.put(name, initializeMYSQL(struct));
-		else if (SQL_TYPE_SQLITE.equalsIgnoreCase(type))
-			connectionPool.put(name, initializeSQLite(struct));
-		else
-			throw new BRFrameworkException("Unsupported SQL Server pool type: "+type);
-		}
 
-	/**
-	 * Creates a MYSQL pool using the gathered settings. 
-	 */
-	private DBConnectionPool initializeMYSQL(XMLStruct struct)
-	{
-		DBConnectionPool pool = null;
-		DBConnector dbu = null;
-		String user = null;
-		String password = null;
-				
-		user = struct.getAttribute(XML_SQL_USER, "root");
-		if (user.trim().length() == 0)
-			throw new BRFrameworkException("Missing user for SQL server pool.");
-		password = struct.getAttribute(XML_SQL_PASSWORD, "");
+		String driver = struct.getAttribute(XML_SQL_DRIVER);
+		if (driver.trim().length() == 0)
+			throw new BRFrameworkException("Missing driver for SQL server pool.");
 
-		String host = struct.getAttribute(XML_SQL_HOST, "localhost");
-
-		String db = struct.getAttribute(XML_SQL_DB, user);
-		if (db.trim().length() == 0)
+		String url = struct.getAttribute(XML_SQL_URL);
+		if (url.trim().length() == 0)
 			throw new BRFrameworkException("Missing URL for SQL server pool.");
+
+		String user = struct.getAttribute(XML_SQL_USER);
+		if (user != null) 
+			user = user.trim();
 		
-		int port = struct.getAttributeInt(XML_SQL_PORT, MySQLUtils.DEFAULT_PORT);
-		
-		try {dbu = new MySQLUtils(db, host, port);}
-		catch (Exception e) {throw new BRFrameworkException(e);}
+		String password = struct.getAttribute(XML_SQL_PASSWORD, "");
+
+		try {
+			dbu = new SQLConnection(driver, url);
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 
 		int conn = struct.getAttributeInt(XML_SQL_CONNECTIONS, 10);
 
-		try {pool = new DBConnectionPool(dbu, conn, user, password);}
-		catch (Exception e) {throw new BRFrameworkException(e);}
-		
-		return pool;
-		}
-	
-	/**
-	 * Creates a SQLite "pool" using the gathered settings.
-	 * One connection only. 
-	 */
-	private DBConnectionPool initializeSQLite(XMLStruct struct)
-	{
-		DBConnectionPool pool = null;
-		DBConnector dbu = null;
-		
-		String db = struct.getAttribute(XML_SQL_DB);
-		if (db.trim().length() == 0)
-			throw new BRFrameworkException("Missing database path for SQL server pool.");
-
 		try {
-			File f = new File(db);
-			if (!f.exists())
-			{
-				Common.createPathForFile(getApplicationFilePath(db));
-				f = new File(getApplicationFilePath(db));
-				}
-			dbu = new SQLiteUtils(f);
-		} catch (Exception e) {throw new BRFrameworkException(e);}
+			if (user != null)
+				pool = new SQLConnectionPool(dbu, conn, user, password);
+			else
+				pool = new SQLConnectionPool(dbu, conn);
+				
+		} catch (Exception e) {
+			throw new BRFrameworkException(e);
+			}
 		
-		try {pool = new DBConnectionPool(dbu, 1);}
-		catch (Exception e) {throw new BRFrameworkException(e);}
-		
-		return pool;
+		connectionPool.put(name, pool);
 		}
-	
+
 	/**
 	 * Initializes a view resolver.
 	 */

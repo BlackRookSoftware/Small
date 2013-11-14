@@ -1,8 +1,8 @@
 package com.blackrook.j2ee;
 
-import com.blackrook.db.QueryResult;
 import com.blackrook.j2ee.BRToolkit;
 import com.blackrook.j2ee.BRTransaction.Level;
+import com.blackrook.sql.SQLResult;
 
 /**
  * Data access object for submitting database queries.
@@ -73,10 +73,10 @@ public abstract class BRDAO
 	 * servlet connection pool and performs a query.
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	protected final QueryResult doQuery(String queryKey, Object ... parameters)
+	protected final SQLResult doQuery(String queryKey, Object ... parameters)
 	{
 		return getToolkit().doQueryPooled(defaultSQLPool, queryKey, parameters);
 		}
@@ -87,10 +87,10 @@ public abstract class BRDAO
 	 * is a literal query - NOT a key that references a query.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query causes an error.
 	 */
-	protected final QueryResult doQueryInline(String query, Object ... parameters)
+	protected final SQLResult doQueryInline(String query, Object ... parameters)
 	{
 		return getToolkit().doQueryPooledInline(defaultSQLPool, query, parameters);
 		}
@@ -177,7 +177,7 @@ public abstract class BRDAO
 	 * @param type the class type to instantiate.
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
@@ -269,7 +269,7 @@ public abstract class BRDAO
 	 * @param type the class type to instantiate.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
@@ -286,7 +286,7 @@ public abstract class BRDAO
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	protected final QueryResult doUpdateQuery(String queryKey, Object ... parameters)
+	protected final SQLResult doUpdateQuery(String queryKey, Object ... parameters)
 	{
 		return getToolkit().doUpdateQueryPooled(defaultSQLPool, queryKey, parameters);
 		}
@@ -297,10 +297,10 @@ public abstract class BRDAO
 	 * is a literal query - NOT a key that references a query.
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
-	 * @return the QueryResult returned.
+	 * @return the SQLResult returned.
 	 * @throws BRFrameworkException if the query causes an error.
 	 */
-	protected final QueryResult doUpdateQueryInline(String query, Object ... parameters)
+	protected final SQLResult doUpdateQueryInline(String query, Object ... parameters)
 	{
 		return getToolkit().doUpdateQueryPooledInline(defaultSQLPool, query, parameters);
 		}
