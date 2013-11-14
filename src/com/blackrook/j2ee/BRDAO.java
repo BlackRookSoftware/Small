@@ -58,9 +58,9 @@ public abstract class BRDAO
 	/**
 	 * Generates a transaction for multiple queries in one set.
 	 * This transaction performs all of its queries through one connection.
-	 * The connection is held by this transaction until it is finished via {@link BRTransaction#finish()}.
+	 * The connection is held by this transaction until it is finished via {@link SQLTransaction#finish()}.
 	 * @param transactionLevel the isolation level of the transaction.
-	 * @return a {@link BRTransaction} object to handle a contiguous transaction.
+	 * @return a {@link SQLTransaction} object to handle a contiguous transaction.
 	 * @throws BRFrameworkException if the transaction could not be created.
 	 */
 	protected final BRTransaction startTransaction(Level transactionLevel)
