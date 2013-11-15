@@ -29,7 +29,7 @@ import com.blackrook.j2ee.util.BRUtil;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
 import com.blackrook.sql.SQLConnectionPool;
-import com.blackrook.sql.SQLConnection;
+import com.blackrook.sql.SQLConnector;
 import com.blackrook.sql.SQLUtil;
 import com.blackrook.sql.SQLResult;
 
@@ -534,7 +534,7 @@ public final class BRToolkit
 	private void initializeSQL(XMLStruct struct)
 	{
 		SQLConnectionPool pool = null;
-		SQLConnection dbu = null;
+		SQLConnector dbu = null;
 
 		String name = struct.getAttribute(XML_SQL_NAME, "default");
 
@@ -553,7 +553,7 @@ public final class BRToolkit
 		String password = struct.getAttribute(XML_SQL_PASSWORD, "");
 
 		try {
-			dbu = new SQLConnection(driver, url);
+			dbu = new SQLConnector(driver, url);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
 			}
