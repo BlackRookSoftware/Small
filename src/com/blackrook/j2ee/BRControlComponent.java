@@ -42,6 +42,29 @@ public abstract class BRControlComponent
 		}
 	
 	/**
+	 * Logs a message out via the toolkit.
+	 * @param message the formatted message to log.
+	 * @param args the arguments for the formatted message.
+	 * @see String#format(String, Object...)
+	 */
+	public void log(String message, Object ... args)
+	{
+		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args));
+		}
+
+	/**
+	 * Logs a message out via the toolkit.
+	 * @param throwable the throwable to attach.
+	 * @param message the formatted message to log.
+	 * @param args the arguments for the formatted message.
+	 * @see String#format(String, Object...)
+	 */
+	public void log(Throwable throwable, String message, Object ... args)
+	{
+		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args), throwable);
+		}
+
+	/**
 	 * Gets a file that is on the application path. 
 	 * @param path the path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.util.Random;
 import java.util.concurrent.Future;
 
 import javax.websocket.Session;
@@ -20,12 +21,32 @@ import com.blackrook.lang.json.JSONWriter;
  */
 public abstract class BREndpoint
 {
+	
+	/** Alphabet for generating unique identifiers. */
+	private static final String ID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	
+	/** This endpoint's unique id. */
+	private String id;
+	
 	// Default Endpoint constructor.
 	protected BREndpoint()
 	{
-		
+		// generate random id string.
+		StringBuilder sb = new StringBuilder();
+		Random r = new Random();
+		for (int i = 0; i < 32; i++)
+			sb.append(ID_ALPHABET.charAt(r.nextInt(ID_ALPHABET.length())));
+		id = sb.toString();
 		}
 	
+	/**
+	 * Returns this endpoint's unique id.
+	 */
+	public String getId()
+	{
+		return id;
+		}
+
 	private BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
@@ -62,6 +83,29 @@ public abstract class BREndpoint
 	protected final InputStream getResourceAsStream(String path) throws IOException
 	{
 		return getToolkit().getResourceAsStream(path);
+		}
+
+	/**
+	 * Logs a message out via the toolkit.
+	 * @param message the formatted message to log.
+	 * @param args the arguments for the formatted message.
+	 * @see String#format(String, Object...)
+	 */
+	public void log(String message, Object ... args)
+	{
+		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args));
+		}
+
+	/**
+	 * Logs a message out via the toolkit.
+	 * @param throwable the throwable to attach.
+	 * @param message the formatted message to log.
+	 * @param args the arguments for the formatted message.
+	 * @see String#format(String, Object...)
+	 */
+	public void log(Throwable throwable, String message, Object ... args)
+	{
+		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args), throwable);
 		}
 
 	/**

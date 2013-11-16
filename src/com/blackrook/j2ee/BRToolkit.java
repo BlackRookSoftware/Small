@@ -211,7 +211,7 @@ public final class BRToolkit
 	 */
 	public void log(String message, Object ... args)
 	{
-		servletContext.log(String.format(message + "\n", args));
+		servletContext.log(String.format(message, args));
 		}
 
 	/**
@@ -223,7 +223,7 @@ public final class BRToolkit
 	 */
 	public void log(Throwable throwable, String message, Object ... args)
 	{
-		servletContext.log(String.format(message + "\n", args), throwable);
+		servletContext.log(String.format(message, args), throwable);
 		}
 
 	/**
