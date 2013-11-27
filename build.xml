@@ -13,10 +13,10 @@
 	<property name="dev.base" value=".." />
 	<property name="lib.base" value="E:\JavaLibraries" />
 
-	<property name="commons.lib" value="${dev.base}/Commons/bin"/>
-	<property name="commons.io.lib" value="${dev.base}/CommonsIO/bin"/>
-	<property name="commons.lang.lib" value="${dev.base}/CommonsLang/bin"/>
-	<property name="commons.sync.lib" value="${dev.base}/CommonsSync/bin" />
+	<property name="common.lib" value="${dev.base}/Common/bin"/>
+	<property name="common.io.lib" value="${dev.base}/CommonIO/bin"/>
+	<property name="common.lang.lib" value="${dev.base}/CommonLang/bin"/>
+	<property name="common.sync.lib" value="${dev.base}/CommonSync/bin" />
 	<property name="db.lib" value="${dev.base}/DB/bin"/>
 
 	<property name="j2ee.libdir" value="${lib.base}/Tomcat 6 Libraries" />
@@ -65,19 +65,19 @@
 		<exclude name="**/test/*" />
 	</patternset>
 	
-	<fileset id="fileset.commons.classes.notest" dir="${commons.lib}">
+	<fileset id="fileset.common.classes.notest" dir="${common.lib}">
 		<patternset refid="pattern.classes.notest" />
 	</fileset>
 	
-	<fileset id="fileset.commons.io.classes.notest" dir="${commons.io.lib}">
+	<fileset id="fileset.common.io.classes.notest" dir="${common.io.lib}">
 		<patternset refid="pattern.classes.notest" />
 	</fileset>
 	
-	<fileset id="fileset.commons.lang.classes.notest" dir="${commons.lang.lib}">
+	<fileset id="fileset.common.lang.classes.notest" dir="${common.lang.lib}">
 		<patternset refid="pattern.classes.notest" />
 	</fileset>
 
-	<fileset id="fileset.commons.sync.classes.notest" dir="${commons.sync.lib}">
+	<fileset id="fileset.common.sync.classes.notest" dir="${common.sync.lib}">
 		<patternset refid="pattern.classes.notest" />
 	</fileset>
 
@@ -131,10 +131,10 @@
 			srcdir="${src.dir}" 
 			destdir="${bin.dir}"
 			classpath="
-				${commons.lib}${S}
-				${commons.io.lib}${S}
-				${commons.lang.lib}${S}
-				${commons.sync.lib}${S}
+				${common.lib}${S}
+				${common.io.lib}${S}
+				${common.lang.lib}${S}
+				${common.sync.lib}${S}
 				${db.lib}${S}
 				${j2ee.servlet.lib.jar}${S}
 	    		${j2ee.jsp.lib.jar}${S}
@@ -147,10 +147,10 @@
     <target name="javadoc">
         <javadoc access="protected" additionalparam="-J-Xmx512m  " author="true" 
 			classpath="
-				${commons.lib}${S}
-				${commons.io.lib}${S}
-				${commons.lang.lib}${S}
-				${commons.sync.lib}${S}
+				${common.lib}${S}
+				${common.io.lib}${S}
+				${common.lang.lib}${S}
+				${common.sync.lib}${S}
 				${db.lib}${S}
 				${j2ee.servlet.lib.jar}${S}
         		${j2ee.jsp.lib.jar}${S}
@@ -176,7 +176,7 @@
             <link href="http://blackrooksoftware.com/docs/common/" />
             <link href="http://blackrooksoftware.com/docs/commonio/" />
             <link href="http://blackrooksoftware.com/docs/commonlang/" />
-            <link href="http://blackrooksoftware.com/docs/commonsync/" />
+            <link href="http://blackrooksoftware.com/docs/commonync/" />
             <link href="http://blackrooksoftware.com/docs/db/" />
             <link href="http://download.oracle.com/javase/6/docs/api/" />
         	<link href="http://download.oracle.com/javaee/5/api/" />
@@ -197,16 +197,16 @@
 			<fileset dir="${bin.dir}" excludes="**/test*" />
 		</jar>
 		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.commons.classes.notest" />
+			<fileset refid="fileset.common.classes.notest" />
 		</jar>
 		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.commons.io.classes.notest" />
+			<fileset refid="fileset.common.io.classes.notest" />
 		</jar>
 		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.commons.lang.classes.notest" />
+			<fileset refid="fileset.common.lang.classes.notest" />
 		</jar>
 		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.commons.sync.classes.notest" />
+			<fileset refid="fileset.common.sync.classes.notest" />
 		</jar>
 		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
 			<fileset refid="fileset.db.classes.notest" />
