@@ -34,12 +34,12 @@ public abstract class BRControlComponent
 	protected BRControlComponent()
 	{
 		randomLagSimulator = new Random();
-		}
+	}
 	
 	private BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
-		}
+	}
 	
 	/**
 	 * Logs a message out via the toolkit.
@@ -50,7 +50,7 @@ public abstract class BRControlComponent
 	public void log(String message, Object ... args)
 	{
 		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args));
-		}
+	}
 
 	/**
 	 * Logs a message out via the toolkit.
@@ -62,7 +62,7 @@ public abstract class BRControlComponent
 	public void log(Throwable throwable, String message, Object ... args)
 	{
 		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args), throwable);
-		}
+	}
 
 	/**
 	 * Gets a file that is on the application path. 
@@ -72,7 +72,7 @@ public abstract class BRControlComponent
 	protected final File getApplicationFile(String path)
 	{
 		return getToolkit().getApplicationFile(path);
-		}
+	}
 
 	/**
 	 * Gets a file path that is on the application path. 
@@ -82,7 +82,7 @@ public abstract class BRControlComponent
 	protected final String getApplicationFilePath(String relativepath)
 	{
 		return getToolkit().getApplicationFilePath(relativepath);
-		}
+	}
 
 	/**
 	 * Opens an input stream to a resource using a path relative to the
@@ -95,7 +95,7 @@ public abstract class BRControlComponent
 	protected final InputStream getResourceAsStream(String path) throws IOException
 	{
 		return getToolkit().getResourceAsStream(path);
-		}
+	}
 
 	/**
 	 * Includes the output of a view in the response.
@@ -109,7 +109,7 @@ public abstract class BRControlComponent
 		if (path == null)
 			throw new BRFrameworkException("No such view: \""+key+"\". No view resolver returned an adequate path.");
 		includeViewInline(request, response, path);
-		}
+	}
 
 	/**
 	 * Includes the output of a view in the response, not using a view location key.
@@ -121,10 +121,10 @@ public abstract class BRControlComponent
 	{
 		try{
 			request.getRequestDispatcher(path).include(request, response);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Surreptitiously forwards the request to a view.
@@ -138,7 +138,7 @@ public abstract class BRControlComponent
 		if (path == null)
 			throw new BRFrameworkException("No such view: \""+key+"\". No view resolver returned an adequate path.");
 		sendToViewInline(request, response, path);
-		}
+	}
 
 	/**
 	 * Surreptitiously forwards the request to a view, not using a view location key.
@@ -150,10 +150,10 @@ public abstract class BRControlComponent
 	{
 		try{
 			request.getRequestDispatcher(path).forward(request, response);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Sends back JSON to the client.
@@ -166,10 +166,10 @@ public abstract class BRControlComponent
 		response.setHeader("Content-Type", CONTENT_MIME_TYPE_JSON);
 		try {
 			JSONWriter.writeJSON(jsonObject, response.getWriter());
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Sends back a JSON-ified object to the client.
@@ -183,10 +183,10 @@ public abstract class BRControlComponent
 		response.setHeader("Content-Type", CONTENT_MIME_TYPE_JSON);
 		try {
 			JSONWriter.writeJSON(JSONObject.create(object), response.getWriter());
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Sends back XML to the client.
@@ -199,10 +199,10 @@ public abstract class BRControlComponent
 		response.setHeader("Content-Type", CONTENT_MIME_TYPE_XML);
 		try {
 			(new XMLWriter()).writeXML(xml, response.getWriter());
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Sends a file to the client.
@@ -216,7 +216,7 @@ public abstract class BRControlComponent
 	protected final void sendFile(HttpServletResponse response, File file)
 	{
 		sendFileContents(response, BRUtil.getMIMEType(file.getName()), file, file.getName());
-		}
+	}
 
 	/**
 	 * Sends a file to the client.
@@ -230,7 +230,7 @@ public abstract class BRControlComponent
 	protected final void sendFile(HttpServletResponse response, String mimeType, File file)
 	{
 		sendFileContents(response, mimeType, file, file.getName());
-		}
+	}
 
 	/**
 	 * Sends the contents of a file to the client.
@@ -243,7 +243,7 @@ public abstract class BRControlComponent
 	protected final void sendFileContents(HttpServletResponse response, File file)
 	{
 		sendFileContents(response, BRUtil.getMIMEType(file.getName()), file, null);
-		}
+	}
 
 	/**
 	 * Sends contents of a file to the client.
@@ -256,7 +256,7 @@ public abstract class BRControlComponent
 	protected final void sendFileContents(HttpServletResponse response, String mimeType, File file)
 	{
 		sendFileContents(response, mimeType, file, null);
-		}
+	}
 
 	/**
 	 * Sends the contents of a file to the client.
@@ -273,12 +273,12 @@ public abstract class BRControlComponent
 		try {
 			fis = new FileInputStream(file);
 			sendData(response, mimeType, fileName, fis, file.length());
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throwException(e);
 		} finally {
 			Common.close(fis);
-			}
 		}
+	}
 
 	/**
 	 * Sends the contents of a stream out through the response.
@@ -309,11 +309,11 @@ public abstract class BRControlComponent
 						32768, 
 						length > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)length
 					);
-				}
-		} catch (IOException e) {
-			throwException(e);
 			}
+	} catch (IOException e) {
+			throwException(e);
 		}
+	}
 
 	/**
 	 * Sends request to the error page with a status code.
@@ -325,10 +325,10 @@ public abstract class BRControlComponent
 	{
 		try{
 			response.sendError(statusCode, message);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Forwards the client abruptly to another document or servlet (new client request). 
@@ -339,10 +339,10 @@ public abstract class BRControlComponent
 	{
 		try{
 			response.sendRedirect(url);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
@@ -353,7 +353,7 @@ public abstract class BRControlComponent
 	protected final void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
-		}
+	}
 
 	/**
 	 * Pauses the current thread for up to <code>maxMillis</code>
@@ -363,7 +363,7 @@ public abstract class BRControlComponent
 	protected final void simulateLag(long maxMillis)
 	{
 		Common.sleep(randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 :maxMillis));
-		}
+	}
 	
 	
 	

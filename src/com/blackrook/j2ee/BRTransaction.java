@@ -63,8 +63,8 @@ public final class BRTransaction
 		private Level(int id)
 		{
 			this.id = id;
-			}
-	}
+		}
+}
 	
 	/** The toolkit for this framework. */
 	private BRToolkit toolkit;
@@ -92,10 +92,10 @@ public final class BRTransaction
 			this.levelState = connection.getTransactionIsolation();
 			connection.setAutoCommit(false);
 			connection.setTransactionIsolation(transactionLevel.id);
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 
 	/**
 	 * Returns true if this transaction has been completed or false if
@@ -104,7 +104,7 @@ public final class BRTransaction
 	public boolean isFinished()
 	{
 		return connection == null; 
-		}	
+	}	
 	
 	/**
 	 * Completes this transaction and prevents further calls on it.
@@ -123,11 +123,11 @@ public final class BRTransaction
 			connection.setTransactionIsolation(levelState);
 			connection.setAutoCommit(true);
 			connection.close();
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
-		connection = null;
 		}
+		connection = null;
+	}
 	
 	/**
 	 * Commits the actions completed so far in this transaction.
@@ -141,10 +141,10 @@ public final class BRTransaction
 			throw new IllegalStateException("This transaction is already finished.");
 		try {
 			connection.commit();
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Rolls back this entire transaction.
@@ -157,10 +157,10 @@ public final class BRTransaction
 			throw new IllegalStateException("This transaction is already finished.");
 		try {
 			connection.rollback();
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Rolls back this transaction to a {@link Savepoint}. Everything executed
@@ -175,10 +175,10 @@ public final class BRTransaction
 			throw new IllegalStateException("This transaction is already finished.");
 		try {
 			connection.rollback(savepoint);
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Calls {@link Connection#setSavepoint()} on the encapsulated connection.
@@ -193,12 +193,12 @@ public final class BRTransaction
 		Savepoint out = null;
 		try {
 			out = connection.setSavepoint();
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
+		}
 		
 		return out;
-		}
+	}
 	
 	/**
 	 * Calls {@link Connection#setSavepoint()} on the encapsulated connection.
@@ -214,12 +214,12 @@ public final class BRTransaction
 		Savepoint out = null;
 		try {
 			out = connection.setSavepoint(name);
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
+		}
 		
 		return out;
-		}
+	}
 	
 	/**
 	 * Performs a query on this transaction.
@@ -235,7 +235,7 @@ public final class BRTransaction
 			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 
 		return doQueryInline(query, parameters);
-		}
+	}
 
 	/**
 	 * Performs a query on this transaction. The provided query
@@ -250,11 +250,11 @@ public final class BRTransaction
 		SQLResult result = null;
 		try {
 			result = SQLUtil.doQuery(connection, query, parameters); 
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
-		return result;
 		}
+		return result;
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default servlet connection pool 
@@ -349,7 +349,7 @@ public final class BRTransaction
 			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 
 		return doQueryInline(type, query, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default 
@@ -443,11 +443,11 @@ public final class BRTransaction
 		T[] result = null;
 		try {
 			result = SQLUtil.doQuery(type, connection, query, parameters); 
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
-		return result;
 		}
+		return result;
+	}
 
 	/**
 	 * Performs an update query on this transaction.
@@ -463,7 +463,7 @@ public final class BRTransaction
 			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 
 		return doUpdateQueryInline(query, parameters);
-		}
+	}
 
 	/**
 	 * Performs an update query on this transaction. The provided query
@@ -478,11 +478,11 @@ public final class BRTransaction
 		SQLResult result = null;
 		try {
 			result = SQLUtil.doQueryUpdate(connection, query, parameters); 
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-			}
-		return result;
 		}
+		return result;
+	}
 
 	@Override
 	protected void finalize() throws Throwable
@@ -490,6 +490,6 @@ public final class BRTransaction
 		if (!isFinished())
 			rollback();
 		super.finalize();
-		}
+	}
 	
 }

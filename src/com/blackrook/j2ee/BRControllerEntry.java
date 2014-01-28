@@ -76,12 +76,12 @@ class BRControllerEntry
 					if ((map = methodMap.get(rm)) == null)
 						methodMap.put(rm, map = new HashMap<String, Method>(4));
 					map.put(pagename, m);
-					}
 				}
 			}
+		}
 		
 		instance = (BRController)BRUtil.getBean(controllerClass);
-		}
+	}
 	
 	/** Checks if a method is a valid request entry. */
 	private boolean validMethod(Method method, String methodPrefix)
@@ -94,7 +94,7 @@ class BRControllerEntry
 			&& method.isAnnotationPresent(RequestEntry.class)
 			;
 			
-		}
+	}
 	
 	/**
 	 * Gets a method on the controller using the specified page string. 
@@ -109,7 +109,7 @@ class BRControllerEntry
 		
 		Method out = map.get(getPageNoExtension(pageString));
 		return out;
-		}
+	}
 	
 	/**
 	 * Get the base page name parsed out of the page.
@@ -121,7 +121,7 @@ class BRControllerEntry
 			return page.substring(0, endIndex);
 		else
 			return page; 
-		}
+	}
 	
 	/**
 	 * Adds a filter to this controller.
@@ -129,7 +129,7 @@ class BRControllerEntry
 	public void addFilter(BRFilter filter)
 	{
 		filterQueue.add(filter);
-		}
+	}
 
 	/**
 	 * Calls filters attached to a controller.
@@ -142,7 +142,7 @@ class BRControllerEntry
 		while (go && it.hasNext())
 			go = it.next().onFilter(file, request, response);
 		return go;
-		}
+	}
 
 	/**
 	 * Calls filters attached to a controller.
@@ -156,7 +156,7 @@ class BRControllerEntry
 			go = it.next().onFilterMultipart(file, request, response, parts);
 		
 		return go;
-		}
+	}
 
 	/**
 	 * Calls filters attached to a controller.
@@ -170,7 +170,7 @@ class BRControllerEntry
 			go = it.next().onFilterJSON(file, request, response, json);
 		
 		return go;
-		}
+	}
 
 	/**
 	 * Calls filters attached to a controller.
@@ -184,7 +184,7 @@ class BRControllerEntry
 			go = it.next().onFilterXML(file, request, response, xml);
 		
 		return go;
-		}
+	}
 
 	/**
 	 * Returns the class type of this controller.
@@ -192,7 +192,7 @@ class BRControllerEntry
 	public Class<?> getControllerClass()
 	{
 		return controllerClass;
-		}
+	}
 
 	/**
 	 * Returns the instantiated controller.
@@ -200,6 +200,6 @@ class BRControllerEntry
 	public BRController getInstance()
 	{
 		return instance;
-		}
+	}
 
 }

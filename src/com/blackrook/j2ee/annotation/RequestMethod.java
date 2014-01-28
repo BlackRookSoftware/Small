@@ -41,7 +41,7 @@ public enum RequestMethod
 	{
 		this.compatibilityGroup = compatibilityGroup;
 		this.parameterTypes = parameterTypes;
-		}
+	}
 	
 	/**
 	 * Returns a quick way of determining if certain types have compatible parameters (and could theoretically be used together.
@@ -49,7 +49,7 @@ public enum RequestMethod
 	public int getCompatibilityGroup()
 	{
 		return compatibilityGroup;
-		}
+	}
 	
 	/**
 	 * Returns a the required parameter types for entry points.
@@ -57,6 +57,6 @@ public enum RequestMethod
 	public Class<?>[] getParameterTypes()
 	{
 		return parameterTypes;
-		}
+	}
 	
 }

@@ -37,7 +37,7 @@ public abstract class BREndpoint
 		for (int i = 0; i < 32; i++)
 			sb.append(ID_ALPHABET.charAt(r.nextInt(ID_ALPHABET.length())));
 		id = sb.toString();
-		}
+	}
 	
 	/**
 	 * Returns this endpoint's unique id.
@@ -45,12 +45,12 @@ public abstract class BREndpoint
 	public String getId()
 	{
 		return id;
-		}
+	}
 
 	private BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
-		}
+	}
 
 	/**
 	 * Gets a file that is on the application path. 
@@ -60,7 +60,7 @@ public abstract class BREndpoint
 	protected final File getApplicationFile(String path)
 	{
 		return getToolkit().getApplicationFile(path);
-		}
+	}
 
 	/**
 	 * Gets a file path that is on the application path. 
@@ -70,7 +70,7 @@ public abstract class BREndpoint
 	protected final String getApplicationFilePath(String relativepath)
 	{
 		return getToolkit().getApplicationFilePath(relativepath);
-		}
+	}
 
 	/**
 	 * Opens an input stream to a resource using a path relative to the
@@ -83,7 +83,7 @@ public abstract class BREndpoint
 	protected final InputStream getResourceAsStream(String path) throws IOException
 	{
 		return getToolkit().getResourceAsStream(path);
-		}
+	}
 
 	/**
 	 * Logs a message out via the toolkit.
@@ -94,7 +94,7 @@ public abstract class BREndpoint
 	public void log(String message, Object ... args)
 	{
 		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args));
-		}
+	}
 
 	/**
 	 * Logs a message out via the toolkit.
@@ -106,7 +106,7 @@ public abstract class BREndpoint
 	public void log(Throwable throwable, String message, Object ... args)
 	{
 		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args), throwable);
-		}
+	}
 
 	/**
 	 * Sends a message string, synchronously, to the client.
@@ -121,8 +121,8 @@ public abstract class BREndpoint
 			session.getBasicRemote().sendText(message);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Sends a message string, synchronously, to the client, hinting that 
@@ -139,8 +139,8 @@ public abstract class BREndpoint
 			session.getBasicRemote().sendText(message, isLast);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 
 	/**
 	 * Sends binary data, synchronously, to the client.
@@ -155,8 +155,8 @@ public abstract class BREndpoint
 			session.getBasicRemote().sendBinary(buffer);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Sends binary data, synchronously, to the client, hinting that 
@@ -172,8 +172,8 @@ public abstract class BREndpoint
 			session.getBasicRemote().sendBinary(buffer, isLast);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}			
-		}
+		}			
+	}
 	
 	/**
 	 * Sends binary data, synchronously, to the client.
@@ -190,8 +190,8 @@ public abstract class BREndpoint
 			sendBinary(session, ByteBuffer.wrap(buffer));
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Sends binary data, synchronously, to the client, hinting that 
@@ -209,8 +209,8 @@ public abstract class BREndpoint
 			sendBinaryPartial(session, ByteBuffer.wrap(buffer), isLast);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Sends a JSON object to the client, synchronously, as a JSON-ified string
@@ -227,9 +227,9 @@ public abstract class BREndpoint
 			JSONWriter.writeJSON(object, sw);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
-		sendText(session, sw.toString());
 		}
+		sendText(session, sw.toString());
+	}
 	
 	/**
 	 * Sends an object to the client, synchronously, as a JSON-ified string
@@ -247,8 +247,8 @@ public abstract class BREndpoint
 			sendText(session, sw.toString());
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Sends a stream of data, synchronously, until the end of the stream.
@@ -271,11 +271,11 @@ public abstract class BREndpoint
 				bb.rewind();
 				sendBinaryPartial(session, buffer, buf < bufferSize);
 				bb.rewind();
-				}
+			}
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
 		}
+	}
 	
 	/**
 	 * Sends the contents of a file as a stream of data, synchronously, until the end of the file.
@@ -295,8 +295,8 @@ public abstract class BREndpoint
 			throw new BRFrameworkException(e);
 		} finally {
 			Common.close(fis);
-			}
 		}
+	}
 
 	/**
 	 * Sends a message string, asynchronously, to the client.
@@ -308,7 +308,7 @@ public abstract class BREndpoint
 	protected final Future<Void> sendAsyncText(final Session session, String message)
 	{
 		return session.getAsyncRemote().sendText(message);
-		}
+	}
 
 	/**
 	 * Sends binary data, asynchronously, to the client.
@@ -320,7 +320,7 @@ public abstract class BREndpoint
 	protected final Future<Void> sendAsyncBinary(final Session session, ByteBuffer buffer)
 	{
 		return session.getAsyncRemote().sendBinary(buffer);
-		}
+	}
 
 	/**
 	 * Sends binary data, asynchronously, to the client.
@@ -334,7 +334,7 @@ public abstract class BREndpoint
 	protected final Future<Void> sendAsyncBinary(final Session session, byte[] buffer)
 	{
 		return sendAsyncBinary(session, ByteBuffer.wrap(buffer));
-		}
+	}
 
 	/**
 	 * Sends a JSON object to the client, asynchronously, as a JSON-ified string
@@ -351,9 +351,9 @@ public abstract class BREndpoint
 			JSONWriter.writeJSON(object, sw);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
-		return sendAsyncText(session, sw.toString());
 		}
+		return sendAsyncText(session, sw.toString());
+	}
 
 	/**
 	 * Sends an object to the client, asynchronously, as a JSON-ified string
@@ -370,8 +370,8 @@ public abstract class BREndpoint
 			JSONWriter.writeJSON(JSONObject.create(object), sw);
 		} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
-		return sendAsyncText(session, sw.toString());
 		}
+		return sendAsyncText(session, sw.toString());
+	}
 	
 }

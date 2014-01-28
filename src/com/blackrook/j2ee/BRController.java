@@ -35,7 +35,7 @@ public abstract class BRController extends BRControlComponent
 	public void onGet(String file, HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 	/**
 	 * The default entry point for all Black Rook Framework Servlets on a POST request call.
@@ -49,7 +49,7 @@ public abstract class BRController extends BRControlComponent
 	public void onPost(String file, HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 	/**
 	 * The default entry point for all Black Rook Framework Servlets on a POST request call 
@@ -65,7 +65,7 @@ public abstract class BRController extends BRControlComponent
 	public void onMultipart(String file, HttpServletRequest request, HttpServletResponse response, Part[] parts)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 
 	/**
@@ -82,7 +82,7 @@ public abstract class BRController extends BRControlComponent
 	public void onJSON(String file, HttpServletRequest request, HttpServletResponse response, JSONObject json)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 
 	/**
@@ -99,7 +99,7 @@ public abstract class BRController extends BRControlComponent
 	public void onXML(String file, HttpServletRequest request, HttpServletResponse response, XMLStruct xml)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 
 	/**
@@ -114,7 +114,7 @@ public abstract class BRController extends BRControlComponent
 	public void onHead(String file, HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 
 	/**
@@ -129,7 +129,7 @@ public abstract class BRController extends BRControlComponent
 	public void onPut(String file, HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 
 	/**
@@ -144,6 +144,6 @@ public abstract class BRController extends BRControlComponent
 	public void onDelete(String file, HttpServletRequest request, HttpServletResponse response)
 	{
 		sendCode(response, 405, "Servlet does not support this method.");
-		}
+	}
 
 }

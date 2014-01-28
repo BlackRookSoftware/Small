@@ -45,7 +45,7 @@ public final class BRUtil implements EntityTables
 	public static String getMIMEType(String filename)
 	{
 		return MIME_TYPE_MAP.getType(Common.getFileExtension(filename));
-		}
+	}
 	
 	/**
 	 * Encodes a string so that it can be input safely into a URL string.
@@ -63,9 +63,9 @@ public final class BRUtil implements EntityTables
 			else
 				sb.append(c);
 			i++;
-			}
-		return sb.toString();
 		}
+		return sb.toString();
+	}
 	
 	/**
 	 * Decodes a URL-encoded string.
@@ -93,7 +93,7 @@ public final class BRUtil implements EntityTables
 					{
 						x = 0;
 						state = STATE_DECODE;
-						}
+					}
 					else
 						sb.append(c);
 					break;
@@ -105,26 +105,26 @@ public final class BRUtil implements EntityTables
 						try {
 							v = Integer.parseInt(new String(chars), 16);
 							sb.append((char)(v & 0x0ff));
-						} catch (NumberFormatException e) {
+					} catch (NumberFormatException e) {
 							sb.append('%').append(chars[0]).append(chars[1]);
-							}
-						state = STATE_START;
 						}
+						state = STATE_START;
+					}
 					break;
-				}
+			}
 			
 			i++;
-			}
+		}
 		
 		if (state == STATE_DECODE)
 		{
 			sb.append('%');
 			for (int n = 0; n < x; n++)
 				sb.append(chars[n]);
-			}
+		}
 		
 		return sb.toString();
-		}
+	}
 	
 	/**
 	 * Converts a String to an HTML-safe string.
@@ -154,10 +154,10 @@ public final class BRUtil implements EntityTables
 				sb.append("&apos;");
 			else
 				sb.append(c);
-			}
+		}
 		
 		return sb.toString();
-		}
+	}
 	
 	/**
 	 * Converts a String with HTML entities in it to one without.
@@ -185,7 +185,7 @@ public final class BRUtil implements EntityTables
 					{
 						entity.delete(0, entity.length());
 						state = STATE_ENTITY;
-						}
+					}
 					else
 						sb.append(c);
 					break;
@@ -197,30 +197,30 @@ public final class BRUtil implements EntityTables
 						{
 							int n = Integer.parseInt(e.substring(2), 16);
 							sb.append((char)n);
-							}
+						}
 						else if (e.startsWith("#"))
 						{
 							int n = Integer.parseInt(e.substring(1), 10);
 							sb.append((char)n);
-							}
+						}
 						else if (ENTITY_NAME_MAP.containsKey(e))
 							sb.append(ENTITY_NAME_MAP.get(e));
 						else
 							sb.append(e);
 						
 						state = STATE_STRING;
-						}
+					}
 					else
 						entity.append(c);
 					break;
-				}
 			}
+		}
 		
 		if (state == STATE_ENTITY)
 			sb.append('&').append(entity.toString());
 		
 		return sb.toString();
-		}
+	}
 
 	/**
 	 * Gets the current connection's session id.
@@ -230,7 +230,7 @@ public final class BRUtil implements EntityTables
 	public static String getSessionId(HttpServletRequest request)
 	{
 		return request.getSession().getId();
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the request level.
@@ -249,7 +249,7 @@ public final class BRUtil implements EntityTables
 		if ((className = clazz.getCanonicalName()) == null)
 			throw new IllegalArgumentException("Class provided has no type!");
 		return getRequestBean(request, clazz, "$$"+className, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the request level.
@@ -263,7 +263,7 @@ public final class BRUtil implements EntityTables
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
 		return getRequestBean(request, clazz, name, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the request level.
@@ -282,15 +282,15 @@ public final class BRUtil implements EntityTables
 			try {
 				obj = clazz.newInstance();
 				request.setAttribute(name, obj);
-			} catch (Exception e) {
+		} catch (Exception e) {
 				throwException(e);
-				}
 			}
+		}
 	
 		if (obj == null)
 			return null;
 		return clazz.cast(obj);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the session level.
@@ -309,7 +309,7 @@ public final class BRUtil implements EntityTables
 		if ((className = clazz.getCanonicalName()) == null)
 			throw new IllegalArgumentException("Class provided has no type!");
 		return getSessionBean(request, clazz, "$$"+className, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the session level.
@@ -323,7 +323,7 @@ public final class BRUtil implements EntityTables
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
 		return getSessionBean(request, clazz, name, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the session level.
@@ -350,17 +350,17 @@ public final class BRUtil implements EntityTables
 					{
 						obj = clazz.newInstance();
 						session.setAttribute(name, obj);
-						}
 					}
-			} catch (Exception e) {
-				throwException(e);
 				}
+		} catch (Exception e) {
+				throwException(e);
 			}
+		}
 	
 		if (obj == null)
 			return null;
 		return clazz.cast(obj);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the application level.
@@ -378,7 +378,7 @@ public final class BRUtil implements EntityTables
 		if ((className = clazz.getCanonicalName()) == null)
 			throw new IllegalArgumentException("Class provided has no type!");
 		return getApplicationBean(context, clazz, "$$"+className, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the application level.
@@ -392,7 +392,7 @@ public final class BRUtil implements EntityTables
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz, String name)
 	{
 		return getApplicationBean(context, clazz, name, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the application level.
@@ -415,17 +415,17 @@ public final class BRUtil implements EntityTables
 					{
 						obj = clazz.newInstance();
 						context.setAttribute(name, obj);
-						}
 					}
-			} catch (Exception e) {
-				throwException(e);
 				}
+		} catch (Exception e) {
+				throwException(e);
 			}
+		}
 	
 		if (obj == null)
 			return null;
 		return clazz.cast(obj);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
@@ -439,7 +439,7 @@ public final class BRUtil implements EntityTables
 	public static <T> T getBean(Class<T> clazz)
 	{
 		return getBean(clazz, "$$"+clazz.getPackage().getName()+"."+clazz.getName(), true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
@@ -453,7 +453,7 @@ public final class BRUtil implements EntityTables
 	public static <T> T getBean(Class<T> clazz, String name)
 	{
 		return getBean(clazz, name, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
@@ -477,18 +477,18 @@ public final class BRUtil implements EntityTables
 					try {
 						obj = clazz.newInstance();
 						SINGLETON_MAP.put(name, obj);
-					} catch (Exception e) {
+				} catch (Exception e) {
 						throwException(e);
-						}
 					}
 				}
 			}
+		}
 	
 		if (obj == null)
 			return null;
 		else
 			return clazz.cast(obj);
-		}
+	}
 
 	/**
 	 * Gets a group of parameters that start with a specific prefix.
@@ -503,7 +503,7 @@ public final class BRUtil implements EntityTables
 			if (entry.getKey().startsWith(prefix))
 				out.put(entry.getKey(), entry.getValue());
 		return out;
-		}
+	}
 	
 	/**
 	 * Convenience method that checks if a parameter exists on a request. 
@@ -512,7 +512,7 @@ public final class BRUtil implements EntityTables
 	public static boolean getParameterExist(HttpServletRequest request, String paramName)
 	{
 		return request.getParameterValues(paramName) != null && request.getParameterValues(paramName).length > 0;
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>session.getAttribute(attribName)</code> 
@@ -521,7 +521,7 @@ public final class BRUtil implements EntityTables
 	public static boolean getAttributeExist(HttpSession session, String attribName)
 	{
 		return session.getAttribute(attribName) != null;
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>context.getAttribute(attribName)</code> 
@@ -530,7 +530,7 @@ public final class BRUtil implements EntityTables
 	public static boolean getAttributeExist(ServletContext context, String attribName)
 	{
 		return context.getAttribute(attribName) != null;
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -542,7 +542,7 @@ public final class BRUtil implements EntityTables
 	public static boolean getParameterBoolean(HttpServletRequest request, String paramName)
 	{
 		return getParameterBoolean(request, paramName, "true");
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -554,7 +554,7 @@ public final class BRUtil implements EntityTables
 	{
 		String out = request.getParameter(paramName);
 		return (out == null && trueValue == null) || (out != null && out.equalsIgnoreCase(trueValue));
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -563,7 +563,7 @@ public final class BRUtil implements EntityTables
 	public static String getParameterString(HttpServletRequest request, String paramName)
 	{
 		return getParameterString(request, paramName, "");
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -573,7 +573,7 @@ public final class BRUtil implements EntityTables
 	{
 		String out = request.getParameter(paramName);
 		return out != null ? out : def;
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -582,7 +582,7 @@ public final class BRUtil implements EntityTables
 	public static byte getParameterByte(HttpServletRequest request, String paramName)
 	{
 		return getParameterByte(request, paramName, (byte)0);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -591,7 +591,7 @@ public final class BRUtil implements EntityTables
 	public static byte getParameterByte(HttpServletRequest request, String paramName, byte def)
 	{
 		return Common.parseByte(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -600,7 +600,7 @@ public final class BRUtil implements EntityTables
 	public static short getParameterShort(HttpServletRequest request, String paramName)
 	{
 		return getParameterShort(request, paramName, (short)0);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -609,7 +609,7 @@ public final class BRUtil implements EntityTables
 	public static short getParameterShort(HttpServletRequest request, String paramName, short def)
 	{
 		return Common.parseShort(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -618,7 +618,7 @@ public final class BRUtil implements EntityTables
 	public static char getParameterChar(HttpServletRequest request, String paramName)
 	{
 		return getParameterChar(request, paramName, '\0');
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -627,7 +627,7 @@ public final class BRUtil implements EntityTables
 	public static char getParameterChar(HttpServletRequest request, String paramName, char def)
 	{
 		return Common.parseChar(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -636,7 +636,7 @@ public final class BRUtil implements EntityTables
 	public static int getParameterInt(HttpServletRequest request, String paramName)
 	{
 		return getParameterInt(request, paramName, 0);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -645,7 +645,7 @@ public final class BRUtil implements EntityTables
 	public static int getParameterInt(HttpServletRequest request, String paramName, int def)
 	{
 		return Common.parseInt(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -654,7 +654,7 @@ public final class BRUtil implements EntityTables
 	public static float getParameterFloat(HttpServletRequest request, String paramName)
 	{
 		return getParameterFloat(request, paramName, 0f);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -663,7 +663,7 @@ public final class BRUtil implements EntityTables
 	public static float getParameterFloat(HttpServletRequest request, String paramName, float def)
 	{
 		return Common.parseFloat(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -672,7 +672,7 @@ public final class BRUtil implements EntityTables
 	public static long getParameterLong(HttpServletRequest request, String paramName)
 	{
 		return getParameterLong(request, paramName, 0L);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -681,7 +681,7 @@ public final class BRUtil implements EntityTables
 	public static long getParameterLong(HttpServletRequest request, String paramName, long def)
 	{
 		return Common.parseLong(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -690,7 +690,7 @@ public final class BRUtil implements EntityTables
 	public static double getParameterDouble(HttpServletRequest request, String paramName)
 	{
 		return getParameterDouble(request, paramName, 0.0);
-		}
+	}
 
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
@@ -699,7 +699,7 @@ public final class BRUtil implements EntityTables
 	public static double getParameterDouble(HttpServletRequest request, String paramName, double def)
 	{
 		return Common.parseDouble(request.getParameter(paramName), def);
-		}
+	}
 
 	/**
 	 * Method that parses a parameter as a date. 
@@ -717,18 +717,18 @@ public final class BRUtil implements EntityTables
 			{
 				formatter = new SimpleDateFormat(formatString);
 				DATE_PATTERN_MAP.put(formatString, formatter);
-				}
 			}
+		}
 		
 		Date out = null;
 		try {
 			out = formatter.parse(getParameterString(request, paramName));
-		} catch (ParseException e) {
+	} catch (ParseException e) {
 			return null;
-			}
+		}
 		
 		return out;
-		}
+	}
 	
 	/**
 	 * Sets the fields on a new instance of an object, using its public fields and setters, using the
@@ -751,7 +751,7 @@ public final class BRUtil implements EntityTables
 	public static <T extends Object> T setModelFields(HttpServletRequest request, Class<T> type)
 	{
 		return setModelFields(request, Reflect.create(type));
-		}
+	}
 	
 	/**
 	 * Sets the fields on an object, using its public fields and setters, using the
@@ -798,18 +798,18 @@ public final class BRUtil implements EntityTables
 							Array.set(newArray, i, getConvertedModelObject(fieldName, getParameterString(request, fieldName), arrayType));
 						else
 							Array.set(newArray, i, getParameterString(request, fieldName));
-						}
-					Reflect.setField(target, fieldName, newArray);
 					}
+					Reflect.setField(target, fieldName, newArray);
+				}
 				else
 				{
 					if (setterType != String.class)
 						Reflect.setField(target, fieldName, getConvertedModelObject(fieldName, getParameterString(request, fieldName), setterType));
 					else
 						Reflect.setField(target, fieldName, getParameterString(request, fieldName));
-					}
-				foundFields.put(fieldName);
 				}
+				foundFields.put(fieldName);
+			}
 			else if (session != null && getAttributeExist(session, fieldName))
 			{
 				Object objval = session.getAttribute(fieldName);
@@ -818,7 +818,7 @@ public final class BRUtil implements EntityTables
 				else
 					throw new BRFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
 				foundFields.put(fieldName);
-				}
+			}
 			else if (context != null && getAttributeExist(context, fieldName))
 			{
 				Object objval = context.getAttribute(fieldName);
@@ -827,8 +827,8 @@ public final class BRUtil implements EntityTables
 				else
 					throw new BRFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
 				foundFields.put(fieldName);
-				}
 			}
+		}
 		
 		for (ObjectPair<String, MethodSignature> pair : profile.getSetterMethods())
 		{
@@ -852,17 +852,17 @@ public final class BRUtil implements EntityTables
 							Array.set(newArray, i, getConvertedModelObject(fieldName, values[i], arrayType));
 						else
 							Array.set(newArray, i, getParameterString(request, fieldName));
-						}
-					Reflect.invokeBlind(signature.getMethod(), target, newArray);
 					}
+					Reflect.invokeBlind(signature.getMethod(), target, newArray);
+				}
 				else
 				{
 					if (setterType != String.class)
 						Reflect.invokeBlind(signature.getMethod(), target, getConvertedModelObject(fieldName, getParameterString(request, fieldName), setterType));
 					else
 						Reflect.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName));
-					}
 				}
+			}
 			else if (session != null && getAttributeExist(session, fieldName))
 			{
 				Object objval = session.getAttribute(fieldName);
@@ -870,7 +870,7 @@ public final class BRUtil implements EntityTables
 					Reflect.invokeBlind(signature.getMethod(), target, objval);
 				else
 					throw new BRFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
-				}
+			}
 			else if (context != null && getAttributeExist(context, fieldName))
 			{
 				Object objval = context.getAttribute(fieldName);
@@ -878,11 +878,11 @@ public final class BRUtil implements EntityTables
 					Reflect.invokeBlind(signature.getMethod(), target, objval);
 				else
 					throw new BRFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
-				}
 			}
+		}
 		
 		return target;
-		}
+	}
 	
 	// Converts values.
 	private static Object getConvertedModelObject(String name, Object source, Class<?> type)
@@ -925,7 +925,7 @@ public final class BRUtil implements EntityTables
 				return String.valueOf(b);
 			else
 				throw new BRFrameworkException("Member "+name+" is boolean typed; target is not boolean typed.");
-			}
+		}
 		else if (source instanceof Number)
 		{
 			Number n = (Number)source;
@@ -962,7 +962,7 @@ public final class BRUtil implements EntityTables
 				return String.valueOf(n);
 			else
 				throw new BRFrameworkException("Cannot convert attribute "+name+".");
-			}
+		}
 		else if (source instanceof String)
 		{
 			String s = (String)source;
@@ -998,10 +998,10 @@ public final class BRUtil implements EntityTables
 				return s;
 			else
 				throw new BRFrameworkException("Cannot convert attribute "+name+".");
-			}
+		}
 		
 		throw new BRFrameworkException("Cannot convert attribute "+name+".");
-		}
+	}
 	
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
@@ -1012,6 +1012,6 @@ public final class BRUtil implements EntityTables
 	public static void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
-		}
+	}
 	
 }

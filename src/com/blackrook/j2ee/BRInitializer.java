@@ -9,11 +9,11 @@ public class BRInitializer implements ServletContextListener
 	public void contextInitialized(ServletContextEvent sce)
 	{
 		BRToolkit.createToolkit(sce.getServletContext());
-		}
+	}
 
 	@Override
 	public void contextDestroyed(ServletContextEvent sce)
 	{
-		}
+	}
 
 }

@@ -19,7 +19,7 @@ public abstract class BRDAO
 	protected BRDAO()
 	{
 		this(BRToolkit.DEFAULT_POOL_NAME);
-		}
+	}
 
 	/**
 	 * Other constructor. Sets default pools.
@@ -28,7 +28,7 @@ public abstract class BRDAO
 	{
 		super();
 		defaultSQLPool = defaultThreadPoolName;
-		}
+	}
 
 	/**
 	 * Gets the Black Rook Framework Toolkit.
@@ -36,7 +36,7 @@ public abstract class BRDAO
 	private BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
-		}
+	}
 
 
 	/**
@@ -45,7 +45,7 @@ public abstract class BRDAO
 	public String getDefaultSQLPool()
 	{
 		return defaultSQLPool;
-		}
+	}
 
 	/**
 	 * Sets the name of the default connection pool that this DAO uses.
@@ -53,7 +53,7 @@ public abstract class BRDAO
 	public void setDefaultSQLPool(String servletDefaultSQLPool)
 	{
 		this.defaultSQLPool = servletDefaultSQLPool;
-		}
+	}
 
 	/**
 	 * Generates a transaction for multiple queries in one set.
@@ -66,7 +66,7 @@ public abstract class BRDAO
 	protected final BRTransaction startTransaction(Level transactionLevel)
 	{
 		return getToolkit().startTransaction(defaultSQLPool, transactionLevel);
-		}
+	}
 	
 	/**
 	 * Attempts to grab an available connection from the default 
@@ -79,7 +79,7 @@ public abstract class BRDAO
 	protected final SQLResult doQuery(String queryKey, Object ... parameters)
 	{
 		return getToolkit().doQueryPooled(defaultSQLPool, queryKey, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default 
@@ -93,7 +93,7 @@ public abstract class BRDAO
 	protected final SQLResult doQueryInline(String query, Object ... parameters)
 	{
 		return getToolkit().doQueryPooledInline(defaultSQLPool, query, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default servlet connection pool 
@@ -184,7 +184,7 @@ public abstract class BRDAO
 	protected final <T> T[] doQuery(Class<T> type, String queryKey, Object ... parameters)
 	{
 		return getToolkit().doQueryPooled(defaultSQLPool, type, queryKey, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default 
@@ -276,7 +276,7 @@ public abstract class BRDAO
 	protected final <T> T[] doQueryInline(Class<T> type, String query, Object ... parameters)
 	{
 		return getToolkit().doQueryPooledInline(defaultSQLPool, type, query, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default 
@@ -289,7 +289,7 @@ public abstract class BRDAO
 	protected final SQLResult doUpdateQuery(String queryKey, Object ... parameters)
 	{
 		return getToolkit().doUpdateQueryPooled(defaultSQLPool, queryKey, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the default 
@@ -303,6 +303,6 @@ public abstract class BRDAO
 	protected final SQLResult doUpdateQueryInline(String query, Object ... parameters)
 	{
 		return getToolkit().doUpdateQueryPooledInline(defaultSQLPool, query, parameters);
-		}
+	}
 	
 }

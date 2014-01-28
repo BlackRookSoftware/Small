@@ -116,7 +116,7 @@ public final class BRToolkit
 		if (INSTANCE != null)
 			return INSTANCE;
 		return INSTANCE = new BRToolkit(context);
-		}
+	}
 
 	/**
 	 * Gets a file that is on the application path. 
@@ -127,7 +127,7 @@ public final class BRToolkit
 	{
 		File inFile = new File(realAppPath+"/"+path);
 		return inFile.exists() ? inFile : null;
-		}
+	}
 
 	/**
 	 * Gets a file path that is on the application path. 
@@ -137,7 +137,7 @@ public final class BRToolkit
 	public String getApplicationFilePath(String relativepath)
 	{
 		return realAppPath + "/" + relativepath;
-		}
+	}
 
 	/**
 	 * Returns servlet context that constructed this.
@@ -145,7 +145,7 @@ public final class BRToolkit
 	public ServletContext getServletContext()
 	{
 		return servletContext;
-		}
+	}
 
 	/**
 	 * Opens an input stream to a resource using a path relative to the
@@ -159,7 +159,7 @@ public final class BRToolkit
 	{
 		File inFile = getApplicationFile(path);
 		return inFile != null ? new FileInputStream(inFile) : null;
-		}
+	}
 
 	/**
 	 * Gets the path to a view by keyword.
@@ -176,11 +176,11 @@ public final class BRToolkit
 					if (!resolver.dontCacheView(keyword))
 						viewCache.put(keyword, out);
 					break;					
-					}
-			}
+				}
+		}
 		
 		return out;
-		}
+	}
 
 	/**
 	 * Gets a query by keyword.
@@ -197,11 +197,11 @@ public final class BRToolkit
 					if (!resolver.dontCacheQuery(keyword))
 						queryCache.put(keyword, out);
 					break;					
-					}
-			}
+				}
+		}
 		
 		return out;
-		}
+	}
 
 	/**
 	 * Logs a message out via the servlet context.
@@ -212,7 +212,7 @@ public final class BRToolkit
 	public void log(String message, Object ... args)
 	{
 		servletContext.log(String.format(message, args));
-		}
+	}
 
 	/**
 	 * Logs a message out via the servlet context.
@@ -224,7 +224,7 @@ public final class BRToolkit
 	public void log(Throwable throwable, String message, Object ... args)
 	{
 		servletContext.log(String.format(message, args), throwable);
-		}
+	}
 
 	/**
 	 * Generates a transaction for multiple queries in one set.
@@ -244,12 +244,12 @@ public final class BRToolkit
 		Connection connection = null;
 		try {
 			connection = pool.getAvailableConnection();
-		} catch (InterruptedException e) {
+	} catch (InterruptedException e) {
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-			}
+		}
 		
 		return new BRTransaction(this, connection, transactionLevel);
-		}
+	}
 	
 	/**
 	 * Attempts to grab an available connection from the pool and performs a query.
@@ -265,7 +265,7 @@ public final class BRToolkit
 		if (query == null)
 			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 		return doQueryPooledInline(poolname, query, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the pool and performs a query.
@@ -287,15 +287,15 @@ public final class BRToolkit
 			conn = pool.getAvailableConnection();
 			result = SQLUtil.doQuery(conn, query, parameters);
 			conn.close(); // should release
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
+	} catch (InterruptedException e) {
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
-			}
-		return result;
 		}
+		return result;
+	}
 
 	/**
 	 * Attempts to grab an available connection from the pool and performs a query.
@@ -312,7 +312,7 @@ public final class BRToolkit
 		if (query == null)
 			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 		return doQueryPooledInline(poolname, type, query, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the pool and performs a query.
@@ -335,15 +335,15 @@ public final class BRToolkit
 			conn = pool.getAvailableConnection();
 			result = SQLUtil.doQuery(type, conn, query, parameters);
 			conn.close(); // should release
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
+	} catch (InterruptedException e) {
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
-			}
-		return result;
 		}
+		return result;
+	}
 
 	/**
 	 * Attempts to grab an available connection from the pool and performs an update query.
@@ -359,7 +359,7 @@ public final class BRToolkit
 		if (query == null)
 			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
 		return doUpdateQueryPooledInline(poolname, query, parameters);
-		}
+	}
 
 	/**
 	 * Attempts to grab an available connection from the pool and performs a query.
@@ -380,15 +380,15 @@ public final class BRToolkit
 			conn = pool.getAvailableConnection();
 			result = SQLUtil.doQueryUpdate(conn, query, parameters);
 			conn.close(); // should release
-		} catch (SQLException e) {
+	} catch (SQLException e) {
 			throw new BRFrameworkException(e);
-		} catch (InterruptedException e) {
+	} catch (InterruptedException e) {
 			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
-			}
-		return result;
 		}
+		return result;
+	}
 	
 	/**
 	 * Returns a list of view names.
@@ -396,7 +396,7 @@ public final class BRToolkit
 	String[] getCachedViewNames()
 	{
 		return getKeys(viewCache);
-		}
+	}
 	
 	/**
 	 * Returns a list of cached query keyword names.
@@ -404,7 +404,7 @@ public final class BRToolkit
 	String[] getCachedQueryKeywordNames()
 	{
 		return getKeys(queryCache);
-		}
+	}
 	
 	/**
 	 * Returns a list of connection pool names.
@@ -412,7 +412,7 @@ public final class BRToolkit
 	String[] getConnectionPoolNames()
 	{
 		return getKeys(connectionPool);
-		}
+	}
 	
 	/**
 	 * Returns a database connection pool by key name.
@@ -422,7 +422,7 @@ public final class BRToolkit
 	SQLConnectionPool getConnectionPool(String key)
 	{
 		return connectionPool.get(key);
-		}
+	}
 
 	/**
 	 * Returns a controller for a path.
@@ -448,8 +448,8 @@ public final class BRToolkit
 			// add to cache and return.
 			controllerCache.put(path, out);
 			return out;
-			}
 		}
+	}
 
 	/**
 	 * Returns a filter for a path.
@@ -463,7 +463,7 @@ public final class BRToolkit
 			return out;
 		
 		return null;
-		}
+	}
 
 	// gets String keys from a map.
 	private String[] getKeys(HashMap<String, ?> map)
@@ -477,7 +477,7 @@ public final class BRToolkit
 		String[] out = new String[outList.size()];
 		outList.toArray(out);
 		return out;
-		}
+	}
 	
 	/**
 	 * Constructs a new root toolkit used by all servlets and filters.
@@ -519,14 +519,14 @@ public final class BRToolkit
 						initializeControllerRoot(struct);
 					else if (struct.isName(XML_FILTERPATH))
 						initializeFilter(struct);
-					}
 				}
-		} catch (Exception e) {
+			}
+	} catch (Exception e) {
 			throw new BRFrameworkException(e);
 		} finally {
 			Common.close(in);
-			}
 		}
+	}
 
 	/**
 	 * Initializes an SQL connection pool.
@@ -554,9 +554,9 @@ public final class BRToolkit
 
 		try {
 			dbu = new SQLConnector(driver, url);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
+		}
 
 		int conn = struct.getAttributeInt(XML_SQL_CONNECTIONS, 10);
 
@@ -566,12 +566,12 @@ public final class BRToolkit
 			else
 				pool = new SQLConnectionPool(dbu, conn);
 				
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException(e);
-			}
+		}
 		
 		connectionPool.put(name, pool);
-		}
+	}
 
 	/**
 	 * Initializes a view resolver.
@@ -587,21 +587,21 @@ public final class BRToolkit
 		
 		try {
 			clz = Class.forName(clazz);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException("Class in view resolver could not be found: "+clazz);
-			}
+		}
 		
 		try {
 			resolver = (BRViewResolver)BRUtil.getBean(clz);
-		} catch (ClassCastException e) {
+	} catch (ClassCastException e) {
 			throw new BRFrameworkException("Class in view resolver is not an instance of BRViewResolver: "+clz.getName());
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException("Class in view resolver could not be instantiated: "+clz.getName());
-			}
+		}
 
 		if (resolver != null)
 			viewResolvers.add(resolver);
-		}
+	}
 
 	/**
 	 * Initializes a query resolver.
@@ -617,21 +617,21 @@ public final class BRToolkit
 		
 		try {
 			clz = Class.forName(clazz);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException("Class in query resolver could not be found: "+clazz);
-			}
+		}
 		
 		try {
 			resolver = (BRQueryResolver)BRUtil.getBean(clz);
-		} catch (ClassCastException e) {
+	} catch (ClassCastException e) {
 			throw new BRFrameworkException("Class in query resolver is not an instance of BRQueryResolver: "+clz.getName());
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException("Class in query resolver could not be instantiated: "+clz.getName());
-			}
+		}
 
 		if (resolver != null)
 			queryResolvers.add(resolver);
-		}
+	}
 
 	/**
 	 * Initializes the controller root resolver.
@@ -648,7 +648,7 @@ public final class BRToolkit
 			throw new BRFrameworkException("Controller root declaration must specify a root package.");
 		
 		controllerRootPackage = pkg;
-		}
+	}
 
 	/**
 	 * Initializes a filter.
@@ -666,7 +666,7 @@ public final class BRToolkit
 		String[] classes = classString.split("(\\s|\\,)+");
 		
 		filterEntries.put(pkg, classes);
-		}
+	}
 
 	// Instantiates a controller via root resolver.
 	private BRControllerEntry instantiateController(String path)
@@ -679,20 +679,20 @@ public final class BRToolkit
 		Class<?> controllerClass = null;
 		try {
 			controllerClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
+	} catch (ClassNotFoundException e) {
 			return null;
 			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
-			}
+		}
 		
 		BRControllerEntry out = null;
 		
 		try {
 			out = new BRControllerEntry(controllerClass, controllerRootMethodPrefix);
-		} catch (ClassCastException e) {
+	} catch (ClassCastException e) {
 			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+className);
-			}
+		}
 		
 		int lastIndex = 0;
 		String[] filterClasses = null;
@@ -702,8 +702,8 @@ public final class BRToolkit
 			{
 				className = className.substring(0, lastIndex);
 				filterClasses = filterEntries.get(className);
-				}
-		} while (lastIndex >= 0 && filterClasses == null);
+			}
+	} while (lastIndex >= 0 && filterClasses == null);
 		
 		if (filterClasses != null) for (String fc : filterClasses)
 		{
@@ -711,10 +711,10 @@ public final class BRToolkit
 			if ((filter = filterCache.get(fc)) == null)
 				filter = instantiateFilter(fc);
 			out.addFilter(filter);
-			}
+		}
 		
 		return out;
-		}
+	}
 	
 	// Creates a filter by its entry.
 	private BRFilter instantiateFilter(String className)
@@ -722,22 +722,22 @@ public final class BRToolkit
 		Class<?> filterClass = null;
 		try {
 			filterClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
+	} catch (ClassNotFoundException e) {
 			throw new BRFrameworkException("Class in filter declaration could not be found: "+className);
-			}
+		}
 		
 		BRFilter out = null;
 		
 		try {
 			out = (BRFilter)BRUtil.getBean(filterClass);
-		} catch (ClassCastException e) {
+	} catch (ClassCastException e) {
 			throw new BRFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throw new BRFrameworkException("Class in filter declaration could not be instantiated: "+className);
-			}
+		}
 		
 		return out;
-		}
+	}
 
 	// Gets the classname of a path.
 	private String getClassNameForController(String path)
@@ -751,7 +751,7 @@ public final class BRToolkit
 				return null;
 			cls = controllerRootIndexClass;
 			return cls;
-			}
+		}
 		else
 		{
 			String[] dirs = path.substring(1).split("[/]+");
@@ -762,10 +762,10 @@ public final class BRToolkit
 				{
 					sb.append(dirs[i]);
 					sb.append('.');
-					}
+				}
 				pkg += sb.toString();
 
-				}
+			}
 
 			cls = dirs[dirs.length - 1];
 			cls = pkg + controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
@@ -775,13 +775,13 @@ public final class BRToolkit
 				return null;
 
 			return cls;
-			}
 		}
+	}
 	
 	// Get filters using path definitions.
 	private BRFilter[] getFiltersUsingDefinitions(String path)
 	{
 		return null;
-		}
+	}
 	
 }

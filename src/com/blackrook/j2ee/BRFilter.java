@@ -26,7 +26,7 @@ public abstract class BRFilter extends BRControlComponent
 	public boolean onFilter(String file, HttpServletRequest request, HttpServletResponse response)
 	{
 		return true;
-		}
+	}
 
 	/**
 	 * Called to figure out the stuff to do with a POST Multipart HTTP request.
@@ -42,7 +42,7 @@ public abstract class BRFilter extends BRControlComponent
 	public boolean onFilterMultipart(String file, HttpServletRequest request, HttpServletResponse response, Part[] parts)
 	{
 		return true;
-		}
+	}
 	
 	/**
 	 * Called to figure out the stuff to do with a POST JSON HTTP request.
@@ -58,7 +58,7 @@ public abstract class BRFilter extends BRControlComponent
 	public boolean onFilterJSON(String file, HttpServletRequest request, HttpServletResponse response, JSONObject json)
 	{
 		return true;
-		}
+	}
 
 	/**
 	 * Called to figure out the stuff to do with a POST XML HTTP request.
@@ -74,5 +74,5 @@ public abstract class BRFilter extends BRControlComponent
 	public boolean onFilterXML(String file, HttpServletRequest request, HttpServletResponse response, XMLStruct struct)
 	{
 		return true;
-		}
+	}
 }

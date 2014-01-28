@@ -14,7 +14,7 @@ public class MultipartParserException extends Exception
 	public MultipartParserException()
 	{
 		super();
-		}
+	}
 	
 	/**
 	 * Creates a new exception.
@@ -22,7 +22,7 @@ public class MultipartParserException extends Exception
 	public MultipartParserException(String message)
 	{
 		super(message);
-		}
+	}
 
 	/**
 	 * Creates a new exception.
@@ -30,7 +30,7 @@ public class MultipartParserException extends Exception
 	public MultipartParserException(Throwable exception)
 	{
 		super(exception);
-		}
+	}
 	
 	/**
 	 * Creates a new exception with a message.
@@ -38,6 +38,6 @@ public class MultipartParserException extends Exception
 	public MultipartParserException(String message, Throwable exception)
 	{
 		super(message, exception);
-		}
+	}
 	
 }

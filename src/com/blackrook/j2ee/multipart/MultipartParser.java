@@ -71,7 +71,7 @@ public class MultipartParser implements Iterable<Part>
 				boundary = piece.substring(PIECE_BOUNDARY.length());
 			else if (piece.startsWith(PIECE_CHARSET))
 				charset = piece.substring(PIECE_CHARSET.length());
-			}
+		}
 		
 		String startBoundary = "--" + boundary;
 		String endBoundary = startBoundary + "--";
@@ -117,7 +117,7 @@ public class MultipartParser implements Iterable<Part>
 								outFile = generateTempFile(outputDir);
 								currentPart.file = outFile;
 								out = new FileOutputStream(outFile);
-								}
+							}
 							else
 							{
 								line = scanLine(sis);
@@ -135,17 +135,17 @@ public class MultipartParser implements Iterable<Part>
 										currentPart = new Part();
 										partList.add(currentPart);
 										loop = false;
-										}
+									}
 									else if (line.equals(endBoundary))
 									{
 										state = STATE_END;
 										loop = false;
-										}
+									}
 									else
 										currentPart.value += "\n" + line;
-									}
 								}
 							}
+						}
 						else if (line.startsWith(startBoundary))
 							throw new MultipartParserException("Found boundary in header. Submission is malformed.");
 						break;
@@ -165,20 +165,20 @@ public class MultipartParser implements Iterable<Part>
 							state = STATE_HEADER;
 							currentPart = new Part();
 							partList.add(currentPart);
-							}
+						}
 						else
 							throw new MultipartParserException("Data terminated with bad boundary. Submission is malformed.");
-						}
-						break;
 					}
+						break;
 				}
+			}
 			
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throw new MultipartParserException("Could not read request body.", e);
 		} finally {
 			Common.close(out);
-			}
 		}
+	}
 	
 	/**
 	 * Returns true if a request is a multiform request, false
@@ -187,7 +187,7 @@ public class MultipartParser implements Iterable<Part>
 	public static boolean isMultipart(HttpServletRequest request)
 	{
 		return request.getContentType().startsWith("multipart/");
-		}
+	}
 
 	/**
 	 * Returns all of the parts parsed by this parser.
@@ -195,7 +195,7 @@ public class MultipartParser implements Iterable<Part>
 	public List<Part> getPartList()
 	{
 		return partList;
-		}
+	}
 
 	// Parses the disposition header.
 	private void parseDisposition(String line, Part part) throws MultipartParserException
@@ -213,10 +213,10 @@ public class MultipartParser implements Iterable<Part>
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
 						part.name = BRUtil.urlDecode(value.substring(1, value.length() - 1));
-					}
+				}
 				else
 					part.name = value;
-				}
+			}
 			else if (token.startsWith("filename="))
 			{
 				String value = token.substring("filename=".length());
@@ -226,20 +226,20 @@ public class MultipartParser implements Iterable<Part>
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
 						part.fileName = BRUtil.urlDecode(value.substring(1, value.length() - 1));
-					}
+				}
 				else
 					part.fileName = value;
-				}
 			}
-		
 		}
+		
+	}
 
 	// Parses the content type header.
 	private void parseContentType(String line, Part part)
 	{
 		String type = line.substring(HEADER_TYPE.length()).trim();
 		part.contentType = type;
-		}
+	}
 	
 	// Creates a temp file.
 	private File generateTempFile(File outputDir) throws IOException
@@ -256,7 +256,7 @@ public class MultipartParser implements Iterable<Part>
 		sb.append(out);
 		sb.append(SUFFIX);
 		return new File(outputDir.getCanonicalFile().getPath() + sb.toString());
-		}
+	}
 
 	// scans until finds the boundary.
 	private String scanLine(ServletInputStream sis) throws IOException
@@ -268,10 +268,10 @@ public class MultipartParser implements Iterable<Part>
 			buf = sis.readLine(buffer, 0, buffer.length);
 			String s = new String(buffer, 0, buf, charset);
 			sb.append(s, 0, s.length() - NEWLINE.length());
-		} while (buf == buffer.length);
+	} while (buf == buffer.length);
 		 
 		return sb.toString();
-		}
+	}
 	
 	// scans until finds the boundary.
 	private void scanDataUntilBoundary(InputStream in, OutputStream out, byte[] startBoundary) throws IOException
@@ -295,8 +295,8 @@ public class MultipartParser implements Iterable<Part>
 					match = 0;
 					nlmatch = 0;
 					out.write(b);
-					}
 				}
+			}
 			else if (nlmatch > 0)
 			{
 				if (b == startBoundary[match])
@@ -308,19 +308,19 @@ public class MultipartParser implements Iterable<Part>
 					out.write(NEWLINE_BYTES, 0, nlmatch);
 					out.write(b);
 					nlmatch = 0;
-					}
 				}
+			}
 			else if (b == NEWLINE_BYTES[nlmatch])
 				nlmatch++;
 			else
 				out.write(b);
-			}
 		}
+	}
 	
 	@Override
 	public Iterator<Part> iterator()
 	{
 		return partList.iterator();
-		}
+	}
 
 }

@@ -26,7 +26,7 @@ public abstract class BRTag extends BodyTagSupport
 		
 		private final int eval;
 		StartResponse(int eval) {this.eval = eval;}
-		}
+	}
 	
 	/**
 	 * Response type for tag end.
@@ -40,7 +40,7 @@ public abstract class BRTag extends BodyTagSupport
 		
 		private final int eval;
 		EndResponse(int eval) {this.eval = eval;}
-		}
+	}
 	
 	@Override
 	public final int doStartTag() throws JspException 
@@ -49,7 +49,7 @@ public abstract class BRTag extends BodyTagSupport
 			(HttpServletRequest)pageContext.getRequest(),
 			(HttpServletResponse)pageContext.getResponse()
 			).eval;
-		}
+	}
 
 	@Override
 	public final int doEndTag() throws JspException
@@ -58,7 +58,7 @@ public abstract class BRTag extends BodyTagSupport
 			(HttpServletRequest)pageContext.getRequest(),
 			(HttpServletResponse)pageContext.getResponse()
 			).eval;
-		}
+	}
 	
 	/**
 	 * Returns the writer for writing directly to the page's output stream. 
@@ -66,7 +66,7 @@ public abstract class BRTag extends BodyTagSupport
 	public final JspWriter getWriter()
 	{
 		return pageContext.getOut();
-		}
+	}
 	
 	/**
 	 * Gets and auto-casts an object bean stored at the page context level.
@@ -78,7 +78,7 @@ public abstract class BRTag extends BodyTagSupport
 	public final <T> T getPageBean(Class<T> clazz, String name)
 	{
 		return getPageBean(clazz, name, true);
-		}
+	}
 
 	/**
 	 * Gets and auto-casts an object bean stored at the program level,
@@ -97,15 +97,15 @@ public abstract class BRTag extends BodyTagSupport
 			try {
 				obj = create ? clazz.newInstance() : null;
 				pageContext.setAttribute(name, obj);
-			} catch (Exception e) {
+		} catch (Exception e) {
 				throwException(e);
-				}
 			}
+		}
 	
 		if (obj == null)
 			return null;
 		return clazz.cast(obj);
-		} 
+	} 
 	
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
@@ -116,7 +116,7 @@ public abstract class BRTag extends BodyTagSupport
 	public final void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
-		}
+	}
 
 	/**
 	 * Called at the start of the tag evaluation.
@@ -128,7 +128,7 @@ public abstract class BRTag extends BodyTagSupport
 	public StartResponse onStart(HttpServletRequest request, HttpServletResponse response)
 	{
 		return StartResponse.SKIP_BODY;
-		}
+	}
 
 	/**
 	 * Called at the end of the tag evaluation.
@@ -140,7 +140,7 @@ public abstract class BRTag extends BodyTagSupport
 	public EndResponse onEnd(HttpServletRequest request, HttpServletResponse response)
 	{
 		return EndResponse.EVALUATE_PAGE;
-		}
+	}
 
 
 }

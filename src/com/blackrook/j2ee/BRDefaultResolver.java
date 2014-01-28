@@ -19,27 +19,27 @@ public class BRDefaultResolver implements BRQueryResolver, BRViewResolver
 	private BRToolkit getToolkit()
 	{
 		return BRToolkit.INSTANCE;
-		}
+	}
 	
 	/** Always returns false. */
 	@Override
 	public boolean dontCacheView(String keyword)
 	{
 		return false;
-		}
+	}
 
 	/** Always returns <code>"/WEB-INF/jsp/" + keyword + ".jsp"</code> for every keyword. */
 	@Override
 	public String resolveView(String keyword)
 	{
 		return "/WEB-INF/jsp/" + keyword + ".jsp";
-		}
+	}
 
 	@Override
 	public boolean dontCacheQuery(String keyword)
 	{
 		return false;
-		}
+	}
 
 	@Override
 	public String resolveQuery(String keyword)
@@ -63,15 +63,15 @@ public class BRDefaultResolver implements BRQueryResolver, BRViewResolver
 					continue;
 				
 				sb.append(line).append('\n');
-				}
+			}
 		} catch (Exception e) {
 			throw new BRFrameworkException("Could not read query contents from file: " + f.getAbsolutePath(), e);
 		} finally {
 			Common.close(br);
 			Common.close(in);
-			}
+		}
 		
 		return sb.toString();
-		}
+	}
 
 }

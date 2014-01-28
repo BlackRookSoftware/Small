@@ -27,7 +27,7 @@ public class Part
 	public String getName()
 	{
 		return name;
-		}
+	}
 
 	/**
 	 * Returns if this part refers to a file.
@@ -36,7 +36,7 @@ public class Part
 	public boolean isFile()
 	{
 		return fileName != null;
-		}
+	}
 
 	/**
 	 * Returns the original file name of the file, or null if not a file.
@@ -45,7 +45,7 @@ public class Part
 	public String getFileName()
 	{
 		return fileName;
-		}
+	}
 
 	/**
 	 * Returns a handle to this file, or null if not a file.
@@ -59,7 +59,7 @@ public class Part
 	public File getFile()
 	{
 		return file;
-		}
+	}
 
 	/**
 	 * Returns the content type of the uploaded file, or null if not a file.
@@ -68,7 +68,7 @@ public class Part
 	public String getContentType()
 	{
 		return contentType;
-		}
+	}
 
 	/**
 	 * This part's value, if it is not a file.
@@ -76,6 +76,6 @@ public class Part
 	public String getValue()
 	{
 		return value;
-		}
+	}
 
 }

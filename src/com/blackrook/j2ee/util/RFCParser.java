@@ -19,7 +19,7 @@ public class RFCParser
 	{
 		characters = data.trim().toCharArray();
 		position = 0;
-		}
+	}
 	
 	/**
 	 * Returns true if this has tokens left.
@@ -27,7 +27,7 @@ public class RFCParser
 	public boolean hasTokens()
 	{
 		return position < characters.length;
-		}
+	}
 	
 	/**
 	 * Returns the next token.
@@ -58,16 +58,16 @@ public class RFCParser
 					{
 						position++;
 						good = false;
-						}
+					}
 					else
 					{
 						sb.append(c);
 						position++;
-						}
+					}
 					break;
-				}
 			}
+		}
 		
 		return sb.toString();
-		}
+	}
 }

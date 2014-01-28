@@ -216,7 +216,7 @@ public final class BRMIMETypes extends CaseInsensitiveHashMap<String>
 		put("xwd", "image/x-xwindowdump");
 		put("z", "application/x-compress");
 		put("zip", "application/zip");
-		}
+	}
 	
 	/**
 	 * Returns the MIME type for a particular file extension, case-insensitively.
@@ -227,5 +227,5 @@ public final class BRMIMETypes extends CaseInsensitiveHashMap<String>
 	{
 		String out = get(extension);
 		return out != null ? out : "application/octet-stream";
-		}
+	}
 }

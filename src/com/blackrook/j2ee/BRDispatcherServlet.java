@@ -51,8 +51,8 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
 			else
 				entry.getInstance().onGet(page, request, response);
-			}
 		}
+	}
 
 	@Override
 	public final void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -66,16 +66,16 @@ public final class BRDispatcherServlet extends HttpServlet
 			JSONObject json = null;
 			try {
 				json = readJSON(request);
-			} catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 				sendCode(response, 400, "The encoding type for the POST request is not supported.");
 				return;
-			} catch (JSONConversionException e) {
+		} catch (JSONConversionException e) {
 				sendCode(response, 400, "JSON request was malformed.");
 				return;
-			} catch (IOException e) {
+		} catch (IOException e) {
 				sendCode(response, 500, "Could not read from request.");
 				return;
-				}
+			}
 
 			String page = getPage(request);
 			if (!entry.callFilters(page, request, response, json))
@@ -86,20 +86,20 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, json);
 			else
 				entry.getInstance().onJSON(page, request, response, json);
-			}
+		}
 		else if (isXML(request))
 		{
 			XMLStruct xmlStruct = null;
 			
 			try {
 				xmlStruct = readXML(request);
-			} catch (SAXException e) {
+		} catch (SAXException e) {
 				sendCode(response, 400, "XML request was malformed.");
 				return;
-			} catch (IOException e) {
+		} catch (IOException e) {
 				sendCode(response, 500, "Could not read from request.");
 				return;
-				}
+			}
 
 			String page = getPage(request);
 			if (!entry.callFilters(page, request, response, xmlStruct))
@@ -110,17 +110,17 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, xmlStruct);
 			else
 				entry.getInstance().onXML(page, request, response, xmlStruct);
-			}
+		}
 		else if (MultipartParser.isMultipart(request))
 		{
 			MultipartParser parser = null;
 			try {
 				parser = new MultipartParser(request, new File(System.getProperty("java.io.tmpdir")));
-			} catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 				sendCode(response, 400, "The encoding type for the POST request is not supported.");
-			} catch (MultipartParserException e) {
+		} catch (MultipartParserException e) {
 				sendCode(response, 500, "The server could not parse the multiform request.");
-				}
+			}
 			
 			Part[] parts = new Part[parser.getPartList().size()];
 			parser.getPartList().toArray(parts);
@@ -142,9 +142,9 @@ public final class BRDispatcherServlet extends HttpServlet
 					{
 						File tempFile = part.getFile();
 						tempFile.delete();
-						}
-				}
+					}
 			}
+		}
 		else
 		{
 			String page = getPage(request);
@@ -156,8 +156,8 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
 			else
 				entry.getInstance().onPost(page, request, response);
-			}
 		}
+	}
 	
 	@Override
 	public final void doHead(HttpServletRequest request, HttpServletResponse response)
@@ -177,8 +177,8 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
 			else
 				entry.getInstance().onHead(page, request, response);
-			}
 		}
+	}
 	
 	@Override
 	public final void doPut(HttpServletRequest request, HttpServletResponse response)
@@ -198,8 +198,8 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
 			else
 				entry.getInstance().onPut(page, request, response);
-			}
 		}
+	}
 	
 	@Override
 	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
@@ -219,8 +219,8 @@ public final class BRDispatcherServlet extends HttpServlet
 				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
 			else
 				entry.getInstance().onDelete(page, request, response);
-			}
 		}
+	}
 
 	/**
 	 * Get the base page parsed out of the request URI.
@@ -234,7 +234,7 @@ public final class BRDispatcherServlet extends HttpServlet
 			return requestURI.substring(slashIndex + 1, endIndex);
 		else
 			return requestURI.substring(slashIndex + 1); 
-		}
+	}
 	
 	/**
 	 * Get the base path parsed out of the request URI.
@@ -248,7 +248,7 @@ public final class BRDispatcherServlet extends HttpServlet
 			return requestURI.substring(contextPathLen, slashIndex);
 		else
 			return requestURI.substring(contextPathLen); 
-		}
+	}
 	
 	/**
 	 * Gets the controller to call using the requested path.
@@ -260,7 +260,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	private final BRControllerEntry getControllerUsingPath(String uriPath)
 	{
 		return BRToolkit.INSTANCE.getController(uriPath);
-		}
+	}
 
 	/**
 	 * Sends request to the error page with a status code.
@@ -272,10 +272,10 @@ public final class BRDispatcherServlet extends HttpServlet
 	{
 		try{
 			response.sendError(statusCode, message);
-		} catch (Exception e) {
+	} catch (Exception e) {
 			throwException(e);
-			}
 		}
+	}
 
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
@@ -286,7 +286,7 @@ public final class BRDispatcherServlet extends HttpServlet
 	private final void throwException(Throwable t)
 	{
 		throw new BRFrameworkException(t);
-		}
+	}
 
 	/**
 	 * Reads XML data from the request and returns an XMLStruct.
@@ -297,16 +297,16 @@ public final class BRDispatcherServlet extends HttpServlet
 		ServletInputStream sis = request.getInputStream();
 		try {
 			xml = XMLStructFactory.readXML(sis);
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throw e;
-		} catch (SAXException e) {
+	} catch (SAXException e) {
 			throw e;
 		} finally {
 			sis.close();
-			}
+		}
 		
 		return xml;
-		}
+	}
 	
 	/**
 	 * Checks if the request is XML-formatted.
@@ -320,7 +320,7 @@ public final class BRDispatcherServlet extends HttpServlet
 			|| type.startsWith("application/xop+xml")
 			|| type.startsWith("application/rss+xml")
 			;
-		}
+	}
 
 	/**
 	 * Reads JSON data from the request and returns a JSONObject.
@@ -335,24 +335,24 @@ public final class BRDispatcherServlet extends HttpServlet
 			String nextToken = parser.nextToken();
 			if (nextToken.startsWith("charset="))
 				charset = nextToken.substring("charset=".length()).trim();
-			}
+		}
 
 		JSONObject jsonObject = null;
 		ServletInputStream sis = request.getInputStream();
 		try {
 			jsonObject = JSONReader.readJSON(new InputStreamReader(sis, charset));
-		} catch (UnsupportedEncodingException e) {
+	} catch (UnsupportedEncodingException e) {
 			throw e;
-		} catch (JSONConversionException e) {
+	} catch (JSONConversionException e) {
 			throw e;
-		} catch (IOException e) {
+	} catch (IOException e) {
 			throw e;
 		} finally {
 			sis.close();
-			}
+		}
 		
 		return jsonObject;
-		}
+	}
 	
 	/**
 	 * Checks if the request is JSON-formatted.
@@ -362,6 +362,6 @@ public final class BRDispatcherServlet extends HttpServlet
 	private boolean isJSON(HttpServletRequest request)
 	{
 		return request.getContentType().startsWith("application/json");
-		}
+	}
 
 }
