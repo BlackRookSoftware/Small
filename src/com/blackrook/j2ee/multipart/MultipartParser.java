@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.util.BRUtil;
+import com.blackrook.j2ee.util.FrameworkUtil;
 import com.blackrook.j2ee.util.RFCParser;
 
 /**
@@ -212,7 +212,7 @@ public class MultipartParser implements Iterable<Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.name = BRUtil.urlDecode(value.substring(1, value.length() - 1));
+						part.name = FrameworkUtil.urlDecode(value.substring(1, value.length() - 1));
 				}
 				else
 					part.name = value;
@@ -225,7 +225,7 @@ public class MultipartParser implements Iterable<Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.fileName = BRUtil.urlDecode(value.substring(1, value.length() - 1));
+						part.fileName = FrameworkUtil.urlDecode(value.substring(1, value.length() - 1));
 				}
 				else
 					part.fileName = value;

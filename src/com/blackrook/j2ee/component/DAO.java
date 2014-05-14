@@ -1,58 +1,40 @@
-package com.blackrook.j2ee;
+package com.blackrook.j2ee.component;
 
-import com.blackrook.j2ee.BRToolkit;
-import com.blackrook.j2ee.BRTransaction.Level;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import com.blackrook.j2ee.SQLProvider;
+import com.blackrook.j2ee.Toolkit;
+import com.blackrook.j2ee.component.DAOTransaction.Level;
+import com.blackrook.j2ee.exception.SimpleFrameworkException;
+import com.blackrook.sql.SQLConnectionPool;
 import com.blackrook.sql.SQLResult;
+import com.blackrook.sql.SQLUtil;
 
 /**
  * Data access object for submitting database queries.
  * @author Matthew Tropiano
  */
-public abstract class BRDAO
+public abstract class DAO extends SQLProvider
 {
-	/** Default SQL Pool. */
-	private String defaultSQLPool;
+	/** SQL Pool Name. */
+	private SQLConnectionPool connectionPool;
 
 	/**
 	 * Base constructor.
 	 */
-	protected BRDAO()
+	protected DAO()
 	{
-		this(BRToolkit.DEFAULT_POOL_NAME);
+		this(Toolkit.DEFAULT_POOL_NAME);
 	}
 
 	/**
 	 * Other constructor. Sets default pools.
 	 */
-	protected BRDAO(String defaultThreadPoolName)
+	protected DAO(String sqlPoolName)
 	{
 		super();
-		defaultSQLPool = defaultThreadPoolName;
-	}
-
-	/**
-	 * Gets the Black Rook Framework Toolkit.
-	 */
-	private BRToolkit getToolkit()
-	{
-		return BRToolkit.INSTANCE;
-	}
-
-
-	/**
-	 * Gets the name of the default connection pool that this DAO uses.
-	 */
-	public String getDefaultSQLPool()
-	{
-		return defaultSQLPool;
-	}
-
-	/**
-	 * Sets the name of the default connection pool that this DAO uses.
-	 */
-	public void setDefaultSQLPool(String servletDefaultSQLPool)
-	{
-		this.defaultSQLPool = servletDefaultSQLPool;
+		connectionPool = getSQLPool(sqlPoolName);
 	}
 
 	/**
@@ -61,11 +43,18 @@ public abstract class BRDAO
 	 * The connection is held by this transaction until it is finished via {@link SQLTransaction#finish()}.
 	 * @param transactionLevel the isolation level of the transaction.
 	 * @return a {@link SQLTransaction} object to handle a contiguous transaction.
-	 * @throws BRFrameworkException if the transaction could not be created.
+	 * @throws SimpleFrameworkException if the transaction could not be created.
 	 */
-	protected final BRTransaction startTransaction(Level transactionLevel)
+	protected final DAOTransaction startTransaction(Level transactionLevel)
 	{
-		return getToolkit().startTransaction(defaultSQLPool, transactionLevel);
+		Connection connection = null;
+		try {
+			connection = connectionPool.getAvailableConnection();
+		} catch (InterruptedException e) {
+			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+		}
+		
+		return new DAOTransaction(this, connection, transactionLevel);
 	}
 	
 	/**
@@ -74,11 +63,14 @@ public abstract class BRDAO
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
 	protected final SQLResult doQuery(String queryKey, Object ... parameters)
 	{
-		return getToolkit().doQueryPooled(defaultSQLPool, queryKey, parameters);
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
+		return doQueryInline(query, parameters);
 	}
 
 	/**
@@ -88,11 +80,24 @@ public abstract class BRDAO
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query causes an error.
+	 * @throws SimpleFrameworkException if the query causes an error.
 	 */
 	protected final SQLResult doQueryInline(String query, Object ... parameters)
 	{
-		return getToolkit().doQueryPooledInline(defaultSQLPool, query, parameters);
+		Connection conn = null;
+		SQLResult result = null;		
+		try {
+			conn = connectionPool.getAvailableConnection();
+			result = SQLUtil.doQuery(conn, query, parameters);
+			conn.close(); // should release
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
+		} catch (InterruptedException e) {
+			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+		} finally {
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
+		}
+		return result;
 	}
 
 	/**
@@ -178,12 +183,15 @@ public abstract class BRDAO
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
 	protected final <T> T[] doQuery(Class<T> type, String queryKey, Object ... parameters)
 	{
-		return getToolkit().doQueryPooled(defaultSQLPool, type, queryKey, parameters);
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
+		return doQueryInline(type, query, parameters);
 	}
 
 	/**
@@ -270,12 +278,25 @@ public abstract class BRDAO
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query causes an error.
+	 * @throws SimpleFrameworkException if the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
 	protected final <T> T[] doQueryInline(Class<T> type, String query, Object ... parameters)
 	{
-		return getToolkit().doQueryPooledInline(defaultSQLPool, type, query, parameters);
+		Connection conn = null;
+		T[] result = null;		
+		try {
+			conn = connectionPool.getAvailableConnection();
+			result = SQLUtil.doQuery(type, conn, query, parameters);
+			conn.close(); // should release
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
+		} catch (InterruptedException e) {
+			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+		} finally {
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
+		}
+		return result;
 	}
 
 	/**
@@ -284,11 +305,14 @@ public abstract class BRDAO
 	 * @param queryKey the query statement to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
 	protected final SQLResult doUpdateQuery(String queryKey, Object ... parameters)
 	{
-		return getToolkit().doUpdateQueryPooled(defaultSQLPool, queryKey, parameters);
+		String query = getQueryByName(queryKey);
+		if (query == null)
+			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
+		return doUpdateQueryInline(query, parameters);
 	}
 
 	/**
@@ -298,11 +322,24 @@ public abstract class BRDAO
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query causes an error.
+	 * @throws SimpleFrameworkException if the query causes an error.
 	 */
 	protected final SQLResult doUpdateQueryInline(String query, Object ... parameters)
 	{
-		return getToolkit().doUpdateQueryPooledInline(defaultSQLPool, query, parameters);
+		Connection conn = null;
+		SQLResult result = null;
+		try {
+			conn = connectionPool.getAvailableConnection();
+			result = SQLUtil.doQueryUpdate(conn, query, parameters);
+			conn.close(); // should release
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
+		} catch (InterruptedException e) {
+			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+		} finally {
+			if (conn != null) try {conn.close();} catch (SQLException e) {};
+		}
+		return result;
 	}
 	
 }

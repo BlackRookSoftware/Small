@@ -15,14 +15,18 @@ public enum RequestMethod
 {
 	/** Standard GET request. */
 	GET(1, String.class, HttpServletRequest.class, HttpServletResponse.class),
-	/** Standard POST request (form encoding). */
+	/** Standard POST request (Content-Type is application/form-url-encoded). */
 	POST(1, String.class, HttpServletRequest.class, HttpServletResponse.class),
-	/** POST request that consists of many parts (mulipart form), usually contains files. */
+	/** POST request that consists of many parts (mulipart form), usually contains files (Content-Type is multipart/*). */
 	POST_MULTIPART(2, String.class, HttpServletRequest.class, HttpServletResponse.class, Part[].class),
 	/** POST request that contains JSON content (Content-Type is application/json). */
 	POST_JSON(3, String.class, HttpServletRequest.class, HttpServletResponse.class, JSONObject.class),
 	/** POST request that contains XML content (Content-Type is application/xml). */
 	POST_XML(4, String.class, HttpServletRequest.class, HttpServletResponse.class, XMLStruct.class),
+	/** POST request that contains other string content (Content-Type is text/*). */
+	POST_TEXT(5, String.class, HttpServletRequest.class, HttpServletResponse.class, String.class),
+	/** POST request that contains other binary content (Content-Type is anything else). */
+	POST_OTHER(6, String.class, HttpServletRequest.class, HttpServletResponse.class, byte[].class),
 	/** Standard HEAD request. */
 	HEAD(1, String.class, HttpServletRequest.class, HttpServletResponse.class),
 	/** Standard PUT request. */
@@ -31,7 +35,7 @@ public enum RequestMethod
 	DELETE(1, String.class, HttpServletRequest.class, HttpServletResponse.class),
 	;
 	
-	/** Quick way of determining if certain types have compatible parameters (and could theoretically be used together. */
+	/** Quick way of determining if certain types have compatible parameters (and could theoretically be used together). */
 	private final int compatibilityGroup;
 	/** Required parameter types for entry points. */
 	private final Class<?>[] parameterTypes;

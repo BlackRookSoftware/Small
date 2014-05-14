@@ -1,9 +1,11 @@
-package com.blackrook.j2ee;
+package com.blackrook.j2ee.component;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
+import com.blackrook.j2ee.Toolkit;
+import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.sql.SQLUtil;
 import com.blackrook.sql.SQLResult;
 
@@ -15,7 +17,7 @@ import com.blackrook.sql.SQLResult;
  * been finished.
  * @author Matthew Tropiano
  */
-public final class BRTransaction
+public final class DAOTransaction
 {
 	/** Enumeration of transaction levels. */
 	public static enum Level
@@ -66,11 +68,10 @@ public final class BRTransaction
 		}
 }
 	
-	/** The toolkit for this framework. */
-	private BRToolkit toolkit;
+	/** The parent DAO. */
+	private DAO dao;
 	/** The encapsulated connection. */
 	private Connection connection;
-	
 	/** Previous level state on the incoming connection. */
 	private int levelState;
 	
@@ -78,22 +79,20 @@ public final class BRTransaction
 	 * Wraps a connection in a transaction.
 	 * The connection gets {@link Connection#setAutoCommit(boolean)} called on it with a FALSE parameter,
 	 * and sets the transaction isolation level. These 
-	 * @param toolkit the {@link BRToolkit}.
+	 * @param toolkit the {@link Toolkit}.
 	 * @param connection the connection to the database to use for this transaction.
 	 * @param transactionLevel the transaction level to set on this transaction.
-	 * @throws BRFrameworkException if the transaction could not be created.
+	 * @throws SimpleFrameworkException if the transaction could not be created.
 	 */
-	BRTransaction(BRToolkit toolkit, Connection connection, Level transactionLevel)
+	DAOTransaction(DAO parent, Connection connection, Level transactionLevel)
 	{
-		this.toolkit = toolkit;
 		this.connection = connection;
-		
 		try {
 			this.levelState = connection.getTransactionIsolation();
 			connection.setAutoCommit(false);
 			connection.setTransactionIsolation(transactionLevel.id);
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 	}
 
@@ -111,7 +110,7 @@ public final class BRTransaction
 	 * This calls {@link Connection#commit()} and {@link Connection#close()} 
 	 * on the encapsulated connection and resets its previous state plus its auto-commit state to true.
 	 * @throws IllegalStateException if this transaction was already finished.
-	 * @throws BRFrameworkException if this causes a database error.
+	 * @throws SimpleFrameworkException if this causes a database error.
 	 */
 	public void finish()
 	{
@@ -123,8 +122,8 @@ public final class BRTransaction
 			connection.setTransactionIsolation(levelState);
 			connection.setAutoCommit(true);
 			connection.close();
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 		connection = null;
 	}
@@ -133,7 +132,7 @@ public final class BRTransaction
 	 * Commits the actions completed so far in this transaction.
 	 * This is also called during {@link #finish()}.
 	 * @throws IllegalStateException if this transaction was already finished.
-	 * @throws BRFrameworkException if this causes a database error.
+	 * @throws SimpleFrameworkException if this causes a database error.
 	 */
 	public void commit()
 	{
@@ -141,8 +140,8 @@ public final class BRTransaction
 			throw new IllegalStateException("This transaction is already finished.");
 		try {
 			connection.commit();
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -157,8 +156,8 @@ public final class BRTransaction
 			throw new IllegalStateException("This transaction is already finished.");
 		try {
 			connection.rollback();
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -167,7 +166,7 @@ public final class BRTransaction
 	 * after the {@link Savepoint} passed into this method will be rolled back.
 	 * @param savepoint the {@link Savepoint} to roll back to.
 	 * @throws IllegalStateException if this transaction was already finished.
-	 * @throws BRFrameworkException if this causes a database error.
+	 * @throws SimpleFrameworkException if this causes a database error.
 	 */
 	public void rollback(Savepoint savepoint)
 	{
@@ -176,7 +175,7 @@ public final class BRTransaction
 		try {
 			connection.rollback(savepoint);
 	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -184,7 +183,7 @@ public final class BRTransaction
 	 * Calls {@link Connection#setSavepoint()} on the encapsulated connection.
 	 * @return a generated {@link Savepoint} of this transaction.
 	 * @throws IllegalStateException if this transaction was already finished.
-	 * @throws BRFrameworkException if this causes a database error.
+	 * @throws SimpleFrameworkException if this causes a database error.
 	 */
 	public Savepoint setSavepoint()
 	{
@@ -193,8 +192,8 @@ public final class BRTransaction
 		Savepoint out = null;
 		try {
 			out = connection.setSavepoint();
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 		
 		return out;
@@ -205,7 +204,7 @@ public final class BRTransaction
 	 * @param name the name of the savepoint.
 	 * @return a generated {@link Savepoint} of this transaction.
 	 * @throws IllegalStateException if this transaction was already finished.
-	 * @throws BRFrameworkException if this causes a database error.
+	 * @throws SimpleFrameworkException if this causes a database error.
 	 */
 	public Savepoint setSavepoint(String name)
 	{
@@ -215,7 +214,7 @@ public final class BRTransaction
 		try {
 			out = connection.setSavepoint(name);
 	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 		
 		return out;
@@ -226,13 +225,13 @@ public final class BRTransaction
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
 	public SQLResult doQuery(String queryKey, Object ... parameters)
 	{
-		String query = toolkit.getQueryByName(queryKey);
+		String query = dao.getQueryByName(queryKey);
 		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
+			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
 
 		return doQueryInline(query, parameters);
 	}
@@ -243,15 +242,15 @@ public final class BRTransaction
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query causes an error.
+	 * @throws SimpleFrameworkException if the query causes an error.
 	 */
 	public SQLResult doQueryInline(String query, Object ... parameters)
 	{
 		SQLResult result = null;
 		try {
 			result = SQLUtil.doQuery(connection, query, parameters); 
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 		return result;
 	}
@@ -339,14 +338,14 @@ public final class BRTransaction
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
 	public <T> T[] doQuery(Class<T> type, String queryKey, Object ... parameters)
 	{
-		String query = toolkit.getQueryByName(queryKey);
+		String query = dao.getQueryByName(queryKey);
 		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
+			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
 
 		return doQueryInline(type, query, parameters);
 	}
@@ -435,7 +434,7 @@ public final class BRTransaction
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query causes an error.
+	 * @throws SimpleFrameworkException if the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
 	public <T> T[] doQueryInline(Class<T> type, String query, Object ... parameters)
@@ -443,8 +442,8 @@ public final class BRTransaction
 		T[] result = null;
 		try {
 			result = SQLUtil.doQuery(type, connection, query, parameters); 
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 		return result;
 	}
@@ -454,13 +453,13 @@ public final class BRTransaction
 	 * @param queryKey the query (by key) to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
 	public SQLResult doUpdateQuery(String queryKey, Object ... parameters)
 	{
-		String query = toolkit.getQueryByName(queryKey);
+		String query = dao.getQueryByName(queryKey);
 		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
+			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
 
 		return doUpdateQueryInline(query, parameters);
 	}
@@ -471,15 +470,15 @@ public final class BRTransaction
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws BRFrameworkException if the query causes an error.
+	 * @throws SimpleFrameworkException if the query causes an error.
 	 */
 	public SQLResult doUpdateQueryInline(String query, Object ... parameters)
 	{
 		SQLResult result = null;
 		try {
 			result = SQLUtil.doQueryUpdate(connection, query, parameters); 
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
+		} catch (SQLException e) {
+			throw new SimpleFrameworkException(e);
 		}
 		return result;
 	}

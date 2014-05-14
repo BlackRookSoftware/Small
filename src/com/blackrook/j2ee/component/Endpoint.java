@@ -1,4 +1,4 @@
-package com.blackrook.j2ee;
+package com.blackrook.j2ee.component;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +12,8 @@ import java.util.concurrent.Future;
 import javax.websocket.Session;
 
 import com.blackrook.commons.Common;
+import com.blackrook.j2ee.ToolkitComponent;
+import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 
@@ -19,7 +21,7 @@ import com.blackrook.lang.json.JSONWriter;
  * A WebSocket endpoint helper class that exposes some useful functions to facilitate endpoint creation.
  * @author Matthew Tropiano
  */
-public abstract class BREndpoint
+public abstract class Endpoint extends ToolkitComponent
 {
 	
 	/** Alphabet for generating unique identifiers. */
@@ -29,7 +31,7 @@ public abstract class BREndpoint
 	private String id;
 	
 	// Default Endpoint constructor.
-	protected BREndpoint()
+	protected Endpoint()
 	{
 		// generate random id string.
 		StringBuilder sb = new StringBuilder();
@@ -47,80 +49,19 @@ public abstract class BREndpoint
 		return id;
 	}
 
-	private BRToolkit getToolkit()
-	{
-		return BRToolkit.INSTANCE;
-	}
-
-	/**
-	 * Gets a file that is on the application path. 
-	 * @param path the path to the file to get.
-	 * @return a file representing the specified resource or null if it couldn't be found.
-	 */
-	protected final File getApplicationFile(String path)
-	{
-		return getToolkit().getApplicationFile(path);
-	}
-
-	/**
-	 * Gets a file path that is on the application path. 
-	 * @param relativepath the relative path to the file to get.
-	 * @return a file representing the specified resource or null if it couldn't be found.
-	 */
-	protected final String getApplicationFilePath(String relativepath)
-	{
-		return getToolkit().getApplicationFilePath(relativepath);
-	}
-
-	/**
-	 * Opens an input stream to a resource using a path relative to the
-	 * application context path. 
-	 * Outside users should not be able to access this!
-	 * @param path the path to the resource to open.
-	 * @return an open input stream to the specified resource or null if it couldn't be opened.
-	 * @throws IOException if the stream cannot be opened.
-	 */
-	protected final InputStream getResourceAsStream(String path) throws IOException
-	{
-		return getToolkit().getResourceAsStream(path);
-	}
-
-	/**
-	 * Logs a message out via the toolkit.
-	 * @param message the formatted message to log.
-	 * @param args the arguments for the formatted message.
-	 * @see String#format(String, Object...)
-	 */
-	public void log(String message, Object ... args)
-	{
-		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args));
-	}
-
-	/**
-	 * Logs a message out via the toolkit.
-	 * @param throwable the throwable to attach.
-	 * @param message the formatted message to log.
-	 * @param args the arguments for the formatted message.
-	 * @see String#format(String, Object...)
-	 */
-	public void log(Throwable throwable, String message, Object ... args)
-	{
-		getToolkit().log("<" + this.getClass().getSimpleName() + "> " + String.format(message + "\n", args), throwable);
-	}
-
 	/**
 	 * Sends a message string, synchronously, to the client.
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param message the message string to pass back to the connected client.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendText(final Session session, String message)
 	{
 		try {
 			session.getBasicRemote().sendText(message);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -131,14 +72,14 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param message the (partial) message string to pass back to the connected client.
 	 * @param isLast if true, tells the client that this is the final part. if false, it is not the last part.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendTextPartial(final Session session, String message, boolean isLast)
 	{
 		try {
 			session.getBasicRemote().sendText(message, isLast);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 
@@ -147,14 +88,14 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendBinary(final Session session, ByteBuffer buffer)
 	{
 		try {
 			session.getBasicRemote().sendBinary(buffer);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -164,14 +105,14 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendBinaryPartial(final Session session, ByteBuffer buffer, boolean isLast)
 	{
 		try {
 			session.getBasicRemote().sendBinary(buffer, isLast);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}			
 	}
 	
@@ -182,14 +123,14 @@ public abstract class BREndpoint
 	 * before it is sent. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendBinary(final Session session, byte[] buffer)
 	{
 		try {
 			sendBinary(session, ByteBuffer.wrap(buffer));
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -201,14 +142,14 @@ public abstract class BREndpoint
 	 * before it is sent. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendBinaryPartial(final Session session, byte[] buffer, boolean isLast)
 	{
 		try {
 			sendBinaryPartial(session, ByteBuffer.wrap(buffer), isLast);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -218,7 +159,7 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final void sendJSON(final Session session, JSONObject object)
 	{
@@ -226,7 +167,7 @@ public abstract class BREndpoint
 		try {
 			JSONWriter.writeJSON(object, sw);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 		sendText(session, sw.toString());
 	}
@@ -237,7 +178,7 @@ public abstract class BREndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
-	 * @throws BRFrameworkException on a send error or if an error occurs during conversion.
+	 * @throws SimpleFrameworkException on a send error or if an error occurs during conversion.
 	 */
 	protected final void sendJSON(final Session session, Object object)
 	{
@@ -246,7 +187,7 @@ public abstract class BREndpoint
 			JSONWriter.writeJSON(JSONObject.create(object), sw);
 			sendText(session, sw.toString());
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -257,7 +198,7 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param in the input stream to read from.
 	 * @param bufferSize the size of the buffer to use during the send.
-	 * @throws BRFrameworkException on a send or read error.
+	 * @throws SimpleFrameworkException on a send or read error.
 	 */
 	protected final void sendData(final Session session, InputStream in, int bufferSize)
 	{
@@ -273,7 +214,7 @@ public abstract class BREndpoint
 				bb.rewind();
 			}
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 	}
 	
@@ -283,7 +224,7 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param file the file to read.
 	 * @param bufferSize the size of the buffer to use during the send.
-	 * @throws BRFrameworkException on a send or read error.
+	 * @throws SimpleFrameworkException on a send or read error.
 	 */
 	protected final void sendFileContents(final Session session, File file, int bufferSize)
 	{
@@ -292,7 +233,7 @@ public abstract class BREndpoint
 			fis = new FileInputStream(file);
 			sendData(session, fis, bufferSize);
 		} catch (IOException e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		} finally {
 			Common.close(fis);
 		}
@@ -303,7 +244,7 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param message the message string to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final Future<Void> sendAsyncText(final Session session, String message)
 	{
@@ -329,7 +270,7 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final Future<Void> sendAsyncBinary(final Session session, byte[] buffer)
 	{
@@ -342,7 +283,7 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws BRFrameworkException on a send error.
+	 * @throws SimpleFrameworkException on a send error.
 	 */
 	protected final Future<Void> sendAsyncJSON(final Session session, JSONObject object)
 	{
@@ -350,7 +291,7 @@ public abstract class BREndpoint
 		try {
 			JSONWriter.writeJSON(object, sw);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 		return sendAsyncText(session, sw.toString());
 	}
@@ -361,7 +302,7 @@ public abstract class BREndpoint
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws BRFrameworkException on a send error or if an error occurs during conversion.
+	 * @throws SimpleFrameworkException on a send error or if an error occurs during conversion.
 	 */
 	protected final Future<Void> sendAsyncJSON(final Session session, Object object)
 	{
@@ -369,7 +310,7 @@ public abstract class BREndpoint
 		try {
 			JSONWriter.writeJSON(JSONObject.create(object), sw);
 		} catch (Exception e) {
-			throw new BRFrameworkException(e);
+			throw new SimpleFrameworkException(e);
 		}
 		return sendAsyncText(session, sw.toString());
 	}

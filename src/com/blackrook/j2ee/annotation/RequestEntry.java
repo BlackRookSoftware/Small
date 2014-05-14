@@ -5,10 +5,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.j2ee.BRController;
+import com.blackrook.j2ee.component.Controller;
 
 /**
- * Public methods with this annotation on {@link BRController} objects are
+ * Public methods with this annotation on {@link Controller} objects are
  * considered entry points via HTTP requests.
  * @author Matthew Tropiano
  */

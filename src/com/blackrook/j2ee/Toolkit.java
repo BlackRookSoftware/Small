@@ -14,8 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Iterator;
 
 import javax.servlet.ServletContext;
@@ -24,21 +22,22 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.BRTransaction.Level;
-import com.blackrook.j2ee.util.BRUtil;
+import com.blackrook.j2ee.component.Filter;
+import com.blackrook.j2ee.component.QueryResolver;
+import com.blackrook.j2ee.component.ViewResolver;
+import com.blackrook.j2ee.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.util.FrameworkUtil;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
 import com.blackrook.sql.SQLConnectionPool;
 import com.blackrook.sql.SQLConnector;
-import com.blackrook.sql.SQLUtil;
-import com.blackrook.sql.SQLResult;
 
 /**
  * The main manager class through which all things are
  * pooled and lent out to servlets that request it. 
  * @author Matthew Tropiano
  */
-public final class BRToolkit
+public final class Toolkit
 {
 	/** Name for Black Rook Toolkit Application attribute. */
 	public static final String DEFAULT_APPLICATION_NAME = "__BRTOOLKIT__";
@@ -70,7 +69,7 @@ public final class BRToolkit
 	private static final String XML_SQL_CONNECTIONS = "connections";
 
 	/** Singleton toolkit instance. */
-	static BRToolkit INSTANCE = null;
+	static Toolkit INSTANCE = null;
 
 	/** Servlet context. */
 	private ServletContext servletContext;
@@ -80,11 +79,11 @@ public final class BRToolkit
 	/** The cache map for JSP pages. */
 	private HashMap<String, String> viewCache;
 	/** List of view resolvers. */
-	private List<BRViewResolver> viewResolvers;
+	private List<ViewResolver> viewResolvers;
 	/** The cache for queries. */
 	private HashMap<String, String> queryCache;
 	/** List of query resolvers. */
-	private List<BRQueryResolver> queryResolvers;
+	private List<QueryResolver> queryResolvers;
 
 	/** Controller root package. */
 	private String controllerRootPackage;
@@ -100,9 +99,9 @@ public final class BRToolkit
 	private HashMap<String, String[]> filterEntries;
 
 	/** The controllers that were instantiated. */
-	private HashMap<String, BRControllerEntry> controllerCache;
+	private HashMap<String, ControllerEntry> controllerCache;
 	/** The filters that were instantiated. */
-	private HashMap<String, BRFilter> filterCache;
+	private HashMap<String, Filter> filterCache;
 
 	/** Database connection pool. */
 	private HashMap<String, SQLConnectionPool> connectionPool;
@@ -111,11 +110,11 @@ public final class BRToolkit
 	 * Constructs a new Toolkit.
 	 * @param context the servlet context.
 	 */
-	synchronized static BRToolkit createToolkit(ServletContext context)
+	synchronized static Toolkit create(ServletContext context)
 	{
 		if (INSTANCE != null)
 			return INSTANCE;
-		return INSTANCE = new BRToolkit(context);
+		return INSTANCE = new Toolkit(context);
 	}
 
 	/**
@@ -123,7 +122,7 @@ public final class BRToolkit
 	 * @param path the path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	public File getApplicationFile(String path)
+	File getApplicationFile(String path)
 	{
 		File inFile = new File(realAppPath+"/"+path);
 		return inFile.exists() ? inFile : null;
@@ -134,7 +133,7 @@ public final class BRToolkit
 	 * @param relativepath the relative path to the file to get.
 	 * @return a file representing the specified resource or null if it couldn't be found.
 	 */
-	public String getApplicationFilePath(String relativepath)
+	String getApplicationFilePath(String relativepath)
 	{
 		return realAppPath + "/" + relativepath;
 	}
@@ -142,7 +141,7 @@ public final class BRToolkit
 	/**
 	 * Returns servlet context that constructed this.
 	 */
-	public ServletContext getServletContext()
+	ServletContext getServletContext()
 	{
 		return servletContext;
 	}
@@ -155,7 +154,7 @@ public final class BRToolkit
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
 	 */
 	@SuppressWarnings("resource")
-	public InputStream getResourceAsStream(String path) throws IOException
+	InputStream getResourceAsStream(String path) throws IOException
 	{
 		File inFile = getApplicationFile(path);
 		return inFile != null ? new FileInputStream(inFile) : null;
@@ -165,12 +164,12 @@ public final class BRToolkit
 	 * Gets the path to a view by keyword.
 	 * @return the associated path or null if not found. 
 	 */
-	public String getViewByName(String keyword)
+	String getViewByName(String keyword)
 	{
 		String out = viewCache.get(keyword);
 		if  (out == null)
 		{
-			for (BRViewResolver resolver : viewResolvers)
+			for (ViewResolver resolver : viewResolvers)
 				if ((out = resolver.resolveView(keyword)) != null)
 				{
 					if (!resolver.dontCacheView(keyword))
@@ -186,12 +185,12 @@ public final class BRToolkit
 	 * Gets a query by keyword.
 	 * @return the associated query or null if not found. 
 	 */
-	public String getQueryByName(String keyword)
+	String getQueryByName(String keyword)
 	{
 		String out = queryCache.get(keyword);
 		if  (out == null)
 		{
-			for (BRQueryResolver resolver : queryResolvers)
+			for (QueryResolver resolver : queryResolvers)
 				if ((out = resolver.resolveQuery(keyword)) != null)
 				{
 					if (!resolver.dontCacheQuery(keyword))
@@ -204,190 +203,17 @@ public final class BRToolkit
 	}
 
 	/**
-	 * Logs a message out via the servlet context.
-	 * @param message the formatted message to log.
-	 * @param args the arguments for the formatted message.
-	 * @see String#format(String, Object...)
+	 * Attempts to get a connection pool by a certain name.
+	 * @param name the name of the connection pool.
+	 * @return a valid connection pool.
+	 * @throws SimpleFrameworkException if the pool could not be found.
 	 */
-	public void log(String message, Object ... args)
+	SQLConnectionPool getSQLPool(String name)
 	{
-		servletContext.log(String.format(message, args));
-	}
-
-	/**
-	 * Logs a message out via the servlet context.
-	 * @param throwable the throwable to 
-	 * @param message the formatted message to log.
-	 * @param args the arguments for the formatted message.
-	 * @see String#format(String, Object...)
-	 */
-	public void log(Throwable throwable, String message, Object ... args)
-	{
-		servletContext.log(String.format(message, args), throwable);
-	}
-
-	/**
-	 * Generates a transaction for multiple queries in one set.
-	 * This transaction performs all of its queries through one connection.
-	 * The connection is held by this transaction until it is finished via {@link SQLTransaction#finish()}.
-	 * @param poolname the name of the connection pool to use.
-	 * @param transactionLevel the isolation level of the transaction.
-	 * @return a {@link SQLTransaction} object to handle a contiguous transaction.
-	 * @throws BRFrameworkException if the transaction could not be created.
-	 */
-	BRTransaction startTransaction(String poolname, Level transactionLevel)
-	{
-		SQLConnectionPool pool = connectionPool.get(poolname);
+		SQLConnectionPool pool = connectionPool.get(name);
 		if (pool == null)
-			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
-		
-		Connection connection = null;
-		try {
-			connection = pool.getAvailableConnection();
-	} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-		}
-		
-		return new BRTransaction(this, connection, transactionLevel);
-	}
-	
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param queryKey the query statement to execute (by key).
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
-	 */
-	SQLResult doQueryPooled(String poolname, String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doQueryPooledInline(poolname, query, parameters);
-	}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * Assumes that the query passed is an actual query and not a lookup key.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param query the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query causes an error.
-	 */
-	SQLResult doQueryPooledInline(String poolname, String query, Object ... parameters)
-	{
-		Connection conn = null;
-		SQLResult result = null;		
-		try {
-			SQLConnectionPool pool = connectionPool.get(poolname);
-			if (pool == null)
-				throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
-			conn = pool.getAvailableConnection();
-			result = SQLUtil.doQuery(conn, query, parameters);
-			conn.close(); // should release
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
-	} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
-		}
-		return result;
-	}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * The result is returned as a series of objects with the data filled in.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param queryKey the query statement to execute (by key).
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
-	 */
-	<T> T[] doQueryPooled(String poolname, Class<T> type, String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doQueryPooledInline(poolname, type, query, parameters);
-	}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * The result is returned as a series of objects with the data filled in.
-	 * Assumes that the query passed is an actual query and not a lookup key.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param query the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query causes an error.
-	 */
-	<T> T[] doQueryPooledInline(String poolname, Class<T> type, String query, Object ... parameters)
-	{
-		Connection conn = null;
-		T[] result = null;		
-		try {
-			SQLConnectionPool pool = connectionPool.get(poolname);
-			if (pool == null)
-				throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
-			conn = pool.getAvailableConnection();
-			result = SQLUtil.doQuery(type, conn, query, parameters);
-			conn.close(); // should release
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
-	} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
-		}
-		return result;
-	}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs an update query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param queryKey the query statement to execute (by key).
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query cannot be resolved or the query causes an error.
-	 */
-	SQLResult doUpdateQueryPooled(String poolname, String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new BRFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doUpdateQueryPooledInline(poolname, query, parameters);
-	}
-
-	/**
-	 * Attempts to grab an available connection from the pool and performs a query.
-	 * @param poolname the SQL connection pool name to use.
-	 * @param query the query statement to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the update result returned (usually number of rows affected).
-	 * @throws BRFrameworkException if the query causes an error.
-	 */
-	SQLResult doUpdateQueryPooledInline(String poolname, String query, Object ... parameters)
-	{
-		Connection conn = null;
-		SQLResult result = null;
-		SQLConnectionPool pool = connectionPool.get(poolname);
-		if (pool == null)
-			throw new BRFrameworkException("Connection pool \""+poolname+"\" does not exist.");
-		try {
-			conn = pool.getAvailableConnection();
-			result = SQLUtil.doQueryUpdate(conn, query, parameters);
-			conn.close(); // should release
-	} catch (SQLException e) {
-			throw new BRFrameworkException(e);
-	} catch (InterruptedException e) {
-			throw new BRFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
-		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
-		}
-		return result;
+			throw new SimpleFrameworkException("Connection pool \""+name+"\" does not exist.");
+		return pool;
 	}
 	
 	/**
@@ -429,7 +255,7 @@ public final class BRToolkit
 	 * @param path the path of the controller.
 	 * @return a controller instance to call or null to trigger a 404.
 	 */
-	BRControllerEntry getController(String path)
+	ControllerEntry getController(String path)
 	{
 		if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
@@ -440,7 +266,7 @@ public final class BRToolkit
 			if (controllerCache.containsKey(path))
 				return controllerCache.get(path);
 			
-			BRControllerEntry out = instantiateController(path);
+			ControllerEntry out = instantiateController(path);
 	
 			if (out == null)
 				return null;
@@ -456,9 +282,9 @@ public final class BRToolkit
 	 * @param path the path of the filter.
 	 * @return a filter instance to call or null for no filter.
 	 */
-	BRFilter[] getFilters(String path)
+	Filter[] getFilters(String path)
 	{
-		BRFilter[] out = getFiltersUsingDefinitions(path);
+		Filter[] out = getFiltersUsingDefinitions(path);
 		if (out != null)
 			return out;
 		
@@ -483,17 +309,17 @@ public final class BRToolkit
 	 * Constructs a new root toolkit used by all servlets and filters.
 	 * @param context the servlet context to use.
 	 */
-	private BRToolkit(ServletContext context)
+	private Toolkit(ServletContext context)
 	{
 		servletContext = context;
 		viewCache = new CaseInsensitiveHashMap<String>(25);
-		viewResolvers = new List<BRViewResolver>(25);
+		viewResolvers = new List<ViewResolver>(25);
 		queryCache = new CaseInsensitiveHashMap<String>(25);
-		queryResolvers = new List<BRQueryResolver>(25);
+		queryResolvers = new List<QueryResolver>(25);
 		connectionPool = new CaseInsensitiveHashMap<SQLConnectionPool>();
-		controllerCache = new HashMap<String, BRControllerEntry>();
+		controllerCache = new HashMap<String, ControllerEntry>();
 		filterEntries = new HashMap<String, String[]>();
-		filterCache = new HashMap<String, BRFilter>();
+		filterCache = new HashMap<String, Filter>();
 		
 		realAppPath = context.getRealPath("/");
 		
@@ -503,7 +329,7 @@ public final class BRToolkit
 		try {
 			in = getResourceAsStream(MAPPING_XML);
 			if (in == null)
-				throw new BRFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML);
+				throw new SimpleFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML);
 			xml = XMLStructFactory.readXML(in);
 			for (XMLStruct root : xml)
 			{
@@ -521,8 +347,8 @@ public final class BRToolkit
 						initializeFilter(struct);
 				}
 			}
-	} catch (Exception e) {
-			throw new BRFrameworkException(e);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException(e);
 		} finally {
 			Common.close(in);
 		}
@@ -540,11 +366,11 @@ public final class BRToolkit
 
 		String driver = struct.getAttribute(XML_SQL_DRIVER);
 		if (driver.trim().length() == 0)
-			throw new BRFrameworkException("Missing driver for SQL server pool.");
+			throw new SimpleFrameworkException("Missing driver for SQL server pool.");
 
 		String url = struct.getAttribute(XML_SQL_URL);
 		if (url.trim().length() == 0)
-			throw new BRFrameworkException("Missing URL for SQL server pool.");
+			throw new SimpleFrameworkException("Missing URL for SQL server pool.");
 
 		String user = struct.getAttribute(XML_SQL_USER);
 		if (user != null) 
@@ -554,8 +380,8 @@ public final class BRToolkit
 
 		try {
 			dbu = new SQLConnector(driver, url);
-	} catch (Exception e) {
-			throw new BRFrameworkException(e);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException(e);
 		}
 
 		int conn = struct.getAttributeInt(XML_SQL_CONNECTIONS, 10);
@@ -566,8 +392,8 @@ public final class BRToolkit
 			else
 				pool = new SQLConnectionPool(dbu, conn);
 				
-	} catch (Exception e) {
-			throw new BRFrameworkException(e);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException(e);
 		}
 		
 		connectionPool.put(name, pool);
@@ -580,23 +406,23 @@ public final class BRToolkit
 	{
 		String clazz = struct.getAttribute(XML_VIEW_CLASS).trim();
 		if (clazz.length() == 0)
-			throw new BRFrameworkException("Missing class in view resolver delaration.");
+			throw new SimpleFrameworkException("Missing class in view resolver delaration.");
 
 		Class<?> clz = null;
-		BRViewResolver resolver = null;
+		ViewResolver resolver = null;
 		
 		try {
 			clz = Class.forName(clazz);
-	} catch (Exception e) {
-			throw new BRFrameworkException("Class in view resolver could not be found: "+clazz);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in view resolver could not be found: "+clazz);
 		}
 		
 		try {
-			resolver = (BRViewResolver)BRUtil.getBean(clz);
-	} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in view resolver is not an instance of BRViewResolver: "+clz.getName());
-	} catch (Exception e) {
-			throw new BRFrameworkException("Class in view resolver could not be instantiated: "+clz.getName());
+			resolver = (ViewResolver)FrameworkUtil.getBean(clz);
+		} catch (ClassCastException e) {
+			throw new SimpleFrameworkException("Class in view resolver is not an instance of BRViewResolver: "+clz.getName());
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in view resolver could not be instantiated: "+clz.getName());
 		}
 
 		if (resolver != null)
@@ -610,23 +436,23 @@ public final class BRToolkit
 	{
 		String clazz = struct.getAttribute(XML_QUERY_CLASS).trim();
 		if (clazz.length() == 0)
-			throw new BRFrameworkException("Missing class in query resolver delaration.");
+			throw new SimpleFrameworkException("Missing class in query resolver delaration.");
 		
 		Class<?> clz = null;
-		BRQueryResolver resolver = null;
+		QueryResolver resolver = null;
 		
 		try {
 			clz = Class.forName(clazz);
-	} catch (Exception e) {
-			throw new BRFrameworkException("Class in query resolver could not be found: "+clazz);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in query resolver could not be found: "+clazz);
 		}
 		
 		try {
-			resolver = (BRQueryResolver)BRUtil.getBean(clz);
-	} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in query resolver is not an instance of BRQueryResolver: "+clz.getName());
-	} catch (Exception e) {
-			throw new BRFrameworkException("Class in query resolver could not be instantiated: "+clz.getName());
+			resolver = (QueryResolver)FrameworkUtil.getBean(clz);
+		} catch (ClassCastException e) {
+			throw new SimpleFrameworkException("Class in query resolver is not an instance of BRQueryResolver: "+clz.getName());
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in query resolver could not be instantiated: "+clz.getName());
 		}
 
 		if (resolver != null)
@@ -645,7 +471,7 @@ public final class BRToolkit
 		controllerRootIndexClass = struct.getAttribute(XML_CONTROLLERROOT_INDEXCONTROLLERCLASS).trim();
 		
 		if (pkg == null)
-			throw new BRFrameworkException("Controller root declaration must specify a root package.");
+			throw new SimpleFrameworkException("Controller root declaration must specify a root package.");
 		
 		controllerRootPackage = pkg;
 	}
@@ -659,9 +485,9 @@ public final class BRToolkit
 		String classString = struct.getAttribute(XML_FILTERPATH_CLASSES);
 
 		if (pkg == null)
-			throw new BRFrameworkException("Filter in declaration does not declare a package.");
+			throw new SimpleFrameworkException("Filter in declaration does not declare a package.");
 		if (classString == null)
-			throw new BRFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
+			throw new SimpleFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
 		
 		String[] classes = classString.split("(\\s|\\,)+");
 		
@@ -669,7 +495,7 @@ public final class BRToolkit
 	}
 
 	// Instantiates a controller via root resolver.
-	private BRControllerEntry instantiateController(String path)
+	private ControllerEntry instantiateController(String path)
 	{
 		String className = getClassNameForController(path);
 		
@@ -679,19 +505,19 @@ public final class BRToolkit
 		Class<?> controllerClass = null;
 		try {
 			controllerClass = Class.forName(className);
-	} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {
 			return null;
 			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 		}
 		
-		BRControllerEntry out = null;
+		ControllerEntry out = null;
 		
 		try {
-			out = new BRControllerEntry(controllerClass, controllerRootMethodPrefix);
-	} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
-	} catch (Exception e) {
-			throw new BRFrameworkException("Class in controller declaration could not be instantiated: "+className);
+			out = new ControllerEntry(controllerClass, controllerRootMethodPrefix);
+		} catch (ClassCastException e) {
+			throw new SimpleFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className);
 		}
 		
 		int lastIndex = 0;
@@ -703,11 +529,11 @@ public final class BRToolkit
 				className = className.substring(0, lastIndex);
 				filterClasses = filterEntries.get(className);
 			}
-	} while (lastIndex >= 0 && filterClasses == null);
+		} while (lastIndex >= 0 && filterClasses == null);
 		
 		if (filterClasses != null) for (String fc : filterClasses)
 		{
-			BRFilter filter = null;
+			Filter filter = null;
 			if ((filter = filterCache.get(fc)) == null)
 				filter = instantiateFilter(fc);
 			out.addFilter(filter);
@@ -717,23 +543,23 @@ public final class BRToolkit
 	}
 	
 	// Creates a filter by its entry.
-	private BRFilter instantiateFilter(String className)
+	private Filter instantiateFilter(String className)
 	{			
 		Class<?> filterClass = null;
 		try {
 			filterClass = Class.forName(className);
-	} catch (ClassNotFoundException e) {
-			throw new BRFrameworkException("Class in filter declaration could not be found: "+className);
+		} catch (ClassNotFoundException e) {
+			throw new SimpleFrameworkException("Class in filter declaration could not be found: "+className);
 		}
 		
-		BRFilter out = null;
+		Filter out = null;
 		
 		try {
-			out = (BRFilter)BRUtil.getBean(filterClass);
-	} catch (ClassCastException e) {
-			throw new BRFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
-	} catch (Exception e) {
-			throw new BRFrameworkException("Class in filter declaration could not be instantiated: "+className);
+			out = (Filter)FrameworkUtil.getBean(filterClass);
+		} catch (ClassCastException e) {
+			throw new SimpleFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in filter declaration could not be instantiated: "+className);
 		}
 		
 		return out;
@@ -779,7 +605,7 @@ public final class BRToolkit
 	}
 	
 	// Get filters using path definitions.
-	private BRFilter[] getFiltersUsingDefinitions(String path)
+	private Filter[] getFiltersUsingDefinitions(String path)
 	{
 		return null;
 	}

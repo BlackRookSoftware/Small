@@ -85,7 +85,7 @@
 -->
 
 <queryresolver 
-	class="com.blackrook.j2ee.BRDefaultResolver" 
+	class="com.blackrook.j2ee.SFDefaultResolver" 
 	/>
 
 
@@ -115,7 +115,7 @@
 <!--
 <filterpath 
 	package="com.add.path.here" 
-	classes="com.blackrook.j2ee.filter.BRFilter" 
+	classes="com.blackrook.j2ee.filter.SFFilter" 
 	/>
 -->
 

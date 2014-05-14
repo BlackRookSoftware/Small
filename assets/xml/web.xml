@@ -6,7 +6,7 @@
 
 <servlet>
 	<servlet-name>BRDispatcherServlet</servlet-name>
-	<servlet-class>com.blackrook.j2ee.BRDispatcherServlet</servlet-class>
+	<servlet-class>com.blackrook.j2ee.SFDispatcherServlet</servlet-class>
 </servlet>
 <servlet-mapping>
 	<servlet-name>BRDispatcherServlet</servlet-name>
