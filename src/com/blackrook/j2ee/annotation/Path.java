@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method parameter. Should be used on Controllers.
+ * Annotates a method parameter. Should be used in Controllers.
  * <p>
  * Parameter type must be String, and will be set to the request path.
  * @author Matthew Tropiano

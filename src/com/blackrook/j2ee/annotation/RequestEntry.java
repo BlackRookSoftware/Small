@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import com.blackrook.j2ee.RequestMethod;
 
 /**
- * Public methods with this annotation on {@link Controller} objects are
+ * Public methods with this annotation in {@link Controller} objects are
  * considered entry points via HTTP requests.
  * @author Matthew Tropiano
  */

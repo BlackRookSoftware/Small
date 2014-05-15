@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method parameter for request parameter binding. Should be used on Controllers.
+ * Annotates a method parameter for request parameter binding. Should be used in Controllers.
  * <p>
  * Matched type can be array, in order to accept parameters with the same name. 
  * If the request body type is <code>multipart/**</code>, the parameter type can be {@link File},
