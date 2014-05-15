@@ -26,7 +26,6 @@ import com.blackrook.j2ee.component.Filter;
 import com.blackrook.j2ee.component.QueryResolver;
 import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
-import com.blackrook.j2ee.util.FrameworkUtil;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
 import com.blackrook.sql.SQLConnectionPool;
@@ -57,7 +56,6 @@ public final class Toolkit
 	private static final String XML_CONTROLLERROOT_PACKAGE = "package";
 	private static final String XML_CONTROLLERROOT_PREFIX = "prefix";
 	private static final String XML_CONTROLLERROOT_SUFFIX = "suffix";
-	private static final String XML_CONTROLLERROOT_METHODPREFIX = "methodprefix";
 	private static final String XML_CONTROLLERROOT_INDEXCONTROLLERCLASS = "indexclass";
 	
 	private static final String XML_SQL = "connectionpool";
@@ -91,8 +89,6 @@ public final class Toolkit
 	private String controllerRootPrefix;
 	/** Controller root suffix. */
 	private String controllerRootSuffix;
-	/** Controller root method prefix. */
-	private String controllerRootMethodPrefix;
 	/** Controller root index controller. */
 	private String controllerRootIndexClass;
 	/** Map of package to filter classes. */
@@ -467,7 +463,6 @@ public final class Toolkit
 		String pkg = struct.getAttribute(XML_CONTROLLERROOT_PACKAGE).trim();
 		controllerRootPrefix = struct.getAttribute(XML_CONTROLLERROOT_PREFIX, "").trim();
 		controllerRootSuffix = struct.getAttribute(XML_CONTROLLERROOT_SUFFIX, "Controller").trim();
-		controllerRootMethodPrefix = struct.getAttribute(XML_CONTROLLERROOT_METHODPREFIX, "call").trim();
 		controllerRootIndexClass = struct.getAttribute(XML_CONTROLLERROOT_INDEXCONTROLLERCLASS).trim();
 		
 		if (pkg == null)
@@ -513,7 +508,7 @@ public final class Toolkit
 		ControllerEntry out = null;
 		
 		try {
-			out = new ControllerEntry(controllerClass, controllerRootMethodPrefix);
+			out = new ControllerEntry(controllerClass);
 		} catch (ClassCastException e) {
 			throw new SimpleFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
 		} catch (Exception e) {

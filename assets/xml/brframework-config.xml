@@ -161,10 +161,6 @@
 	suffix			The suffix appended to the controller name.
 					Default is "Controller", if unspecified.
 	
-	methodprefix	The prefix added to the request page for the
-					true method to invoke for the request type.
-					Default is "call", if unspecified.
-					
 	indexclass		The controller class to call if the request URL
 					does not have folders past the application folder
 					in the path (just file).
@@ -174,7 +170,6 @@
 	package="com.add.path.here" 
 	prefix=""  
 	suffix="Controller"
-	methodprefix="call"  
 	indexclass=""  
 	/>
 

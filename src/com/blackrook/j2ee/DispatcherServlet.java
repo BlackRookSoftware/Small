@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 
+import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,12 +15,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import com.blackrook.commons.Reflect;
-import com.blackrook.j2ee.annotation.RequestMethod;
+import com.blackrook.j2ee.ControllerEntry.MethodDescriptor;
+import com.blackrook.j2ee.ControllerEntry.MethodDescriptor.Output;
+import com.blackrook.j2ee.ControllerEntry.MethodDescriptor.ParameterInfo;
+import com.blackrook.j2ee.annotation.Parameter;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.multipart.MultipartParser;
 import com.blackrook.j2ee.multipart.MultipartParserException;
 import com.blackrook.j2ee.multipart.Part;
-import com.blackrook.j2ee.util.RFCParser;
 import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONReader;
@@ -37,22 +40,31 @@ public final class DispatcherServlet extends HttpServlet
 	@Override
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
 	{
-		String path = getPath(request);
-		ControllerEntry entry = getControllerUsingPath(path);
-		if (entry == null)
-			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
-		else
-		{
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.GET, page, request, response, null))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.GET, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
-			else
-				entry.getInstance().onGet(page, request, response);
-		}
+		callControllerEntry(request, response, RequestMethod.GET);
+	}
+
+	@Override
+	public final void doHead(HttpServletRequest request, HttpServletResponse response)
+	{
+		callControllerEntry(request, response, RequestMethod.HEAD);
+	}
+
+	@Override
+	public final void doPut(HttpServletRequest request, HttpServletResponse response)
+	{
+		callControllerEntry(request, response, RequestMethod.PUT);
+	}
+
+	@Override
+	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
+	{
+		callControllerEntry(request, response, RequestMethod.DELETE);
+	}
+
+	@Override
+	public final void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		callControllerEntry(request, response, RequestMethod.OPTIONS);
 	}
 
 	@Override
@@ -186,8 +198,10 @@ public final class DispatcherServlet extends HttpServlet
 		}
 	}
 	
-	@Override
-	public final void doHead(HttpServletRequest request, HttpServletResponse response)
+	/**
+	 * Fetches a regular controller entry and invokes the correct method.
+	 */
+	private final void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod)
 	{
 		String path = getPath(request);
 		ControllerEntry entry = getControllerUsingPath(path);
@@ -196,57 +210,112 @@ public final class DispatcherServlet extends HttpServlet
 		else
 		{
 			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.HEAD, page, request, response, null))
+			if (!entry.callFilters(requestMethod, page, request, response, null))
 				return;
 			
-			Method m = entry.getMethodUsingPath(RequestMethod.HEAD, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
+			MethodDescriptor md = entry.getDescriptorUsingPath(requestMethod, page);
+			if (md != null)
+				callControllerMethod(requestMethod, request, response, md, entry.getInstance());
 			else
-				entry.getInstance().onHead(page, request, response);
+				FrameworkUtil.sendCode(response, 405, "Entry point does not support this method.");
+		}
+	}
+
+	/**
+	 * Invokes a controller method.
+	 */
+	private final void callControllerMethod(RequestMethod requestMethod, HttpServletRequest request, HttpServletResponse response, MethodDescriptor descriptor, Object instance)
+	{
+		ParameterInfo[] methodParams = descriptor.getParameters(); 
+		Object[] invokeParams = new Object[methodParams.length];
+
+		String path = null;
+		String pathFile = null;
+		String pathQuery = null;
+		
+		for (int i = 0; i < methodParams.length; i++)
+		{
+			ParameterInfo pinfo = methodParams[i];
+			switch (pinfo.getSourceType())
+			{
+				case PATH:
+					path = path != null ? path : getPath(request);
+					invokeParams[i] = Reflect.createForType("Parameter " + i, path, pinfo.getType());
+					break;
+				case PATH_FILE:
+					pathFile = pathFile != null ? pathFile : getPage(request);
+					invokeParams[i] = Reflect.createForType("Parameter " + i, pathFile, pinfo.getType());
+					break;
+				case PATH_QUERY:
+					pathQuery = pathQuery != null ? pathQuery : getQueryString(request);
+					invokeParams[i] = Reflect.createForType("Parameter " + i, pathQuery, pinfo.getType());
+					break;
+				case SERVLET_REQUEST:
+					invokeParams[i] = request;
+					break;
+				case SERVLET_RESPONSE:
+					invokeParams[i] = response;
+					break;
+				case SERVLET_CONTEXT:
+					invokeParams[i] = request.getServletContext();
+					break;
+				case SESSION:
+					invokeParams[i] = request.getSession();
+					break;
+				case METHOD_TYPE:
+					invokeParams[i] = requestMethod;
+					break;
+				case HEADER_VALUE:
+				{
+					String headerName = pinfo.getName();
+					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
+					break;
+				}
+				case PARAMETER:
+				{
+					String parameterName = pinfo.getName();
+					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(parameterName), pinfo.getType());
+					break;
+				}
+				case ATTRIBUTE:
+				{
+					// TODO: Finish this!
+					break;
+				}
+				case MODEL:
+				{
+					// TODO: Finish this!
+					break;
+				}
+				case CONTENT:
+				{
+					// TODO: Finish this!
+					break;
+				}
+			}
+		}
+		
+		Object retval = Reflect.invokeBlind(descriptor.getMethod(), instance, invokeParams);
+		if (descriptor.getOutputType() == Output.VIEW)
+			FrameworkUtil.sendToView(request, response, String.valueOf(retval));
+		else if (descriptor.getOutputType() == Output.CONTENT)
+		{
+			FrameworkUtil.sendToView(request, response, String.valueOf(retval));
 		}
 	}
 	
-	@Override
-	public final void doPut(HttpServletRequest request, HttpServletResponse response)
+	/**
+	 * Get the base path parsed out of the request URI.
+	 */
+	private final String getPath(HttpServletRequest request)
 	{
-		String path = getPath(request);
-		ControllerEntry entry = getControllerUsingPath(path);
-		if (entry == null)
-			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
+		String requestURI = request.getRequestURI();
+		int contextPathLen = request.getContextPath().length();
+		int slashIndex = requestURI.lastIndexOf('/');
+		if (slashIndex >= 0)
+			return requestURI.substring(contextPathLen, slashIndex);
 		else
-		{
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.PUT, page, request, response, null))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.PUT, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
-			else
-				entry.getInstance().onPut(page, request, response);
-		}
-	}
-	
-	@Override
-	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
-	{
-		String path = getPath(request);
-		ControllerEntry entry = getControllerUsingPath(path);
-		if (entry == null)
-			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
-		else
-		{
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.DELETE, page, request, response, null))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.DELETE, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
-			else
-				entry.getInstance().onDelete(page, request, response);
-		}
+			return requestURI.substring(contextPathLen); 
 	}
 
 	/**
@@ -264,17 +333,16 @@ public final class DispatcherServlet extends HttpServlet
 	}
 	
 	/**
-	 * Get the base path parsed out of the request URI.
+	 * Get the query string parsed out of the request URI.
 	 */
-	private final String getPath(HttpServletRequest request)
+	private final String getQueryString(HttpServletRequest request)
 	{
 		String requestURI = request.getRequestURI();
-		int contextPathLen = request.getContextPath().length();
-		int slashIndex = requestURI.lastIndexOf('/');
-		if (slashIndex >= 0)
-			return requestURI.substring(contextPathLen, slashIndex);
+		int qIndex = requestURI.indexOf('?');
+		if (qIndex >= 0)
+			return requestURI.substring(qIndex + 1);
 		else
-			return requestURI.substring(contextPathLen); 
+			return ""; 
 	}
 	
 	/**

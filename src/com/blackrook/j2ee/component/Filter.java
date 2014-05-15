@@ -3,14 +3,13 @@ package com.blackrook.j2ee.component;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.j2ee.ControlComponent;
-import com.blackrook.j2ee.annotation.RequestMethod;
+import com.blackrook.j2ee.RequestMethod;
 
 /**
  * All filters are extensions of this class.
  * @author Matthew Tropiano
  */
-public abstract class Filter extends ControlComponent
+public abstract class Filter
 {
 	/**
 	 * Called to figure out if an HTTP Request should pass or be rejected.
