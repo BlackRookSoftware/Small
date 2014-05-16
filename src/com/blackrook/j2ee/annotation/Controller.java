@@ -1,9 +1,16 @@
 package com.blackrook.j2ee.annotation;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * Annotation to signify a Controller with entry points.
  * @author Matthew Tropiano
  */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Controller
 {
 	/**

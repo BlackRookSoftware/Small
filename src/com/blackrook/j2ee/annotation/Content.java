@@ -22,13 +22,14 @@ import java.lang.annotation.Target;
  * If on a method, this turns the returned object on after running the method into data put into the response body.
  * <ul>
  * <li>If return type is a File, the content type is changed to the file's predicted MIME-type and the content is the file's content, verbatim.</li>
- * <li>If return type is an XMLStruct, XML is sent back. Content type is </li>
- * <li>If return type is anything else, it is converted to JSON and sent back.</li>
+ * <li>If return type is an XMLStruct, XML is sent back. Content type is application/json.</li>
+ * <li>If return type is a String, plain text is sent back. Content type is text/plain.</li>
+ * <li>If return type is JSONObject or anything else, it is converted to JSON and sent back.</li>
  * </ul>
  * @author Matthew Tropiano
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface BodyContent
+public @interface Content
 {
 }

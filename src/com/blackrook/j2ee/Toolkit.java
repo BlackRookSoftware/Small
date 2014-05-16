@@ -509,10 +509,8 @@ public final class Toolkit
 		
 		try {
 			out = new ControllerEntry(controllerClass);
-		} catch (ClassCastException e) {
-			throw new SimpleFrameworkException("Class in controller declaration is not an instance of BRController: "+className);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className);
+			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className, e);
 		}
 		
 		int lastIndex = 0;

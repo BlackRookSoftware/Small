@@ -1,30 +1,19 @@
 package com.blackrook.j2ee;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Iterator;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.j2ee.annotation.Attribute;
-import com.blackrook.j2ee.annotation.BodyAttachment;
-import com.blackrook.j2ee.annotation.BodyContent;
 import com.blackrook.j2ee.annotation.Controller;
-import com.blackrook.j2ee.annotation.HeaderValue;
 import com.blackrook.j2ee.annotation.Model;
-import com.blackrook.j2ee.annotation.Parameter;
-import com.blackrook.j2ee.annotation.Path;
-import com.blackrook.j2ee.annotation.PathFile;
-import com.blackrook.j2ee.annotation.PathQuery;
 import com.blackrook.j2ee.annotation.RequestEntry;
-import com.blackrook.j2ee.annotation.View;
 import com.blackrook.j2ee.component.Filter;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
@@ -40,6 +29,10 @@ class ControllerEntry
 	private Object instance;
 	/** Method map. */
 	private HashMap<RequestMethod, HashMap<String, MethodDescriptor>> methodMap;
+	/** Model map. */
+	private HashMap<String, MethodDescriptor> modelMap;
+	/** Attribute map. */
+	private HashMap<String, MethodDescriptor> attributeMap;
 	/** Filter list. */
 	private Queue<Filter> filterQueue;
 	
@@ -56,6 +49,8 @@ class ControllerEntry
 		
 		this.filterQueue = new Queue<Filter>();
 		this.methodMap = new HashMap<RequestMethod, HashMap<String, MethodDescriptor>>();
+		this.modelMap = new HashMap<String, MethodDescriptor>();
+		this.attributeMap = new HashMap<String, MethodDescriptor>();
 		
 		String methodPrefix = controllerAnnotation.methodPrefix();
 		
@@ -63,10 +58,10 @@ class ControllerEntry
 		
 		for (Method m : clazz.getMethods())
 		{
-			if (validMethod(m, methodPrefix))
+			if (isEntryMethod(m, methodPrefix))
 			{
-				RequestEntry re = m.getAnnotation(RequestEntry.class);
-				if (Common.isEmpty(re.value()))
+				RequestEntry anno = m.getAnnotation(RequestEntry.class);
+				if (Common.isEmpty(anno.value()))
 					continue;
 				
 				String methodName = m.getName();
@@ -74,7 +69,7 @@ class ControllerEntry
 						methodName.substring(methodPrefix.length() + 1);
 				
 				MethodDescriptor ed = new MethodDescriptor(clazz.getSimpleName(), m);
-				for (RequestMethod rm : re.value())
+				for (RequestMethod rm : anno.value())
 				{
 					HashMap<String, MethodDescriptor> map = null;
 					if ((map = methodMap.get(rm)) == null)
@@ -82,22 +77,52 @@ class ControllerEntry
 					map.put(pagename, ed);
 				}
 			}
+			else if (isModelConstructorMethod(m))
+			{
+				Model anno = m.getAnnotation(Model.class);
+				modelMap.put(anno.value(), new MethodDescriptor(clazz.getSimpleName(), m));
+			}
+			else if (isAttributeConstructorMethod(m))
+			{
+				Attribute anno = m.getAnnotation(Attribute.class);
+				attributeMap.put(anno.value(), new MethodDescriptor(clazz.getSimpleName(), m));
+			}
 		}
 		
-		instance = (Controller)FrameworkUtil.getBean(clazz);
+		instance = FrameworkUtil.getBean(clazz);
 	}
 	
 	/** Checks if a method is a valid request entry. */
-	private boolean validMethod(Method method, String methodPrefix)
+	private boolean isEntryMethod(Method method, String methodPrefix)
 	{
 		return
 			(method.getModifiers() & Modifier.PUBLIC) != 0 
 			&& method.getName().startsWith(methodPrefix)
 			&& method.getName().length() > methodPrefix.length()
-			&& (method.getReturnType() == Void.TYPE || method.getReturnType() == Void.class)
 			&& method.isAnnotationPresent(RequestEntry.class)
 			;
-			
+	}
+	
+	/** Checks if a method is a Model constructor. */
+	private boolean isModelConstructorMethod(Method method)
+	{
+		return
+			(method.getModifiers() & Modifier.PUBLIC) != 0 
+			&& method.getReturnType() != Void.TYPE 
+			&& method.getReturnType() != Void.class
+			&& method.isAnnotationPresent(Model.class)
+			;
+	}
+	
+	/** Checks if a method is an Attribute constructor. */
+	private boolean isAttributeConstructorMethod(Method method)
+	{
+		return
+			(method.getModifiers() & Modifier.PUBLIC) != 0 
+			&& method.getReturnType() != Void.TYPE 
+			&& method.getReturnType() != Void.class
+			&& method.isAnnotationPresent(Attribute.class)
+			;
 	}
 	
 	/**
@@ -154,182 +179,6 @@ class ControllerEntry
 	public Object getInstance()
 	{
 		return instance;
-	}
-	
-	/**
-	 * Entry descriptor class.
-	 */
-	public static class MethodDescriptor
-	{
-		public static enum Source
-		{
-			PATH,
-			PATH_FILE,
-			PATH_QUERY,
-			SERVLET_REQUEST,
-			SERVLET_RESPONSE,
-			SESSION,
-			SERVLET_CONTEXT,
-			HEADER_VALUE,
-			METHOD_TYPE,
-			ATTRIBUTE,
-			PARAMETER,
-			CONTENT,
-			MODEL;
-		}
-		
-		public static enum Output
-		{
-			CONTENT,
-			CONTENT_ATTACHMENT,
-			VIEW;
-		}
-
-		/**
-		 * Parameter entry for the descriptor.
-		 */
-		public static class ParameterInfo
-		{
-			private Class<?> type;
-			private Source sourceType;
-			private ScopeType sourceScopeType;
-			private String name;
-			
-			private ParameterInfo(Source sourceType, ScopeType scope, Class<?> type, String name)
-			{
-				this.type = type;
-				this.sourceType = sourceType;
-				this.sourceScopeType = scope;
-				this.name = name;
-			}
-
-			public String getName()
-			{
-				return name;
-			}
-
-			public Class<?> getType()
-			{
-				return type;
-			}
-
-			public Source getSourceType()
-			{
-				return sourceType;
-			}
-
-			public ScopeType getSourceScopeType()
-			{
-				return sourceScopeType;
-			}
-		}
-
-		/** Method. */
-		private Method method;
-		/** Return type. */
-		private Class<?> type;
-		/** Output content. */
-		private Output outputType;
-		/** Parameter entry. */
-		private ParameterInfo[] parameters;
-		
-		private MethodDescriptor(String controllerName, Method method)
-		{
-			this.method = method;
-			this.type = method.getReturnType();
-			this.outputType = Output.VIEW;
-			
-			if (method.isAnnotationPresent(BodyContent.class))
-				this.outputType = Output.CONTENT;
-			else if (method.isAnnotationPresent(BodyAttachment.class))
-				this.outputType = Output.CONTENT_ATTACHMENT;
-			else if (method.isAnnotationPresent(View.class))
-				this.outputType = Output.VIEW;
-			
-			Annotation[][] pannotations = method.getParameterAnnotations();
-			Class<?>[] ptypes = method.getParameterTypes();
-			
-			this.parameters = new ParameterInfo[ptypes.length];
-			for (int i = 0; i < ptypes.length; i++)
-			{
-				Source source = null;
-				ScopeType scope = null;
-				String name = null;
-				Class<?> paramType = ptypes[i];
-				
-				if (paramType == RequestMethod.class)
-					source = Source.METHOD_TYPE;
-				else if (paramType == ServletContext.class)
-					source = Source.SERVLET_CONTEXT;
-				else if (paramType == HttpSession.class)
-					source = Source.SESSION;
-				else if (paramType == HttpServletRequest.class)
-					source = Source.SERVLET_REQUEST;
-				else if (paramType == HttpServletResponse.class)
-					source = Source.SERVLET_RESPONSE;
-				else for (int a = 0; a < pannotations[i].length; a++)
-				{
-					Annotation annotation = pannotations[i][a];
-					if (annotation.getClass() == Path.class)
-						source = Source.PATH;
-					else if (annotation.getClass() == PathFile.class)
-						source = Source.PATH_FILE;
-					else if (annotation.getClass() == PathQuery.class)
-						source = Source.PATH_QUERY;
-					else if (annotation.getClass() == BodyContent.class)
-						source = Source.CONTENT;
-					else if (annotation.getClass() == HeaderValue.class)
-					{
-						source = Source.HEADER_VALUE;
-						HeaderValue p = (HeaderValue)annotation;
-						name = p.value();
-					}
-					else if (annotation.getClass() == Model.class)
-					{
-						source = Source.MODEL;
-						Model p = (Model)annotation;
-						name = p.value();
-					}
-					else if (annotation.getClass() == Parameter.class)
-					{
-						source = Source.PARAMETER;
-						Parameter p = (Parameter)annotation;
-						name = p.value();
-					}
-					else if (annotation.getClass() == Attribute.class)
-					{
-						source = Source.ATTRIBUTE;
-						Attribute p = (Attribute)annotation;
-						name = p.value();
-						scope = p.scope();
-					}
-				}
-				
-				this.parameters[i] = new ParameterInfo(source, scope, paramType, name);
-			}
-			
-		}
-
-		public Method getMethod()
-		{
-			return method;
-		}
-
-		public Class<?> getType()
-		{
-			return type;
-		}
-
-		public Output getOutputType()
-		{
-			return outputType;
-		}
-
-		public ParameterInfo[] getParameters()
-		{
-			return parameters;
-		}
-		
 	}
 	
 }

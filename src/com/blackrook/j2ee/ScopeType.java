@@ -11,7 +11,5 @@ public enum ScopeType
 	/** Session scope. */
 	SESSION,
 	/** Application (servlet context) scope. */
-	APPLICATION,
-	/** Directive for parameter search: request, then session, then application. */
-	AUTO;
+	APPLICATION;
 }

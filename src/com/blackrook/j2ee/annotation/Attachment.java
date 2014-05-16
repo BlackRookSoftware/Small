@@ -6,13 +6,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method parameter for header value binding.
+ * Annotates a method. Should be used on Controllers.
+ * <p>
+ * This turns the method return body content into an "attachment" via <code>Content-Disposition</code> headers.
+ * Most effective on File return types.
  * @author Matthew Tropiano
  */
-@Target(ElementType.PARAMETER)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HeaderValue
+public @interface Attachment
 {
-	/** The name of the header value. */
-	String value();
 }

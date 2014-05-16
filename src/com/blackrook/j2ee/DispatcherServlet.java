@@ -1,10 +1,12 @@
 package com.blackrook.j2ee;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Array;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -15,10 +17,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import com.blackrook.commons.Reflect;
-import com.blackrook.j2ee.ControllerEntry.MethodDescriptor;
-import com.blackrook.j2ee.ControllerEntry.MethodDescriptor.Output;
-import com.blackrook.j2ee.ControllerEntry.MethodDescriptor.ParameterInfo;
-import com.blackrook.j2ee.annotation.Parameter;
+import com.blackrook.commons.hash.HashedQueueMap;
+import com.blackrook.commons.linkedlist.Queue;
+import com.blackrook.commons.list.List;
+import com.blackrook.j2ee.MethodDescriptor.Output;
+import com.blackrook.j2ee.MethodDescriptor.ParameterInfo;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.multipart.MultipartParser;
 import com.blackrook.j2ee.multipart.MultipartParserException;
@@ -26,8 +29,10 @@ import com.blackrook.j2ee.multipart.Part;
 import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONReader;
+import com.blackrook.lang.json.JSONWriter;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
+import com.blackrook.lang.xml.XMLWriter;
 
 /**
  * The main dispatcher servlet for the controller portion of the framework.
@@ -40,102 +45,38 @@ public final class DispatcherServlet extends HttpServlet
 	@Override
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
 	{
-		callControllerEntry(request, response, RequestMethod.GET);
+		callControllerEntry(request, response, RequestMethod.GET, null);
 	}
 
 	@Override
 	public final void doHead(HttpServletRequest request, HttpServletResponse response)
 	{
-		callControllerEntry(request, response, RequestMethod.HEAD);
+		callControllerEntry(request, response, RequestMethod.HEAD, null);
 	}
 
 	@Override
 	public final void doPut(HttpServletRequest request, HttpServletResponse response)
 	{
-		callControllerEntry(request, response, RequestMethod.PUT);
+		callControllerEntry(request, response, RequestMethod.PUT, null);
 	}
 
 	@Override
 	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
 	{
-		callControllerEntry(request, response, RequestMethod.DELETE);
+		callControllerEntry(request, response, RequestMethod.DELETE, null);
 	}
 
 	@Override
 	public final void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
-		callControllerEntry(request, response, RequestMethod.OPTIONS);
+		callControllerEntry(request, response, RequestMethod.OPTIONS, null);
 	}
 
 	@Override
 	public final void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
-		String path = getPath(request);
-		ControllerEntry entry = getControllerUsingPath(path);
-		if (entry == null)
-			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
-		else if (isFormEncoded(request))
-		{
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.POST, page, request, response, null))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.POST, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response);
-			else
-				entry.getInstance().onPost(page, request, response);
-		}
-		else if (isJSON(request))
-		{
-			JSONObject json = null;
-			try {
-				json = readJSON(request);
-			} catch (UnsupportedEncodingException e) {
-				sendError(response, 400, "The encoding type for the POST request is not supported.");
-				return;
-			} catch (JSONConversionException e) {
-				sendError(response, 400, "JSON request was malformed.");
-				return;
-			} catch (IOException e) {
-				sendError(response, 500, "Could not read from request.");
-				return;
-			}
-
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.POST_JSON, page, request, response, json))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.POST_JSON, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, json);
-			else
-				entry.getInstance().onJSON(page, request, response, json);
-		}
-		else if (isXML(request))
-		{
-			XMLStruct xmlStruct = null;
-			
-			try {
-				xmlStruct = readXML(request);
-			} catch (SAXException e) {
-				sendError(response, 400, "XML request was malformed.");
-				return;
-			} catch (IOException e) {
-				sendError(response, 500, "Could not read from request.");
-				return;
-			}
-
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.POST_XML, page, request, response, xmlStruct))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.POST_XML, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, xmlStruct);
-			else
-				entry.getInstance().onXML(page, request, response, xmlStruct);
-		}
+		if (isFormEncoded(request))
+			callControllerEntry(request, response, RequestMethod.POST, null);
 		else if (MultipartParser.isMultipart(request))
 		{
 			MultipartParser parser = null;
@@ -147,19 +88,14 @@ public final class DispatcherServlet extends HttpServlet
 				sendError(response, 500, "The server could not parse the multiform request.");
 			}
 			
-			Part[] parts = new Part[parser.getPartList().size()];
-			parser.getPartList().toArray(parts);
+			List<Part> parts = parser.getPartList();
+			
+			HashedQueueMap<String, Part> partMap = new HashedQueueMap<String, Part>();
+			for (Part part : parts)
+				partMap.enqueue(part.getName(), part);
 			
 			try {
-				String page = getPage(request);
-				if (!entry.callFilters(RequestMethod.POST_MULTIPART, page, request, response, parts))
-					return;
-				
-				Method m = entry.getMethodUsingPath(RequestMethod.POST_MULTIPART, page);
-				if (m != null)
-					Reflect.invokeBlind(m, entry.getInstance(), page, request, response, parts);
-				else
-					entry.getInstance().onMultipart(page, request, response, parts);
+				callControllerEntry(request, response, RequestMethod.POST, null);
 			} finally {
 				// clean up files.
 				for (Part part : parts)
@@ -170,38 +106,16 @@ public final class DispatcherServlet extends HttpServlet
 					}
 			}
 		}
-		else if (isPlainText(request))
-		{
-			String content = null;
-			try {
-				content = readPlainText(request);
-			} catch (UnsupportedEncodingException e) {
-				sendError(response, 400, "The encoding type for the POST request is not supported.");
-				return;
-			} catch (IOException e) {
-				sendError(response, 500, "Could not read from request.");
-				return;
-			}
-
-			String page = getPage(request);
-			if (!entry.callFilters(RequestMethod.POST_TEXT, page, request, response, content))
-				return;
-			
-			Method m = entry.getMethodUsingPath(RequestMethod.POST_TEXT, page);
-			if (m != null)
-				Reflect.invokeBlind(m, entry.getInstance(), page, request, response, content);
-			else
-				entry.getInstance().onText(page, request, response, content);
-		}
 		else
 		{
+			callControllerEntry(request, response, RequestMethod.POST, null);
 		}
 	}
 	
 	/**
 	 * Fetches a regular controller entry and invokes the correct method.
 	 */
-	private final void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod)
+	private final void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = getPath(request);
 		ControllerEntry entry = getControllerUsingPath(path);
@@ -215,7 +129,7 @@ public final class DispatcherServlet extends HttpServlet
 			
 			MethodDescriptor md = entry.getDescriptorUsingPath(requestMethod, page);
 			if (md != null)
-				callControllerMethod(requestMethod, request, response, md, entry.getInstance());
+				callControllerMethod(requestMethod, request, response, md, entry.getInstance(), null);
 			else
 				FrameworkUtil.sendCode(response, 405, "Entry point does not support this method.");
 		}
@@ -224,14 +138,15 @@ public final class DispatcherServlet extends HttpServlet
 	/**
 	 * Invokes a controller method.
 	 */
-	private final void callControllerMethod(RequestMethod requestMethod, HttpServletRequest request, HttpServletResponse response, MethodDescriptor descriptor, Object instance)
+	private final void callControllerMethod(RequestMethod requestMethod, HttpServletRequest request, 
+			HttpServletResponse response, MethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		ParameterInfo[] methodParams = descriptor.getParameters(); 
 		Object[] invokeParams = new Object[methodParams.length];
 
 		String path = null;
 		String pathFile = null;
-		String pathQuery = null;
+		Object content = null;
 		
 		for (int i = 0; i < methodParams.length; i++)
 		{
@@ -239,7 +154,7 @@ public final class DispatcherServlet extends HttpServlet
 			switch (pinfo.getSourceType())
 			{
 				case PATH:
-					path = path != null ? path : getPath(request);
+					path = path != null ? path : getFullPath(request);
 					invokeParams[i] = Reflect.createForType("Parameter " + i, path, pinfo.getType());
 					break;
 				case PATH_FILE:
@@ -247,8 +162,7 @@ public final class DispatcherServlet extends HttpServlet
 					invokeParams[i] = Reflect.createForType("Parameter " + i, pathFile, pinfo.getType());
 					break;
 				case PATH_QUERY:
-					pathQuery = pathQuery != null ? pathQuery : getQueryString(request);
-					invokeParams[i] = Reflect.createForType("Parameter " + i, pathQuery, pinfo.getType());
+					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getQueryString(), pinfo.getType());
 					break;
 				case SERVLET_REQUEST:
 					invokeParams[i] = request;
@@ -274,22 +188,70 @@ public final class DispatcherServlet extends HttpServlet
 				case PARAMETER:
 				{
 					String parameterName = pinfo.getName();
-					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(parameterName), pinfo.getType());
+					Object value = null;
+					if (multiformPartMap != null)
+					{
+						if (Reflect.isArray(pinfo.getType()))
+						{
+							Queue<Part> partlist = multiformPartMap.get(parameterName);
+							Object[] vout = (Object[])Array.newInstance(pinfo.getType(), partlist.size());
+							int x = 0;
+							for (Part p : partlist)
+								vout[x++] = getPartData(p, pinfo.getType());
+							value = vout;
+						}
+						else
+						{
+							value = getPartData(multiformPartMap.get(parameterName).head(), pinfo.getType());
+						}
+					}
+					else if (Reflect.isArray(pinfo.getType()))
+						value = request.getParameterValues(parameterName);
+					else
+						value = request.getParameter(parameterName);
+						
+					invokeParams[i] = Reflect.createForType("Parameter " + i, value, pinfo.getType());
 					break;
 				}
 				case ATTRIBUTE:
 				{
-					// TODO: Finish this!
+					// TODO: Handle attribute constructors.
+					ScopeType scope = pinfo.getSourceScopeType();
+					switch (scope)
+					{
+						case REQUEST:
+							invokeParams[i] = FrameworkUtil.getRequestBean(request, pinfo.getType(), pinfo.getName());
+							break;
+						case SESSION:
+							invokeParams[i] = FrameworkUtil.getSessionBean(request, pinfo.getType(), pinfo.getName());
+							break;
+						case APPLICATION:
+							invokeParams[i] = FrameworkUtil.getApplicationBean(request.getServletContext(), pinfo.getType(), pinfo.getName());
+							break;
+					}
 					break;
 				}
 				case MODEL:
 				{
-					// TODO: Finish this!
+					// TODO: Handle model constructors.
+					request.setAttribute(pinfo.getName(), invokeParams[i] = Reflect.create(pinfo.getType()));
 					break;
 				}
 				case CONTENT:
 				{
-					// TODO: Finish this!
+					try {
+						content = content != null ? content : getContentData(request, pinfo.getType());
+						invokeParams[i] = content;
+					} catch (UnsupportedEncodingException e) {
+						sendError(response, 400, "The encoding type for the POST request is not supported.");
+					} catch (JSONConversionException e) {
+						sendError(response, 400, "The JSON content was malformed.");
+					} catch (SAXException e) {
+						sendError(response, 400, "The XML content was malformed.");
+					} catch (IOException e) {
+						sendError(response, 500, "Server could not read request.");
+						throwException(e);
+					}
 					break;
 				}
 			}
@@ -300,12 +262,73 @@ public final class DispatcherServlet extends HttpServlet
 			FrameworkUtil.sendToView(request, response, String.valueOf(retval));
 		else if (descriptor.getOutputType() == Output.CONTENT)
 		{
-			FrameworkUtil.sendToView(request, response, String.valueOf(retval));
+			if (descriptor.getType() == File.class)
+				FrameworkUtil.sendFileContents(response, (File)retval);
+			else if (descriptor.getType() == XMLStruct.class)
+				FrameworkUtil.sendXML(response, (XMLStruct)retval);
+			else if (descriptor.getType() == JSONObject.class)
+				FrameworkUtil.sendJSON(response, (JSONObject)retval);
+			else if (descriptor.getType() == String.class)
+			{
+				byte[] data =  getStringData(((String)retval));
+				FrameworkUtil.sendData(response, "text/plain", null, new ByteArrayInputStream(data), data.length);
+			}
+			else
+				FrameworkUtil.sendJSON(response, retval);
+		}
+		else if (descriptor.getOutputType() == Output.CONTENT_ATTACHMENT)
+		{
+			pathFile = pathFile != null ? pathFile : getPage(request);
+			
+			// File output.
+			if (descriptor.getType() == File.class)
+				FrameworkUtil.sendFile(response, (File)retval);
+			// XML output.
+			else if (descriptor.getType() == XMLStruct.class)
+			{
+				byte[] data;
+				try {
+					StringWriter sw = new StringWriter();
+					(new XMLWriter()).writeXML((XMLStruct)retval, sw);
+					data = getStringData(sw.toString());
+				} catch (IOException e) {
+					throw new SimpleFrameworkException(e);
+				}
+				FrameworkUtil.sendData(response, "application/xml", getPageNoExtension(pathFile)+".xml", new ByteArrayInputStream(data), data.length);
+			}
+			// String data output.
+			else if (descriptor.getType() == String.class)
+			{
+				byte[] data = getStringData(((String)retval));
+				FrameworkUtil.sendData(response, "text/plain", pathFile, new ByteArrayInputStream(data), data.length);
+			}
+			// JSON output.
+			else if (descriptor.getType() == JSONObject.class)
+			{
+				byte[] data;
+				try {
+					data = getStringData(JSONWriter.writeJSONString((JSONObject)retval));
+				} catch (IOException e) {
+					throw new SimpleFrameworkException(e);
+				}
+				FrameworkUtil.sendData(response, "application/json", getPageNoExtension(pathFile)+".json", new ByteArrayInputStream(data), data.length);
+			}
+			// Object JSON output.
+			else
+			{
+				byte[] data;
+				try {
+					data = getStringData(JSONWriter.writeJSONString(retval));
+				} catch (IOException e) {
+					throw new SimpleFrameworkException(e);
+				}
+				FrameworkUtil.sendData(response, "application/json", getPageNoExtension(pathFile)+".json", new ByteArrayInputStream(data), data.length);
+			}
 		}
 	}
-	
+
 	/**
-	 * Get the base path parsed out of the request URI.
+	 * Get the base path (no file) parsed out of the request URI.
 	 */
 	private final String getPath(HttpServletRequest request)
 	{
@@ -314,6 +337,20 @@ public final class DispatcherServlet extends HttpServlet
 		int slashIndex = requestURI.lastIndexOf('/');
 		if (slashIndex >= 0)
 			return requestURI.substring(contextPathLen, slashIndex);
+		else
+			return requestURI.substring(contextPathLen); 
+	}
+
+	/**
+	 * Get the full path parsed out of the request URI.
+	 */
+	private final String getFullPath(HttpServletRequest request)
+	{
+		String requestURI = request.getRequestURI();
+		int contextPathLen = request.getContextPath().length();
+		int qIndex = requestURI.indexOf('?');
+		if (qIndex >= 0)
+			return requestURI.substring(contextPathLen, qIndex);
 		else
 			return requestURI.substring(contextPathLen); 
 	}
@@ -333,16 +370,15 @@ public final class DispatcherServlet extends HttpServlet
 	}
 	
 	/**
-	 * Get the query string parsed out of the request URI.
+	 * Get the base page name parsed out of the page.
 	 */
-	private final String getQueryString(HttpServletRequest request)
+	private final String getPageNoExtension(String page)
 	{
-		String requestURI = request.getRequestURI();
-		int qIndex = requestURI.indexOf('?');
-		if (qIndex >= 0)
-			return requestURI.substring(qIndex + 1);
+		int endIndex = page.indexOf('.');
+		if (endIndex >= 0)
+			return page.substring(0, endIndex);
 		else
-			return ""; 
+			return page; 
 	}
 	
 	/**
@@ -381,6 +417,62 @@ public final class DispatcherServlet extends HttpServlet
 	private final void throwException(Throwable t)
 	{
 		throw new SimpleFrameworkException(t);
+	}
+
+	/**
+	 * Get content data.
+	 */
+	private <T> T getContentData(HttpServletRequest request, Class<T> type) 
+		throws UnsupportedEncodingException, JSONConversionException, SAXException, IOException
+	{
+		if (isJSON(request))
+		{
+			JSONObject json = readJSON(request);
+			if (type == JSONObject.class)
+				return type.cast(json);
+			else
+				return json.newObject(type);
+		}
+		else if (isXML(request))
+		{
+			XMLStruct xmlStruct = readXML(request);
+			if (type == XMLStruct.class)
+				return type.cast(xmlStruct);
+			else
+				throw new ClassCastException("Expected XMLStruct class type for XML data.");
+		}
+		else
+		{
+			String content = readPlainText(request);
+			return Reflect.createForType(content, type);
+		}
+	}
+
+	/**
+	 * Converts a Multipart Part.
+	 */
+	private <T> T getPartData(Part part, Class<T> type)
+	{
+		if (type == Part.class)
+			return type.cast(part);
+		else if (type.isInstance(String.class))
+			return type.cast(part.isFile() ? part.getFileName() : part.getValue());
+		else if (type.isInstance(File.class))
+			return type.cast(part.isFile() ? part.getFile() : null);
+		else
+			return Reflect.createForType(part.isFile() ? null : part.getValue(), type);
+	}
+	
+	/**
+	 * Converts a string to byte data.
+	 */
+	private byte[] getStringData(String data)
+	{
+		try {
+			return data.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new SimpleFrameworkException(e);
+		}
 	}
 
 	/**
@@ -495,16 +587,6 @@ public final class DispatcherServlet extends HttpServlet
 		}
 		
 		return sb.toString();
-	}
-	
-	/**
-	 * Checks if this request is straight-up plaintext or equivalent. 
-	 * @param request the request object.
-	 * @return true if so, false if not.
-	 */
-	private boolean isPlainText(HttpServletRequest request)
-	{
-		return request.getContentType().startsWith("text/");
 	}
 	
 	/**
