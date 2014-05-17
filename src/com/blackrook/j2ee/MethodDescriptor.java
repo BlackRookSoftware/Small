@@ -11,13 +11,17 @@ import javax.servlet.http.HttpSession;
 import com.blackrook.j2ee.annotation.Attachment;
 import com.blackrook.j2ee.annotation.Attribute;
 import com.blackrook.j2ee.annotation.Content;
+import com.blackrook.j2ee.annotation.CookieParameter;
 import com.blackrook.j2ee.annotation.Header;
 import com.blackrook.j2ee.annotation.Model;
+import com.blackrook.j2ee.annotation.NoCache;
 import com.blackrook.j2ee.annotation.Parameter;
 import com.blackrook.j2ee.annotation.Path;
 import com.blackrook.j2ee.annotation.PathFile;
 import com.blackrook.j2ee.annotation.PathQuery;
 import com.blackrook.j2ee.annotation.View;
+import com.blackrook.j2ee.enums.RequestMethod;
+import com.blackrook.j2ee.enums.ScopeType;
 
 /**
  * Method descriptor class.
@@ -36,6 +40,7 @@ public class MethodDescriptor
 		SERVLET_CONTEXT,
 		HEADER_VALUE,
 		METHOD_TYPE,
+		COOKIE,
 		ATTRIBUTE,
 		PARAMETER,
 		CONTENT,
@@ -45,7 +50,7 @@ public class MethodDescriptor
 	public static enum Output
 	{
 		CONTENT,
-		CONTENT_ATTACHMENT,
+		ATTACHMENT,
 		VIEW;
 	}
 
@@ -96,17 +101,20 @@ public class MethodDescriptor
 	private Output outputType;
 	/** Parameter entry. */
 	private ParameterInfo[] parameters;
+	/** No cache? */
+	private boolean noCache;
 	
 	MethodDescriptor(String controllerName, Method method)
 	{
 		this.method = method;
 		this.type = method.getReturnType();
 		this.outputType = Output.VIEW;
+		this.noCache = method.isAnnotationPresent(NoCache.class);
 		
 		if (method.isAnnotationPresent(Content.class))
 			this.outputType = Output.CONTENT;
 		else if (method.isAnnotationPresent(Attachment.class))
-			this.outputType = Output.CONTENT_ATTACHMENT;
+			this.outputType = Output.ATTACHMENT;
 		else if (method.isAnnotationPresent(View.class))
 			this.outputType = Output.VIEW;
 		
@@ -167,6 +175,12 @@ public class MethodDescriptor
 					name = p.value();
 					scope = p.scope();
 				}
+				else if (annotation.annotationType() == CookieParameter.class)
+				{
+					source = Source.COOKIE;
+					CookieParameter p = (CookieParameter)annotation;
+					name = p.value();
+				}
 			}
 			
 			this.parameters[i] = new ParameterInfo(source, scope, paramType, name);
@@ -192,6 +206,11 @@ public class MethodDescriptor
 	public ParameterInfo[] getParameters()
 	{
 		return parameters;
+	}
+
+	public boolean isNoCache()
+	{
+		return noCache;
 	}
 	
 }

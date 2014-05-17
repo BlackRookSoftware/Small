@@ -1034,23 +1034,9 @@ public final class FrameworkUtil implements EntityTables
 	 * Includes the output of a view in the response.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
-	 * @param key target view key taken from the mapping XMLs.
-	 */
-	public static void includeView(HttpServletRequest request, HttpServletResponse response, String key)
-	{
-		String path = Toolkit.INSTANCE.getViewByName(key);
-		if (path == null)
-			throw new SimpleFrameworkException("No such view: \""+key+"\". No view resolver returned an adequate path.");
-		includeViewInline(request, response, path);
-	}
-
-	/**
-	 * Includes the output of a view in the response, not using a view location key.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
 	 * @param path target view path relative to the application context.
 	 */
-	public static void includeViewInline(HttpServletRequest request, HttpServletResponse response, String path)
+	public static void includeView(HttpServletRequest request, HttpServletResponse response, String path)
 	{
 		try{
 			request.getRequestDispatcher(path).include(request, response);
@@ -1063,23 +1049,9 @@ public final class FrameworkUtil implements EntityTables
 	 * Surreptitiously forwards the request to a view.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
-	 * @param key target view key taken from the mapping XMLs.
-	 */
-	public static void sendToView(HttpServletRequest request, HttpServletResponse response, String key)
-	{
-		String path = Toolkit.INSTANCE.getViewByName(key);
-		if (path == null)
-			throw new SimpleFrameworkException("No such view: \""+key+"\". No view resolver returned an adequate path.");
-		sendToViewInline(request, response, path);
-	}
-
-	/**
-	 * Surreptitiously forwards the request to a view, not using a view location key.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
 	 * @param path target view path relative to the application context.
 	 */
-	public static void sendToViewInline(HttpServletRequest request, HttpServletResponse response, String path)
+	public static void sendToView(HttpServletRequest request, HttpServletResponse response, String path)
 	{
 		try{
 			request.getRequestDispatcher(path).forward(request, response);
@@ -1227,7 +1199,27 @@ public final class FrameworkUtil implements EntityTables
 	 */
 	public static void sendData(HttpServletResponse response, String mimeType, String contentName, InputStream inStream, long length)
 	{
+		sendData(response, mimeType, contentName, null, inStream, length);
+	}
+
+	/**
+	 * Sends the contents of a stream out through the response.
+	 * The input stream is not closed after the data is sent.
+	 * The "Content-Type" portion of the header is changed to <code>mimeType</code>.
+	 * The "Content-Length" portion of the header is changed to <code>length</code>, if positive.
+	 * @param response servlet response object.
+	 * @param mimeType the MIME-Type of the stream.
+	 * @param contentName the name of the data to send (file name). Can be null - leaving it out
+	 * 	does not send "Content-Disposition" headers.
+	 * @param encoding if not null, adds a "Content-Encoding" header.
+	 * @param inStream the input stream to read.
+	 * @param length the length of data in bytes to send.
+	 */
+	public static void sendData(HttpServletResponse response, String mimeType, String contentName, String encoding, InputStream inStream, long length)
+	{
 		response.setHeader("Content-Type", mimeType);
+		if (!Common.isEmpty(encoding))
+			response.setHeader("Content-Encoding", encoding);
 		if (!Common.isEmpty(contentName))
 			response.setHeader("Content-Disposition", "attachment; filename=\"" + contentName + "\"");
 		if (length >= 0)
@@ -1237,11 +1229,11 @@ public final class FrameworkUtil implements EntityTables
 			while (length > 0)
 			{
 				length -= Common.relay(
-						inStream, 
-						response.getOutputStream(), 
-						32768, 
-						length > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)length
-					);
+					inStream, 
+					response.getOutputStream(), 
+					32768, 
+					length > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)length
+				);
 			}
 		} catch (IOException e) {
 			throwException(e);

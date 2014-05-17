@@ -1,4 +1,4 @@
-package com.blackrook.j2ee;
+package com.blackrook.j2ee.enums;
 
 /**
  * Attribute scope type.

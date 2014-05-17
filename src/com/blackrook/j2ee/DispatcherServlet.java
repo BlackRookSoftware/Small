@@ -10,18 +10,24 @@ import java.lang.reflect.Array;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
+import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.MethodDescriptor.Output;
 import com.blackrook.j2ee.MethodDescriptor.ParameterInfo;
+import com.blackrook.j2ee.component.Filter;
+import com.blackrook.j2ee.component.ViewResolver;
+import com.blackrook.j2ee.enums.RequestMethod;
+import com.blackrook.j2ee.enums.ScopeType;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.multipart.MultipartParser;
 import com.blackrook.j2ee.multipart.MultipartParserException;
@@ -40,7 +46,27 @@ import com.blackrook.lang.xml.XMLWriter;
  */
 public final class DispatcherServlet extends HttpServlet
 {
-	private static final long serialVersionUID = 4733160851384500294L;
+	private static final long serialVersionUID = -5986230302849170240L;
+	
+	private static final String PREFIX_REDIRECT = "redirect:";
+	
+	/** The controllers that were instantiated. */
+	private HashMap<String, ControllerEntry> controllerCache;
+	/** The filters that were instantiated. */
+	private HashMap<String, Filter> filterCache;
+	/** Map of package to filter classes. */
+	private HashMap<String, String[]> filterEntries;
+	/** Map of view resolvers to instantiated view resolvers. */
+	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
+
+	// Default constructor.
+	public DispatcherServlet()
+	{
+		controllerCache = new HashMap<String, ControllerEntry>();
+		filterCache = new HashMap<String, Filter>();
+		filterEntries = new HashMap<String, String[]>();
+		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
+	}
 	
 	@Override
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -95,7 +121,7 @@ public final class DispatcherServlet extends HttpServlet
 				partMap.enqueue(part.getName(), part);
 			
 			try {
-				callControllerEntry(request, response, RequestMethod.POST, null);
+				callControllerEntry(request, response, RequestMethod.POST, partMap);
 			} finally {
 				// clean up files.
 				for (Part part : parts)
@@ -115,7 +141,7 @@ public final class DispatcherServlet extends HttpServlet
 	/**
 	 * Fetches a regular controller entry and invokes the correct method.
 	 */
-	private final void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
+	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = getPath(request);
 		ControllerEntry entry = getControllerUsingPath(path);
@@ -129,18 +155,154 @@ public final class DispatcherServlet extends HttpServlet
 			
 			MethodDescriptor md = entry.getDescriptorUsingPath(requestMethod, page);
 			if (md != null)
-				callControllerMethod(requestMethod, request, response, md, entry.getInstance(), null);
+				handleRequestMethod(entry, requestMethod, request, response, md, entry.getInstance(), multiformPartMap);
 			else
 				FrameworkUtil.sendCode(response, 405, "Entry point does not support this method.");
 		}
 	}
 
 	/**
-	 * Invokes a controller method.
+	 * Completes a full request call.
 	 */
-	private final void callControllerMethod(RequestMethod requestMethod, HttpServletRequest request, 
+	private void handleRequestMethod(ControllerEntry entry, RequestMethod requestMethod, HttpServletRequest request, 
 			HttpServletResponse response, MethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
 	{
+		Object retval = null;
+		try {
+			retval = invokeControllerMethod(entry, requestMethod, request, response, descriptor, instance, multiformPartMap);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("An exception occurred in a Controller method.",e);
+		}
+		
+		if (descriptor.isNoCache())
+		{
+			response.setHeader("Cache-Control", "no-cache");
+			response.setHeader("Pragma", "no-cache");
+		}
+		
+		if (descriptor.getType() != Void.TYPE && descriptor.getType() != Void.class) switch (descriptor.getOutputType())
+		{
+			case VIEW:
+			{
+				String viewKey = String.valueOf(retval);
+				if (viewKey.startsWith(PREFIX_REDIRECT))
+					FrameworkUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
+				else
+					FrameworkUtil.sendToView(request, response, getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
+				break;
+			}
+			case CONTENT:
+			{
+				if (File.class.isAssignableFrom(descriptor.getType()))
+				{
+					File outfile = (File)retval;
+					if (outfile == null || !outfile.exists())
+						FrameworkUtil.sendCode(response, 404, "File not found.");
+					else
+						FrameworkUtil.sendFileContents(response, outfile);
+				}
+				else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
+					FrameworkUtil.sendXML(response, (XMLStruct)retval);
+				else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
+					FrameworkUtil.sendJSON(response, (JSONObject)retval);
+				else if (String.class.isAssignableFrom(descriptor.getType()))
+				{
+					byte[] data =  getStringData(((String)retval));
+					FrameworkUtil.sendData(response, "text/plain; charset=utf-8", null, new ByteArrayInputStream(data), data.length);
+				}
+				else if (byte[].class.isAssignableFrom(descriptor.getType()))
+				{
+					byte[] data = (byte[])retval;
+					FrameworkUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
+				}
+				else
+					FrameworkUtil.sendJSON(response, retval);
+				break;
+			}
+			case ATTACHMENT:
+			{
+				String fname = getPage(request);
+				
+				// File output.
+				if (File.class.isAssignableFrom(descriptor.getType()))
+				{
+					File outfile = (File)retval;
+					if (outfile == null || !outfile.exists())
+						FrameworkUtil.sendCode(response, 404, "File not found.");
+					else
+						FrameworkUtil.sendFile(response, outfile);
+				}
+				// XML output.
+				else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
+				{
+					byte[] data;
+					try {
+						StringWriter sw = new StringWriter();
+						(new XMLWriter()).writeXML((XMLStruct)retval, sw);
+						data = getStringData(sw.toString());
+					} catch (IOException e) {
+						throw new SimpleFrameworkException(e);
+					}
+					FrameworkUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
+				}
+				// String data output.
+				else if (String.class.isAssignableFrom(descriptor.getType()))
+				{
+					byte[] data = getStringData(((String)retval));
+					FrameworkUtil.sendData(response, "text/plain; charset=utf-8", fname, new ByteArrayInputStream(data), data.length);
+				}
+				// JSON output.
+				else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
+				{
+					byte[] data;
+					try {
+						data = getStringData(JSONWriter.writeJSONString((JSONObject)retval));
+					} catch (IOException e) {
+						throw new SimpleFrameworkException(e);
+					}
+					FrameworkUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+				}
+				// binary output.
+				else if (byte[].class.isAssignableFrom(descriptor.getType()))
+				{
+					byte[] data = (byte[])retval;
+					FrameworkUtil.sendData(response, "application/octet-stream", fname, new ByteArrayInputStream(data), data.length);
+				}
+				// Object JSON output.
+				else
+				{
+					byte[] data;
+					try {
+						data = getStringData(JSONWriter.writeJSONString(retval));
+					} catch (IOException e) {
+						throw new SimpleFrameworkException(e);
+					}
+					FrameworkUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+				}
+				break;
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * @param entry
+	 * @param requestMethod
+	 * @param request
+	 * @param response
+	 * @param descriptor
+	 * @param instance
+	 * @param multiformPartMap
+	 * @return
+	 */
+	private Object invokeControllerMethod(ControllerEntry entry, RequestMethod requestMethod, HttpServletRequest request,
+			HttpServletResponse response, MethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
+	{
+		// get cookies from request.
+		HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
+		for (Cookie c : request.getCookies())
+			cookieMap.put(c.getName(), c);
+		
 		ParameterInfo[] methodParams = descriptor.getParameters(); 
 		Object[] invokeParams = new Object[methodParams.length];
 
@@ -185,6 +347,14 @@ public final class DispatcherServlet extends HttpServlet
 					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
 					break;
 				}
+				case COOKIE:
+				{
+					String cookieName = pinfo.getName();
+					Cookie c = cookieMap.containsKey(cookieName) ? cookieMap.get(cookieName) : new Cookie(cookieName, "");
+					response.addCookie(c);
+					invokeParams[i] = c;
+					break;
+				}
 				case PARAMETER:
 				{
 					String parameterName = pinfo.getName();
@@ -215,7 +385,25 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				case ATTRIBUTE:
 				{
-					// TODO: Handle attribute constructors.
+					MethodDescriptor attribDescriptor = entry.getAttributeConstructor(pinfo.getName());
+					if (attribDescriptor != null)
+					{
+						Object attrib = invokeControllerMethod(entry, requestMethod, request, response, attribDescriptor, instance, multiformPartMap);
+						ScopeType scope = pinfo.getSourceScopeType();
+						switch (scope)
+						{
+							case REQUEST:
+								request.setAttribute(pinfo.getName(), attrib);
+								break;
+							case SESSION:
+								request.getSession().setAttribute(pinfo.getName(), attrib);
+								break;
+							case APPLICATION:
+								request.getServletContext().setAttribute(pinfo.getName(), attrib);
+								break;
+						}
+					}
+					
 					ScopeType scope = pinfo.getSourceScopeType();
 					switch (scope)
 					{
@@ -233,104 +421,49 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				case MODEL:
 				{
-					// TODO: Handle model constructors.
-					request.setAttribute(pinfo.getName(), invokeParams[i] = Reflect.create(pinfo.getType()));
+					MethodDescriptor modelDescriptor = entry.getModelConstructor(pinfo.getName());
+					if (modelDescriptor != null)
+					{
+						Object model = invokeControllerMethod(entry, requestMethod, request, response, modelDescriptor, instance, multiformPartMap);
+						FrameworkUtil.setModelFields(request, model);
+						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
+					}
+					else
+						request.setAttribute(pinfo.getName(), invokeParams[i] = FrameworkUtil.setModelFields(request, pinfo.getType()));
 					break;
 				}
 				case CONTENT:
 				{
-					try {
-						content = content != null ? content : getContentData(request, pinfo.getType());
-						invokeParams[i] = content;
-					} catch (UnsupportedEncodingException e) {
-						sendError(response, 400, "The encoding type for the POST request is not supported.");
-					} catch (JSONConversionException e) {
-						sendError(response, 400, "The JSON content was malformed.");
-					} catch (SAXException e) {
-						sendError(response, 400, "The XML content was malformed.");
-					} catch (IOException e) {
-						sendError(response, 500, "Server could not read request.");
-						throwException(e);
+					if (requestMethod == RequestMethod.POST)
+					{
+						try {
+							content = content != null ? content : getContentData(request, pinfo.getType());
+							invokeParams[i] = content;
+						} catch (UnsupportedEncodingException e) {
+							sendError(response, 400, "The encoding type for the POST request is not supported.");
+						} catch (JSONConversionException e) {
+							sendError(response, 400, "The JSON content was malformed.");
+						} catch (SAXException e) {
+							sendError(response, 400, "The XML content was malformed.");
+						} catch (IOException e) {
+							sendError(response, 500, "Server could not read request.");
+							throwException(e);
+						}
 					}
+					else
+						invokeParams[i] = null;
 					break;
 				}
 			}
 		}
 		
-		Object retval = Reflect.invokeBlind(descriptor.getMethod(), instance, invokeParams);
-		if (descriptor.getOutputType() == Output.VIEW)
-			FrameworkUtil.sendToView(request, response, String.valueOf(retval));
-		else if (descriptor.getOutputType() == Output.CONTENT)
-		{
-			if (descriptor.getType() == File.class)
-				FrameworkUtil.sendFileContents(response, (File)retval);
-			else if (descriptor.getType() == XMLStruct.class)
-				FrameworkUtil.sendXML(response, (XMLStruct)retval);
-			else if (descriptor.getType() == JSONObject.class)
-				FrameworkUtil.sendJSON(response, (JSONObject)retval);
-			else if (descriptor.getType() == String.class)
-			{
-				byte[] data =  getStringData(((String)retval));
-				FrameworkUtil.sendData(response, "text/plain", null, new ByteArrayInputStream(data), data.length);
-			}
-			else
-				FrameworkUtil.sendJSON(response, retval);
-		}
-		else if (descriptor.getOutputType() == Output.CONTENT_ATTACHMENT)
-		{
-			pathFile = pathFile != null ? pathFile : getPage(request);
-			
-			// File output.
-			if (descriptor.getType() == File.class)
-				FrameworkUtil.sendFile(response, (File)retval);
-			// XML output.
-			else if (descriptor.getType() == XMLStruct.class)
-			{
-				byte[] data;
-				try {
-					StringWriter sw = new StringWriter();
-					(new XMLWriter()).writeXML((XMLStruct)retval, sw);
-					data = getStringData(sw.toString());
-				} catch (IOException e) {
-					throw new SimpleFrameworkException(e);
-				}
-				FrameworkUtil.sendData(response, "application/xml", getPageNoExtension(pathFile)+".xml", new ByteArrayInputStream(data), data.length);
-			}
-			// String data output.
-			else if (descriptor.getType() == String.class)
-			{
-				byte[] data = getStringData(((String)retval));
-				FrameworkUtil.sendData(response, "text/plain", pathFile, new ByteArrayInputStream(data), data.length);
-			}
-			// JSON output.
-			else if (descriptor.getType() == JSONObject.class)
-			{
-				byte[] data;
-				try {
-					data = getStringData(JSONWriter.writeJSONString((JSONObject)retval));
-				} catch (IOException e) {
-					throw new SimpleFrameworkException(e);
-				}
-				FrameworkUtil.sendData(response, "application/json", getPageNoExtension(pathFile)+".json", new ByteArrayInputStream(data), data.length);
-			}
-			// Object JSON output.
-			else
-			{
-				byte[] data;
-				try {
-					data = getStringData(JSONWriter.writeJSONString(retval));
-				} catch (IOException e) {
-					throw new SimpleFrameworkException(e);
-				}
-				FrameworkUtil.sendData(response, "application/json", getPageNoExtension(pathFile)+".json", new ByteArrayInputStream(data), data.length);
-			}
-		}
+		return Reflect.invokeBlind(descriptor.getMethod(), instance, invokeParams);
 	}
 
 	/**
 	 * Get the base path (no file) parsed out of the request URI.
 	 */
-	private final String getPath(HttpServletRequest request)
+	private String getPath(HttpServletRequest request)
 	{
 		String requestURI = request.getRequestURI();
 		int contextPathLen = request.getContextPath().length();
@@ -344,7 +477,7 @@ public final class DispatcherServlet extends HttpServlet
 	/**
 	 * Get the full path parsed out of the request URI.
 	 */
-	private final String getFullPath(HttpServletRequest request)
+	private String getFullPath(HttpServletRequest request)
 	{
 		String requestURI = request.getRequestURI();
 		int contextPathLen = request.getContextPath().length();
@@ -358,7 +491,7 @@ public final class DispatcherServlet extends HttpServlet
 	/**
 	 * Get the base page parsed out of the request URI.
 	 */
-	private final String getPage(HttpServletRequest request)
+	private String getPage(HttpServletRequest request)
 	{
 		String requestURI = request.getRequestURI();
 		int slashIndex = requestURI.lastIndexOf('/');
@@ -370,53 +503,162 @@ public final class DispatcherServlet extends HttpServlet
 	}
 	
 	/**
-	 * Get the base page name parsed out of the page.
-	 */
-	private final String getPageNoExtension(String page)
-	{
-		int endIndex = page.indexOf('.');
-		if (endIndex >= 0)
-			return page.substring(0, endIndex);
-		else
-			return page; 
-	}
-	
-	/**
 	 * Gets the controller to call using the requested path.
 	 * @param uriPath the path to resolve, no query string.
 	 * @return a controller, or null if no controller by that name. 
 	 * This servlet sends a 404 back if this happens.
 	 * @throws SimpleFrameworkException if a huge error occurred.
 	 */
-	private final ControllerEntry getControllerUsingPath(String uriPath)
+	private ControllerEntry getControllerUsingPath(String path)
 	{
-		return Toolkit.INSTANCE.getController(uriPath);
-	}
-
-	/**
-	 * Sends request to the error page with a status code.
-	 * @param response servlet response object.
-	 * @param statusCode the status code to use.
-	 * @param message the status message.
-	 */
-	private final void sendError(HttpServletResponse response, int statusCode, String message)
-	{
-		try{
-			response.sendError(statusCode, message);
-		} catch (Exception e) {
-			throwException(e);
+		if (controllerCache.containsKey(path))
+			return controllerCache.get(path);
+		
+		synchronized (controllerCache)
+		{
+			// in case a thread already completed it.
+			if (controllerCache.containsKey(path))
+				return controllerCache.get(path);
+			
+			ControllerEntry out = instantiateController(path);
+	
+			if (out == null)
+				return null;
+			
+			// add to cache and return.
+			controllerCache.put(path, out);
+			return out;
 		}
 	}
 
-	/**
-	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link SimpleFrameworkException},
-	 * which is a {@link RuntimeException}.
-	 * @param t the {@link Throwable} to encapsulate and throw.
-	 */
-	private final void throwException(Throwable t)
+	// Instantiates a controller via root resolver.
+	private ControllerEntry instantiateController(String path)
 	{
-		throw new SimpleFrameworkException(t);
+		String className = getClassNameForController(path);
+		
+		if (className == null)
+			return null;
+		
+		Class<?> controllerClass = null;
+		try {
+			controllerClass = Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			return null;
+			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
+		}
+		
+		ControllerEntry out = null;
+		
+		try {
+			out = new ControllerEntry(controllerClass);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className, e);
+		}
+		
+		int lastIndex = 0;
+		String[] filterClasses = null;
+		do {
+			lastIndex = className.lastIndexOf(".");
+			if (lastIndex >= 0)
+			{
+				className = className.substring(0, lastIndex);
+				filterClasses = filterEntries.get(className);
+			}
+		} while (lastIndex >= 0 && filterClasses == null);
+		
+		if (filterClasses != null) for (String fc : filterClasses)
+		{
+			Filter filter = null;
+			if ((filter = filterCache.get(fc)) == null)
+				filter = instantiateFilter(fc);
+			out.addFilter(filter);
+		}
+		
+		return out;
+	}
+
+	// Creates a filter by its entry.
+	private Filter instantiateFilter(String className)
+	{			
+		Class<?> filterClass = null;
+		try {
+			filterClass = Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			throw new SimpleFrameworkException("Class in filter declaration could not be found: "+className);
+		}
+		
+		Filter out = null;
+		
+		try {
+			out = (Filter)FrameworkUtil.getBean(filterClass);
+		} catch (ClassCastException e) {
+			throw new SimpleFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("Class in filter declaration could not be instantiated: "+className);
+		}
+		
+		return out;
+	}
+
+	// Gets the classname of a path.
+	private String getClassNameForController(String path)
+	{
+		String pkg = Toolkit.INSTANCE.getControllerRootPackage() + ".";
+		String cls = "";
+		
+		if (Common.isEmpty(path))
+		{
+			if (Toolkit.INSTANCE.getControllerRootIndexClass() == null)
+				return null;
+			cls = Toolkit.INSTANCE.getControllerRootIndexClass();
+			return cls;
+		}
+		else
+		{
+			String[] dirs = path.substring(1).split("[/]+");
+			if (dirs.length > 1)
+			{
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < dirs.length - 1; i++)
+				{
+					sb.append(dirs[i]);
+					sb.append('.');
+				}
+				pkg += sb.toString();
+	
+			}
+	
+			cls = dirs[dirs.length - 1];
+			cls = pkg + Toolkit.INSTANCE.getControllerRootPrefix() + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + Toolkit.INSTANCE.getControllerRootSuffix();
+			
+			// if class is index folder without using root URL, do not permit use.
+			if (cls.equals(Toolkit.INSTANCE.getControllerRootIndexClass()))
+				return null;
+	
+			return cls;
+		}
+	}
+	
+	/**
+	 * Returns the instance of view resolver to use for resolving views (duh).
+	 */
+	private ViewResolver getViewResolver(Class<? extends ViewResolver> vclass)
+	{
+		if (!viewResolverMap.containsKey(vclass))
+		{
+			synchronized (viewResolverMap)
+			{
+				if (viewResolverMap.containsKey(vclass))
+					return viewResolverMap.get(vclass);
+				else
+				{
+					ViewResolver resolver = Reflect.create(vclass);
+					viewResolverMap.put(vclass, resolver);
+					return resolver;
+				}
+			}
+		}
+		return viewResolverMap.get(vclass);
 	}
 
 	/**
@@ -453,11 +695,11 @@ public final class DispatcherServlet extends HttpServlet
 	 */
 	private <T> T getPartData(Part part, Class<T> type)
 	{
-		if (type == Part.class)
+		if (Part.class.isAssignableFrom(type))
 			return type.cast(part);
-		else if (type.isInstance(String.class))
+		else if (String.class.isAssignableFrom(type))
 			return type.cast(part.isFile() ? part.getFileName() : part.getValue());
-		else if (type.isInstance(File.class))
+		else if (File.class.isAssignableFrom(type))
 			return type.cast(part.isFile() ? part.getFile() : null);
 		else
 			return Reflect.createForType(part.isFile() ? null : part.getValue(), type);
@@ -598,5 +840,50 @@ public final class DispatcherServlet extends HttpServlet
 	{
 		return request.getContentType().equals("application/x-www-form-urlencoded");
 	}
+
+	/**
+	 * Sends request to the error page with a status code.
+	 * @param response servlet response object.
+	 * @param statusCode the status code to use.
+	 * @param message the status message.
+	 */
+	private void sendError(HttpServletResponse response, int statusCode, String message)
+	{
+		try{
+			response.sendError(statusCode, message);
+		} catch (Exception e) {
+			throwException(e);
+		}
+	}
+
+	/**
+	 * Forces an exception to propagate up to the dispatcher.
+	 * Basically encloses the provided throwable in a {@link SimpleFrameworkException},
+	 * which is a {@link RuntimeException}.
+	 * @param t the {@link Throwable} to encapsulate and throw.
+	 */
+	private void throwException(Throwable t)
+	{
+		throw new SimpleFrameworkException(t);
+	}
+
+	/**
+	 * Initializes a filter.
+	private void initializeFilter(XMLStruct struct)
+	{
+		String pkg = struct.getAttribute(XML_FILTERPATH_PACKAGE);
+		String classString = struct.getAttribute(XML_FILTERPATH_CLASSES);
+	
+		if (pkg == null)
+			throw new SimpleFrameworkException("Filter in declaration does not declare a package.");
+		if (classString == null)
+			throw new SimpleFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
+		
+		String[] classes = classString.split("(\\s|\\,)+");
+		
+		filterEntries.put(pkg, classes);
+	}
+	 */
+	
 	
 }

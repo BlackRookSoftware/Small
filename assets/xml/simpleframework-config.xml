@@ -3,70 +3,6 @@
 <config>
 
 <!-- 
-	Database Connection Pool Definitions
-	====================================
-
-	All Pool definitions go in this tag.
-	
-	The two types of pools that can be defined in this tag are Database 
-	Connection Pools and Thread Pools for asynchronously executed tasks.
-	
-	Database Connection Pools are defined in "connectionpool" tags, and have
-	the following attributes:
-	
-	name			The name of the pool. This is the key used to identify this 
-					pool in the framework. All uses of this pool is through 
-					this key. Default is "default".
-	
-	driver			The JDBC driver class name.
-
-	url				The JDBC URL for accessing a particular database. This is
-					different for every driver.
-	
-	user			The username to use for the pooled connections.
-					Leaving this off attempts to open the database connection 
-					without a user.
-	
-	password		The password to use for the pooled connections.
-					Default is blank.
-	
-	connections		The number of connections to open to the database.
-					Default is 10.
-	
--->
-
-<connectionpool
-	name="default"
-	driver="com.jdbc.driver.here"
-	url="jdbc:driver://localhost:3000/database"
-	user="root"
-	password=""
-	connections="10"
-	/>
-
-<!-- 
-	View Resolvers
-	==============
-	
-	These next XML structures declare the view resolvers to use when
-	a framework servlet wants to call or include a view.
-	
-	The view resolvers are called in the order in which they are declared 
-	in this file.
-	
-	Each view resolver is declared in a "viewresolver" tag, and have the
-	following attributes:
-	
-	class			The fully-qualified classname of the class to instantiate
-					for this resolver.
-	
--->
-
-<viewresolver 
-	class="com.blackrook.j2ee.BRDefaultResolver" 
-	/>
-
-<!-- 
 	Query Resolvers
 	===============
 	
@@ -85,9 +21,8 @@
 -->
 
 <queryresolver 
-	class="com.blackrook.j2ee.SFDefaultResolver" 
+	class="com.blackrook.j2ee.DefaultQueryResolver" 
 	/>
-
 
 <!-- 
 	Filter Paths
@@ -115,7 +50,7 @@
 <!--
 <filterpath 
 	package="com.add.path.here" 
-	classes="com.blackrook.j2ee.filter.SFFilter" 
+	classes="com.blackrook.j2ee.Filter" 
 	/>
 -->
 

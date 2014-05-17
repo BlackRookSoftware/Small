@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.blackrook.j2ee.SQLProvider;
-import com.blackrook.j2ee.Toolkit;
 import com.blackrook.j2ee.component.DAOTransaction.Level;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.sql.SQLConnectionPool;
@@ -23,18 +22,10 @@ public abstract class DAO extends SQLProvider
 	/**
 	 * Base constructor.
 	 */
-	protected DAO()
-	{
-		this(Toolkit.DEFAULT_POOL_NAME);
-	}
-
-	/**
-	 * Other constructor. Sets default pools.
-	 */
-	protected DAO(String sqlPoolName)
+	protected DAO(SQLConnectionPool connectionPool)
 	{
 		super();
-		connectionPool = getSQLPool(sqlPoolName);
+		this.connectionPool = connectionPool;
 	}
 
 	/**
@@ -54,42 +45,24 @@ public abstract class DAO extends SQLProvider
 			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		}
 		
-		return new DAOTransaction(this, connection, transactionLevel);
+		return new DAOTransaction(connection, transactionLevel);
 	}
 	
 	/**
 	 * Attempts to grab an available connection from the default 
 	 * servlet connection pool and performs a query.
-	 * @param queryKey the query (by key) to execute.
+	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
 	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	protected final SQLResult doQuery(String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doQueryInline(query, parameters);
-	}
-
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs a query. The provided query
-	 * is a literal query - NOT a key that references a query.
-	 * @param query the query to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the SQLResult returned.
-	 * @throws SimpleFrameworkException if the query causes an error.
-	 */
-	protected final SQLResult doQueryInline(String query, Object ... parameters)
+	protected final SQLResult doQuery(String query, Object ... parameters)
 	{
 		Connection conn = null;
 		SQLResult result = null;		
 		try {
 			conn = connectionPool.getAvailableConnection();
 			result = SQLUtil.doQuery(conn, query, parameters);
-			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new SimpleFrameworkException(e);
 		} catch (InterruptedException e) {
@@ -180,115 +153,19 @@ public abstract class DAO extends SQLProvider
 	 * </tr>
 	 * </table>
 	 * @param type the class type to instantiate.
-	 * @param queryKey the query (by key) to execute.
+	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
 	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
-	protected final <T> T[] doQuery(Class<T> type, String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doQueryInline(type, query, parameters);
-	}
-
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs a query and creates objects from it, setting relevant fields.
-	 * The provided query is a literal query - NOT a key that references a query.
-	 * <p>
-	 * Each result row is applied via the target object's public fields and setter methods.
-	 * <p>
-	 * For instance, if there is a column is a row called "color", its value
-	 * will be applied via the public field "color" or the setter "setColor()". Public
-	 * fields take precedence over setters.
-	 * <p>
-	 * Only certain types are converted without issue. Below is a set of source types
-	 * and their valid target types:
-	 * <table>
-	 * <tr>
-	 * 		<td><b>Boolean</b></td>
-	 * 		<td>
-	 * 			Boolean, all numeric primitives and their autoboxed equivalents, String. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>Number</b></td>
-	 * 		<td>
-	 * 			Boolean (zero is false, nonzero is true), all numeric primitives and their autoboxed equivalents, String,
-	 * 			Date, Timestamp. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>Timestamp</b></td>
-	 * 		<td>
-	 * 			Long (both primitive and object as milliseconds since the Epoch), Timestamp, Date, String 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>Date</b></td>
-	 * 		<td>
-	 * 			Long (both primitive and object as milliseconds since the Epoch), Timestamp, Date, String 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>String</b></td>
-	 * 		<td>
-	 * 			Boolean, all numeric primitives and their autoboxed equivalents, 
-	 * 			String, byte[], char[]. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>Clob</b></td>
-	 * 		<td>
-	 * 			Boolean, all numeric primitives and their autoboxed equivalents, 
-	 * 			String, byte[], char[]. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>Blob</b></td>
-	 * 		<td> 
-	 * 			String, byte[], char[]. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>Clob</b></td>
-	 * 		<td>
-	 * 			Boolean, all numeric primitives and their autoboxed equivalents, 
-	 * 			String, byte[], char[]. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>byte[]</b></td>
-	 * 		<td>
-	 *			String, byte[], char[]. 
-	 * 		</td>
-	 * </tr>
-	 * <tr>
-	 * 		<td><b>char[]</b></td>
-	 * 		<td>
-	 * 			Boolean, all numeric primitives and their autoboxed equivalents, 
-	 * 			String, byte[], char[]. 
-	 * 		</td>
-	 * </tr>
-	 * </table>
-	 * @param type the class type to instantiate.
-	 * @param query the query to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the SQLResult returned.
-	 * @throws SimpleFrameworkException if the query causes an error.
-	 * @throws ClassCastException if one object type cannot be converted to another.
-	 */
-	protected final <T> T[] doQueryInline(Class<T> type, String query, Object ... parameters)
+	protected final <T> T[] doQuery(Class<T> type, String query, Object ... parameters)
 	{
 		Connection conn = null;
 		T[] result = null;		
 		try {
 			conn = connectionPool.getAvailableConnection();
 			result = SQLUtil.doQuery(type, conn, query, parameters);
-			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new SimpleFrameworkException(e);
 		} catch (InterruptedException e) {
@@ -302,36 +179,18 @@ public abstract class DAO extends SQLProvider
 	/**
 	 * Attempts to grab an available connection from the default 
 	 * servlet connection pool and performs an update query.
-	 * @param queryKey the query statement to execute.
+	 * @param query the query statement to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
 	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
-	protected final SQLResult doUpdateQuery(String queryKey, Object ... parameters)
-	{
-		String query = getQueryByName(queryKey);
-		if (query == null)
-			throw new SimpleFrameworkException("Query could not be loaded/cached - "+queryKey);
-		return doUpdateQueryInline(query, parameters);
-	}
-
-	/**
-	 * Attempts to grab an available connection from the default 
-	 * servlet connection pool and performs an update query. The provided query
-	 * is a literal query - NOT a key that references a query.
-	 * @param query the query to execute.
-	 * @param parameters list of parameters for parameterized queries.
-	 * @return the SQLResult returned.
-	 * @throws SimpleFrameworkException if the query causes an error.
-	 */
-	protected final SQLResult doUpdateQueryInline(String query, Object ... parameters)
+	protected final SQLResult doUpdateQuery(String query, Object ... parameters)
 	{
 		Connection conn = null;
 		SQLResult result = null;
 		try {
 			conn = connectionPool.getAvailableConnection();
 			result = SQLUtil.doQueryUpdate(conn, query, parameters);
-			conn.close(); // should release
 		} catch (SQLException e) {
 			throw new SimpleFrameworkException(e);
 		} catch (InterruptedException e) {
@@ -341,5 +200,5 @@ public abstract class DAO extends SQLProvider
 		}
 		return result;
 	}
-	
+
 }

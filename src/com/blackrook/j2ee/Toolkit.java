@@ -22,9 +22,7 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.component.Filter;
 import com.blackrook.j2ee.component.QueryResolver;
-import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
@@ -43,10 +41,8 @@ public final class Toolkit
 	/** Name for all default pools. */
 	public static final String DEFAULT_POOL_NAME = "default";
 	/** Application settings XML file. */
-	public static final String MAPPING_XML = "/WEB-INF/brframework-config.xml";
+	public static final String MAPPING_XML = "/WEB-INF/simpleframework-config.xml";
 	
-	private static final String XML_VIEW = "viewresolver";
-	private static final String XML_VIEW_CLASS = "class";
 	private static final String XML_QUERY = "queryresolver";
 	private static final String XML_QUERY_CLASS = "class";
 	private static final String XML_FILTERPATH = "filterpath";
@@ -74,10 +70,6 @@ public final class Toolkit
 	/** Application context path. */
 	private String realAppPath;
 
-	/** The cache map for JSP pages. */
-	private HashMap<String, String> viewCache;
-	/** List of view resolvers. */
-	private List<ViewResolver> viewResolvers;
 	/** The cache for queries. */
 	private HashMap<String, String> queryCache;
 	/** List of query resolvers. */
@@ -91,13 +83,6 @@ public final class Toolkit
 	private String controllerRootSuffix;
 	/** Controller root index controller. */
 	private String controllerRootIndexClass;
-	/** Map of package to filter classes. */
-	private HashMap<String, String[]> filterEntries;
-
-	/** The controllers that were instantiated. */
-	private HashMap<String, ControllerEntry> controllerCache;
-	/** The filters that were instantiated. */
-	private HashMap<String, Filter> filterCache;
 
 	/** Database connection pool. */
 	private HashMap<String, SQLConnectionPool> connectionPool;
@@ -111,6 +96,26 @@ public final class Toolkit
 		if (INSTANCE != null)
 			return INSTANCE;
 		return INSTANCE = new Toolkit(context);
+	}
+
+	public String getControllerRootPackage()
+	{
+		return controllerRootPackage;
+	}
+
+	public String getControllerRootPrefix()
+	{
+		return controllerRootPrefix;
+	}
+
+	public String getControllerRootSuffix()
+	{
+		return controllerRootSuffix;
+	}
+
+	public String getControllerRootIndexClass()
+	{
+		return controllerRootIndexClass;
 	}
 
 	/**
@@ -157,27 +162,6 @@ public final class Toolkit
 	}
 
 	/**
-	 * Gets the path to a view by keyword.
-	 * @return the associated path or null if not found. 
-	 */
-	String getViewByName(String keyword)
-	{
-		String out = viewCache.get(keyword);
-		if  (out == null)
-		{
-			for (ViewResolver resolver : viewResolvers)
-				if ((out = resolver.resolveView(keyword)) != null)
-				{
-					if (!resolver.dontCacheView(keyword))
-						viewCache.put(keyword, out);
-					break;					
-				}
-		}
-		
-		return out;
-	}
-
-	/**
 	 * Gets a query by keyword.
 	 * @return the associated query or null if not found. 
 	 */
@@ -213,14 +197,6 @@ public final class Toolkit
 	}
 	
 	/**
-	 * Returns a list of view names.
-	 */
-	String[] getCachedViewNames()
-	{
-		return getKeys(viewCache);
-	}
-	
-	/**
 	 * Returns a list of cached query keyword names.
 	 */
 	String[] getCachedQueryKeywordNames()
@@ -246,47 +222,6 @@ public final class Toolkit
 		return connectionPool.get(key);
 	}
 
-	/**
-	 * Returns a controller for a path.
-	 * @param path the path of the controller.
-	 * @return a controller instance to call or null to trigger a 404.
-	 */
-	ControllerEntry getController(String path)
-	{
-		if (controllerCache.containsKey(path))
-			return controllerCache.get(path);
-		
-		synchronized (controllerCache)
-		{
-			// in case a thread already completed it.
-			if (controllerCache.containsKey(path))
-				return controllerCache.get(path);
-			
-			ControllerEntry out = instantiateController(path);
-	
-			if (out == null)
-				return null;
-			
-			// add to cache and return.
-			controllerCache.put(path, out);
-			return out;
-		}
-	}
-
-	/**
-	 * Returns a filter for a path.
-	 * @param path the path of the filter.
-	 * @return a filter instance to call or null for no filter.
-	 */
-	Filter[] getFilters(String path)
-	{
-		Filter[] out = getFiltersUsingDefinitions(path);
-		if (out != null)
-			return out;
-		
-		return null;
-	}
-
 	// gets String keys from a map.
 	private String[] getKeys(HashMap<String, ?> map)
 	{
@@ -308,14 +243,9 @@ public final class Toolkit
 	private Toolkit(ServletContext context)
 	{
 		servletContext = context;
-		viewCache = new CaseInsensitiveHashMap<String>(25);
-		viewResolvers = new List<ViewResolver>(25);
 		queryCache = new CaseInsensitiveHashMap<String>(25);
 		queryResolvers = new List<QueryResolver>(25);
 		connectionPool = new CaseInsensitiveHashMap<SQLConnectionPool>();
-		controllerCache = new HashMap<String, ControllerEntry>();
-		filterEntries = new HashMap<String, String[]>();
-		filterCache = new HashMap<String, Filter>();
 		
 		realAppPath = context.getRealPath("/");
 		
@@ -333,15 +263,13 @@ public final class Toolkit
 				{
 					if (struct.isName(XML_SQL))
 						initializeSQL(struct);
-					else if (struct.isName(XML_VIEW))
-						initializeViewResolver(struct);
 					else if (struct.isName(XML_QUERY))
 						initializeQueryResolver(struct);
 					else if (struct.isName(XML_CONTROLLERROOT))
 						initializeControllerRoot(struct);
-					else if (struct.isName(XML_FILTERPATH))
+/*					else if (struct.isName(XML_FILTERPATH))
 						initializeFilter(struct);
-				}
+*/				}
 			}
 		} catch (Exception e) {
 			throw new SimpleFrameworkException(e);
@@ -396,36 +324,6 @@ public final class Toolkit
 	}
 
 	/**
-	 * Initializes a view resolver.
-	 */
-	private void initializeViewResolver(XMLStruct struct)
-	{
-		String clazz = struct.getAttribute(XML_VIEW_CLASS).trim();
-		if (clazz.length() == 0)
-			throw new SimpleFrameworkException("Missing class in view resolver delaration.");
-
-		Class<?> clz = null;
-		ViewResolver resolver = null;
-		
-		try {
-			clz = Class.forName(clazz);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in view resolver could not be found: "+clazz);
-		}
-		
-		try {
-			resolver = (ViewResolver)FrameworkUtil.getBean(clz);
-		} catch (ClassCastException e) {
-			throw new SimpleFrameworkException("Class in view resolver is not an instance of BRViewResolver: "+clz.getName());
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in view resolver could not be instantiated: "+clz.getName());
-		}
-
-		if (resolver != null)
-			viewResolvers.add(resolver);
-	}
-
-	/**
 	 * Initializes a query resolver.
 	 */
 	private void initializeQueryResolver(XMLStruct struct)
@@ -471,136 +369,5 @@ public final class Toolkit
 		controllerRootPackage = pkg;
 	}
 
-	/**
-	 * Initializes a filter.
-	 */
-	private void initializeFilter(XMLStruct struct)
-	{
-		String pkg = struct.getAttribute(XML_FILTERPATH_PACKAGE);
-		String classString = struct.getAttribute(XML_FILTERPATH_CLASSES);
 
-		if (pkg == null)
-			throw new SimpleFrameworkException("Filter in declaration does not declare a package.");
-		if (classString == null)
-			throw new SimpleFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
-		
-		String[] classes = classString.split("(\\s|\\,)+");
-		
-		filterEntries.put(pkg, classes);
-	}
-
-	// Instantiates a controller via root resolver.
-	private ControllerEntry instantiateController(String path)
-	{
-		String className = getClassNameForController(path);
-		
-		if (className == null)
-			return null;
-		
-		Class<?> controllerClass = null;
-		try {
-			controllerClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			return null;
-			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
-		}
-		
-		ControllerEntry out = null;
-		
-		try {
-			out = new ControllerEntry(controllerClass);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className, e);
-		}
-		
-		int lastIndex = 0;
-		String[] filterClasses = null;
-		do {
-			lastIndex = className.lastIndexOf(".");
-			if (lastIndex >= 0)
-			{
-				className = className.substring(0, lastIndex);
-				filterClasses = filterEntries.get(className);
-			}
-		} while (lastIndex >= 0 && filterClasses == null);
-		
-		if (filterClasses != null) for (String fc : filterClasses)
-		{
-			Filter filter = null;
-			if ((filter = filterCache.get(fc)) == null)
-				filter = instantiateFilter(fc);
-			out.addFilter(filter);
-		}
-		
-		return out;
-	}
-	
-	// Creates a filter by its entry.
-	private Filter instantiateFilter(String className)
-	{			
-		Class<?> filterClass = null;
-		try {
-			filterClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			throw new SimpleFrameworkException("Class in filter declaration could not be found: "+className);
-		}
-		
-		Filter out = null;
-		
-		try {
-			out = (Filter)FrameworkUtil.getBean(filterClass);
-		} catch (ClassCastException e) {
-			throw new SimpleFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in filter declaration could not be instantiated: "+className);
-		}
-		
-		return out;
-	}
-
-	// Gets the classname of a path.
-	private String getClassNameForController(String path)
-	{
-		String pkg = controllerRootPackage + ".";
-		String cls = "";
-		
-		if (Common.isEmpty(path))
-		{
-			if (controllerRootIndexClass == null)
-				return null;
-			cls = controllerRootIndexClass;
-			return cls;
-		}
-		else
-		{
-			String[] dirs = path.substring(1).split("[/]+");
-			if (dirs.length > 1)
-			{
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < dirs.length - 1; i++)
-				{
-					sb.append(dirs[i]);
-					sb.append('.');
-				}
-				pkg += sb.toString();
-
-			}
-
-			cls = dirs[dirs.length - 1];
-			cls = pkg + controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
-			
-			// if class is index folder without using root URL, do not permit use.
-			if (cls.equals(controllerRootIndexClass))
-				return null;
-
-			return cls;
-		}
-	}
-	
-	// Get filters using path definitions.
-	private Filter[] getFiltersUsingDefinitions(String path)
-	{
-		return null;
-	}
-	
 }

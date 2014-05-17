@@ -15,6 +15,8 @@ import com.blackrook.j2ee.annotation.Controller;
 import com.blackrook.j2ee.annotation.Model;
 import com.blackrook.j2ee.annotation.RequestEntry;
 import com.blackrook.j2ee.component.Filter;
+import com.blackrook.j2ee.component.ViewResolver;
+import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
 
@@ -27,6 +29,8 @@ class ControllerEntry
 {
 	/** Controller instance. */
 	private Object instance;
+	/** Controller annotation. */
+	private Class<? extends ViewResolver> viewResolverClass;
 	/** Method map. */
 	private HashMap<RequestMethod, HashMap<String, MethodDescriptor>> methodMap;
 	/** Model map. */
@@ -51,6 +55,7 @@ class ControllerEntry
 		this.methodMap = new HashMap<RequestMethod, HashMap<String, MethodDescriptor>>();
 		this.modelMap = new HashMap<String, MethodDescriptor>();
 		this.attributeMap = new HashMap<String, MethodDescriptor>();
+		this.viewResolverClass = controllerAnnotation.viewResolver();
 		
 		String methodPrefix = controllerAnnotation.methodPrefix();
 		
@@ -126,6 +131,14 @@ class ControllerEntry
 	}
 	
 	/**
+	 * Returns the class of the view resolver that this controller uses.
+	 */
+	public Class<? extends ViewResolver> getViewResolverClass()
+	{
+		return viewResolverClass;
+	}
+
+	/**
 	 * Gets a method on the controller using the specified page string. 
 	 * @param rm the request method.
 	 * @param pageString the page name (no extension).
@@ -138,6 +151,24 @@ class ControllerEntry
 		
 		MethodDescriptor out = map.get(getPageNoExtension(pageString));
 		return out;
+	}
+	
+	/**
+	 * Gets a method on the controller that constructs an attribute. 
+	 * @param attribName the attribute name.
+	 */
+	public MethodDescriptor getAttributeConstructor(String attribName)
+	{
+		return attributeMap.get(attribName);
+	}
+	
+	/**
+	 * Gets a method on the controller that constructs a model object. 
+	 * @param modelName the model attribute name.
+	 */
+	public MethodDescriptor getModelConstructor(String modelName)
+	{
+		return modelMap.get(modelName);
 	}
 	
 	/**

@@ -3,7 +3,7 @@ package com.blackrook.j2ee.component;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.j2ee.RequestMethod;
+import com.blackrook.j2ee.enums.RequestMethod;
 
 /**
  * All filters are extensions of this class.

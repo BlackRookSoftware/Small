@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.j2ee.ScopeType;
+import com.blackrook.j2ee.enums.ScopeType;
 
 /**
  * Annotates a method or method parameter for attribute binding. Should be used on Controllers.
@@ -14,7 +14,7 @@ import com.blackrook.j2ee.ScopeType;
  * Any value that does not already exist is created (via default constructor or method).
  * @author Matthew Tropiano
  */
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Attribute
 {

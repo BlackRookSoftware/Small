@@ -7,29 +7,14 @@ import java.io.InputStreamReader;
 
 import com.blackrook.commons.Common;
 import com.blackrook.j2ee.component.QueryResolver;
-import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 
 /**
- * Default resolver for queries and views. 
+ * Default resolver for querie. 
  * @author Matthew Tropiano
  */
-public class DefaultResolver implements QueryResolver, ViewResolver
+public class DefaultQueryResolver implements QueryResolver
 {
-	/** Always returns false. */
-	@Override
-	public boolean dontCacheView(String keyword)
-	{
-		return false;
-	}
-
-	/** Always returns <code>"/WEB-INF/jsp/" + keyword + ".jsp"</code> for every keyword. */
-	@Override
-	public String resolveView(String keyword)
-	{
-		return "/WEB-INF/jsp/" + keyword + ".jsp";
-	}
-
 	@Override
 	public boolean dontCacheQuery(String keyword)
 	{
