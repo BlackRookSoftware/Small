@@ -19,9 +19,11 @@ import com.blackrook.j2ee.annotation.Parameter;
 import com.blackrook.j2ee.annotation.Path;
 import com.blackrook.j2ee.annotation.PathFile;
 import com.blackrook.j2ee.annotation.PathQuery;
+import com.blackrook.j2ee.annotation.RequestEntry;
 import com.blackrook.j2ee.annotation.View;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.enums.ScopeType;
+import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
 
 /**
  * Method descriptor class.
@@ -43,6 +45,7 @@ public class MethodDescriptor
 		COOKIE,
 		ATTRIBUTE,
 		PARAMETER,
+		PARAMETER_MAP,
 		CONTENT,
 		MODEL;
 	}
@@ -108,15 +111,20 @@ public class MethodDescriptor
 	{
 		this.method = method;
 		this.type = method.getReturnType();
-		this.outputType = Output.VIEW;
+		this.outputType = null;
 		this.noCache = method.isAnnotationPresent(NoCache.class);
 		
-		if (method.isAnnotationPresent(Content.class))
-			this.outputType = Output.CONTENT;
-		else if (method.isAnnotationPresent(Attachment.class))
-			this.outputType = Output.ATTACHMENT;
-		else if (method.isAnnotationPresent(View.class))
-			this.outputType = Output.VIEW;
+		if (method.isAnnotationPresent(RequestEntry.class))
+		{
+			if (method.isAnnotationPresent(Content.class))
+				this.outputType = Output.CONTENT;
+			else if (method.isAnnotationPresent(Attachment.class))
+				this.outputType = Output.ATTACHMENT;
+			else if (method.isAnnotationPresent(View.class))
+				this.outputType = Output.VIEW;
+			else if (this.type != Void.class && this.type != Void.TYPE)
+				throw new SimpleFrameworkSetupException("Entry methods that don't return void must be annotated with @Content, @Attachment, or @View.");
+		}
 		
 		Annotation[][] pannotations = method.getParameterAnnotations();
 		Class<?>[] ptypes = method.getParameterTypes();

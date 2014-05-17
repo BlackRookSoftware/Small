@@ -180,7 +180,7 @@ public final class DispatcherServlet extends HttpServlet
 			response.setHeader("Pragma", "no-cache");
 		}
 		
-		if (descriptor.getType() != Void.TYPE && descriptor.getType() != Void.class) switch (descriptor.getOutputType())
+		switch (descriptor.getOutputType())
 		{
 			case VIEW:
 			{
@@ -281,6 +281,9 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				break;
 			}
+			default:
+				// Do nothing.
+				break;
 		}
 	}
 
