@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.blackrook.j2ee.enums.RequestMethod;
 
 /**
- * Public methods with this annotation in {@link Controller} objects are
+ * Public methods with this annotation in {@link Controller}-annotated objects are
  * considered entry points via HTTP requests. 
  * <p>The method return type influences what gets sent back as content. 
  * If the method returns <code>void</code>, then responding
