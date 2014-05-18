@@ -2,11 +2,14 @@ package com.blackrook.j2ee;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 
 import com.blackrook.commons.Common;
+import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.annotation.Attribute;
 import com.blackrook.j2ee.annotation.Controller;
+import com.blackrook.j2ee.annotation.FilterChain;
 import com.blackrook.j2ee.annotation.Model;
 import com.blackrook.j2ee.annotation.ControllerEntry;
 import com.blackrook.j2ee.component.ViewResolver;
@@ -18,7 +21,7 @@ import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
  * Creates a controller profile to assist in re-calling controllers by path and methods.
  * @author Matthew Tropiano
  */
-class ControllerDescriptor
+class ControllerDescriptor implements ComponentDescriptor
 {
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
 	
@@ -31,9 +34,9 @@ class ControllerDescriptor
 	/** Method map. */
 	private HashMap<RequestMethod, HashMap<String, ControllerMethodDescriptor>> methodMap;
 	/** Model map. */
-	private HashMap<String, ControllerMethodDescriptor> modelMap;
+	private HashMap<String, MethodDescriptor> modelMap;
 	/** Attribute map. */
-	private HashMap<String, ControllerMethodDescriptor> attributeMap;
+	private HashMap<String, MethodDescriptor> attributeMap;
 	/** Filter class list. */
 	private Class<?>[] filterChain;
 	
@@ -48,16 +51,13 @@ class ControllerDescriptor
 		if (controllerAnnotation == null)
 			throw new SimpleFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 		
-		this.filterChain = NO_FILTERS;
 		this.defaultMethodMap = new HashMap<RequestMethod, ControllerMethodDescriptor>();
-		this.methodMap = new HashMap<RequestMethod, HashMap<String, ControllerMethodDescriptor>>();
-		this.modelMap = new HashMap<String, ControllerMethodDescriptor>();
-		this.attributeMap = new HashMap<String, ControllerMethodDescriptor>();
+		this.methodMap = new HashMap<RequestMethod, HashMap<String, ControllerMethodDescriptor>>(4);
+		this.modelMap = new HashMap<String, MethodDescriptor>(4);
+		this.attributeMap = new HashMap<String, MethodDescriptor>(4);
 		this.viewResolverClass = controllerAnnotation.viewResolver();
 		
 		String methodPrefix = controllerAnnotation.methodPrefix();
-		
-		// TODO: Add filter chain handling.
 		
 		for (Method m : clazz.getMethods())
 		{
@@ -103,7 +103,30 @@ class ControllerDescriptor
 			}
 		}
 		
-		instance = FrameworkUtil.getBean(clazz);
+		// accumulate filter chains.
+		Class<?>[] packageFilters = NO_FILTERS; 
+		Class<?>[] controllerFilters = NO_FILTERS; 
+
+		String packageName = clazz.getPackage().getName();
+		do {
+			Package p = Package.getPackage(packageName);
+			if (p == null)
+				break;
+			if (p.isAnnotationPresent(FilterChain.class))
+			{
+				FilterChain fc = clazz.getAnnotation(FilterChain.class);
+				packageFilters = Common.joinArrays(fc.value(), packageFilters);
+			}
+		} while (packageName.lastIndexOf('.') > 0 && (packageName = packageName.substring(0, packageName.lastIndexOf('.'))).length() > 0);
+
+		if (clazz.isAnnotationPresent(FilterChain.class))
+		{
+			FilterChain fc = clazz.getAnnotation(FilterChain.class);
+			controllerFilters = Arrays.copyOf(fc.value(), fc.value().length);
+		}
+		this.filterChain = Common.joinArrays(packageFilters, controllerFilters);
+		
+		this.instance = Reflect.create(clazz);
 	}
 	
 	/** Checks if a method is a valid request entry. */
@@ -176,28 +199,20 @@ class ControllerDescriptor
 		
 		return out;
 	}
-	
-	/**
-	 * Gets a method on the controller that constructs an attribute. 
-	 * @param attribName the attribute name.
-	 */
-	public ControllerMethodDescriptor getAttributeConstructor(String attribName)
+
+	@Override
+	public MethodDescriptor getAttributeConstructor(String attribName)
 	{
 		return attributeMap.get(attribName);
 	}
 	
-	/**
-	 * Gets a method on the controller that constructs a model object. 
-	 * @param modelName the model attribute name.
-	 */
-	public ControllerMethodDescriptor getModelConstructor(String modelName)
+	@Override
+	public MethodDescriptor getModelConstructor(String modelName)
 	{
 		return modelMap.get(modelName);
 	}
 	
-	/**
-	 * Returns the instantiated controller.
-	 */
+	@Override
 	public Object getInstance()
 	{
 		return instance;

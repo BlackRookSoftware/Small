@@ -45,9 +45,6 @@ public final class Toolkit
 	
 	private static final String XML_QUERY = "queryresolver";
 	private static final String XML_QUERY_CLASS = "class";
-	private static final String XML_FILTERPATH = "filterpath";
-	private static final String XML_FILTERPATH_PACKAGE = "package";
-	private static final String XML_FILTERPATH_CLASSES = "classes";
 	private static final String XML_CONTROLLERROOT = "controllerroot";
 	private static final String XML_CONTROLLERROOT_PACKAGE = "package";
 	private static final String XML_CONTROLLERROOT_PREFIX = "prefix";

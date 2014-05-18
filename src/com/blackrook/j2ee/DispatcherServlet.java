@@ -151,27 +151,72 @@ public final class DispatcherServlet extends HttpServlet
 		{
 			String page = getPage(request);
 
-			// TODO: Handle filter chain execution/instantiation.
+			// get cookies from request.
+			HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
+			Cookie[] cookies = request.getCookies();
+			if (cookies != null) for (Cookie c : cookies)
+				cookieMap.put(c.getName(), c);
 			
-			ControllerMethodDescriptor md = entry.getDescriptorUsingPath(requestMethod, page);
-			if (md != null)
-				handleRequestMethod(entry, requestMethod, request, response, md, entry.getInstance(), multiformPartMap);
+			ControllerMethodDescriptor cmd = entry.getDescriptorUsingPath(requestMethod, page);
+			if (cmd != null)
+			{
+				for (Class<?> filterClass : entry.getFilterChain())
+				{
+					FilterDescriptor fd = getFilter(filterClass);
+					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
+						return;
+				}
+
+				for (Class<?> filterClass : cmd.getFilterChain())
+				{
+					FilterDescriptor fd = getFilter(filterClass);
+					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
+						return;
+				}
+
+				handleControllerMethod(entry, requestMethod, request, response, cmd, entry.getInstance(), cookieMap, multiformPartMap);
+			}
 			else
 				FrameworkUtil.sendCode(response, 405, "Entry point does not support this method.");
 		}
 	}
 
+	
 	/**
-	 * Completes a full request call.
+	 * Completes a full filter call.
 	 */
-	private void handleRequestMethod(ControllerDescriptor entry, RequestMethod requestMethod, HttpServletRequest request, 
-			HttpServletResponse response, ControllerMethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
+	private boolean handleFilterMethod(
+		FilterDescriptor entry, 
+		RequestMethod requestMethod, HttpServletRequest request, HttpServletResponse response, 
+		MethodDescriptor descriptor, Object instance, 
+		HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
+	)
 	{
 		Object retval = null;
 		try {
-			retval = invokeFrameworkMethod(entry, requestMethod, request, response, descriptor, instance, multiformPartMap);
+			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, cookieMap, multiformPartMap);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException("An exception occurred in a Controller method.",e);
+			throw new SimpleFrameworkException("An exception occurred in a Filter method.", e);
+		}
+		
+		return (Boolean)retval;
+	}
+	
+	/**
+	 * Completes a full controller request call.
+	 */
+	private void handleControllerMethod(
+		ControllerDescriptor entry, 
+		RequestMethod requestMethod, HttpServletRequest request, HttpServletResponse response, 
+		ControllerMethodDescriptor descriptor, Object instance, 
+		HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
+	)
+	{
+		Object retval = null;
+		try {
+			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, cookieMap, multiformPartMap);
+		} catch (Exception e) {
+			throw new SimpleFrameworkException("An exception occurred in a Controller method.", e);
 		}
 		
 		if (descriptor.isNoCache())
@@ -291,16 +336,15 @@ public final class DispatcherServlet extends HttpServlet
 	 * Calls a method on a filter or controller.
 	 * Returns its return value.
 	 */
-	private Object invokeFrameworkMethod(ControllerDescriptor entry, RequestMethod requestMethod, HttpServletRequest request,
-			HttpServletResponse response, MethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
+	private Object invokeEntryMethod(
+		ComponentDescriptor entry, 
+		RequestMethod requestMethod, HttpServletRequest request,
+		HttpServletResponse response, MethodDescriptor descriptor, 
+		Object instance, HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
+	)
 	{
-		// get cookies from request.
-		HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) for (Cookie c : cookies)
-			cookieMap.put(c.getName(), c);
 		
-		ParameterDescriptor[] methodParams = descriptor.getParameterInfo(); 
+		ParameterDescriptor[] methodParams = descriptor.getParameterDescriptors(); 
 		Object[] invokeParams = new Object[methodParams.length];
 
 		String path = null;
@@ -410,10 +454,10 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				case ATTRIBUTE:
 				{
-					ControllerMethodDescriptor attribDescriptor = entry.getAttributeConstructor(pinfo.getName());
+					MethodDescriptor attribDescriptor = entry.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = invokeFrameworkMethod(entry, requestMethod, request, response, attribDescriptor, instance, multiformPartMap);
+						Object attrib = invokeEntryMethod(entry, requestMethod, request, response, attribDescriptor, instance, cookieMap, multiformPartMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -446,10 +490,10 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				case MODEL:
 				{
-					ControllerMethodDescriptor modelDescriptor = entry.getModelConstructor(pinfo.getName());
+					MethodDescriptor modelDescriptor = entry.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = invokeFrameworkMethod(entry, requestMethod, request, response, modelDescriptor, instance, multiformPartMap);
+						Object model = invokeEntryMethod(entry, requestMethod, request, response, modelDescriptor, instance, cookieMap, multiformPartMap);
 						FrameworkUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
@@ -556,6 +600,28 @@ public final class DispatcherServlet extends HttpServlet
 		}
 	}
 
+	/**
+	 * Gets the filter to call.
+	 * @throws SimpleFrameworkException if a huge error occurred.
+	 */
+	private FilterDescriptor getFilter(Class<?> clazz)
+	{
+		if (filterCache.containsKey(clazz))
+			return filterCache.get(clazz);
+		
+		synchronized (filterCache)
+		{
+			// in case a thread already completed it.
+			if (filterCache.containsKey(clazz))
+				return filterCache.get(clazz);
+			
+			FilterDescriptor out = instantiateFilter(clazz);
+			// add to cache and return.
+			filterCache.put(clazz, out);
+			return out;
+		}
+	}
+
 	// Instantiates a controller via root resolver.
 	private ControllerDescriptor instantiateController(String path)
 	{
@@ -569,7 +635,6 @@ public final class DispatcherServlet extends HttpServlet
 			controllerClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
 			return null;
-			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 		}
 		
 		ControllerDescriptor out = null;
@@ -577,9 +642,17 @@ public final class DispatcherServlet extends HttpServlet
 		try {
 			out = new ControllerDescriptor(controllerClass);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className, e);
+			throw new SimpleFrameworkException("Controller could not be instantiated: "+className, e);
 		}
 		
+		return out;
+	}
+
+	// Instantiates a filter via root resolver.
+	private FilterDescriptor instantiateFilter(Class<?> clazz)
+	{
+		FilterDescriptor out = null;
+		out = new FilterDescriptor(clazz);
 		return out;
 	}
 

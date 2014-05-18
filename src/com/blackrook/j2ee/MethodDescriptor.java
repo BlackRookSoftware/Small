@@ -94,12 +94,12 @@ public class MethodDescriptor
 	private Class<?> type;
 	/** Parameter entry. */
 	private ParameterDescriptor[] parameters;
-	
+
 	MethodDescriptor(Method method)
 	{
 		this.method = method;
 		this.type = method.getReturnType();
-		
+
 		Annotation[][] pannotations = method.getParameterAnnotations();
 		Class<?>[] ptypes = method.getParameterTypes();
 		
@@ -191,7 +191,7 @@ public class MethodDescriptor
 	/**
 	 * The method's parameter info.
 	 */
-	public ParameterDescriptor[] getParameterInfo()
+	public ParameterDescriptor[] getParameterDescriptors()
 	{
 		return parameters;
 	}

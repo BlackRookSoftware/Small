@@ -1,9 +1,11 @@
 package com.blackrook.j2ee;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import com.blackrook.j2ee.annotation.Attachment;
 import com.blackrook.j2ee.annotation.Content;
+import com.blackrook.j2ee.annotation.FilterChain;
 import com.blackrook.j2ee.annotation.NoCache;
 import com.blackrook.j2ee.annotation.ControllerEntry;
 import com.blackrook.j2ee.annotation.View;
@@ -15,6 +17,8 @@ import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
  */
 public class ControllerMethodDescriptor extends MethodDescriptor
 {
+	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
+
 	/** Controller output handling types. */
 	public static enum Output
 	{
@@ -27,12 +31,21 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 	private Output outputType;
 	/** No cache? */
 	private boolean noCache;
-	
+	/** Filter class list. */
+	private Class<?>[] filterChain;
+
 	ControllerMethodDescriptor(Method method)
 	{
 		super(method);
 		this.outputType = null;
 		this.noCache = method.isAnnotationPresent(NoCache.class);
+		this.filterChain = NO_FILTERS;
+		
+		if (method.isAnnotationPresent(FilterChain.class))
+		{
+			FilterChain fc = method.getAnnotation(FilterChain.class);
+			this.filterChain = Arrays.copyOf(fc.value(), fc.value().length);
+		}
 		
 		if (method.isAnnotationPresent(ControllerEntry.class))
 		{
@@ -79,6 +92,14 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 	{
 		return noCache;
 	}
-	
+
+	/**
+	 * Gets this method's filter chain.
+	 */
+	public Class<?>[] getFilterChain()
+	{
+		return filterChain;
+	}
+
 }
 
