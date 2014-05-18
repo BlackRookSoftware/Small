@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method parameter for Cookie binding. Should be used in Controllers.
+ * Annotates a method parameter for Cookie binding. Should be used in Controllers and Filters.
  * <p>
  * Matched type must be {@link Cookie}, and if the Cookie name does not exist,
  * it is created for the response.

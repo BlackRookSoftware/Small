@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import com.blackrook.j2ee.enums.ScopeType;
 
 /**
- * Annotates a method or method parameter for attribute binding. Should be used on Controllers.
+ * Annotates a controller method or method parameter for attribute binding. Should be used in Controllers and Filters.
  * <p>
  * Matched type is NOT converted. Any value created by this parameter is persisted to the scope declared.
  * Any value that does not already exist is created (via default constructor or method).

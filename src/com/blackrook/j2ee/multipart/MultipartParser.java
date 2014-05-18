@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.FrameworkUtil;
-import com.blackrook.j2ee.RFCParser;
+import com.blackrook.j2ee.lang.RFCParser;
 
 /**
  * Parser for multipart form requests.

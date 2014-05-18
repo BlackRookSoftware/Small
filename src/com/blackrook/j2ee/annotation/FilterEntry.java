@@ -6,13 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method parameter for header value binding. Should be used in Controllers and Filters. 
+ * Public methods with this annotation in {@link Filter}-annotated objects declare the filter entry point. 
+ * <p>The annotated method must return a boolean. 
  * @author Matthew Tropiano
  */
-@Target(ElementType.PARAMETER)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Header
+public @interface FilterEntry
 {
-	/** The name of the header value. */
-	String value();
 }

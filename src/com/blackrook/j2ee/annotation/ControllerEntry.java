@@ -19,13 +19,14 @@ import com.blackrook.j2ee.enums.RequestMethod;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequestEntry
+public @interface ControllerEntry
 {
 	/** The request methods that this entry point accepts. */
 	RequestMethod[] value() default { RequestMethod.GET };
 	/** 
-	 * If true, this is the ONLY ENTRY that will be called for all RequestMethods specified.
-	 * False by default. 
+	 * If true, this is the DEFAULT entry point, if no matching method is found.
+	 * You may not specify more than one in a controller. 
+	 * <p>False by default. 
 	 */
-	boolean onlyEntry() default false;
+	boolean defaultEntry() default false;
 }

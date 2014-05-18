@@ -8,29 +8,28 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.blackrook.j2ee.annotation.Attachment;
 import com.blackrook.j2ee.annotation.Attribute;
 import com.blackrook.j2ee.annotation.Content;
 import com.blackrook.j2ee.annotation.CookieParameter;
 import com.blackrook.j2ee.annotation.Header;
 import com.blackrook.j2ee.annotation.Model;
-import com.blackrook.j2ee.annotation.NoCache;
 import com.blackrook.j2ee.annotation.Parameter;
+import com.blackrook.j2ee.annotation.ParameterMap;
 import com.blackrook.j2ee.annotation.Path;
 import com.blackrook.j2ee.annotation.PathFile;
 import com.blackrook.j2ee.annotation.PathQuery;
-import com.blackrook.j2ee.annotation.RequestEntry;
-import com.blackrook.j2ee.annotation.View;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.enums.ScopeType;
-import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
 
 /**
  * Method descriptor class.
- * @author 
+ * Parses a method's characteristics using reflection, 
+ * yielding a digest of its important contents.
+ * @author Matthew Tropiano 
  */
 public class MethodDescriptor
 {
+	/** Parameter source types. */
 	public static enum Source
 	{
 		PATH,
@@ -50,24 +49,17 @@ public class MethodDescriptor
 		MODEL;
 	}
 	
-	public static enum Output
-	{
-		CONTENT,
-		ATTACHMENT,
-		VIEW;
-	}
-
 	/**
 	 * Parameter entry for the descriptor.
 	 */
-	public static class ParameterInfo
+	public static class ParameterDescriptor
 	{
 		private Class<?> type;
 		private Source sourceType;
 		private ScopeType sourceScopeType;
 		private String name;
 		
-		private ParameterInfo(Source sourceType, ScopeType scope, Class<?> type, String name)
+		protected ParameterDescriptor(Source sourceType, ScopeType scope, Class<?> type, String name)
 		{
 			this.type = type;
 			this.sourceType = sourceType;
@@ -100,36 +92,18 @@ public class MethodDescriptor
 	private Method method;
 	/** Return type. */
 	private Class<?> type;
-	/** Output content. */
-	private Output outputType;
 	/** Parameter entry. */
-	private ParameterInfo[] parameters;
-	/** No cache? */
-	private boolean noCache;
+	private ParameterDescriptor[] parameters;
 	
-	MethodDescriptor(String controllerName, Method method)
+	MethodDescriptor(Method method)
 	{
 		this.method = method;
 		this.type = method.getReturnType();
-		this.outputType = null;
-		this.noCache = method.isAnnotationPresent(NoCache.class);
-		
-		if (method.isAnnotationPresent(RequestEntry.class))
-		{
-			if (method.isAnnotationPresent(Content.class))
-				this.outputType = Output.CONTENT;
-			else if (method.isAnnotationPresent(Attachment.class))
-				this.outputType = Output.ATTACHMENT;
-			else if (method.isAnnotationPresent(View.class))
-				this.outputType = Output.VIEW;
-			else if (this.type != Void.class && this.type != Void.TYPE)
-				throw new SimpleFrameworkSetupException("Entry methods that don't return void must be annotated with @Content, @Attachment, or @View.");
-		}
 		
 		Annotation[][] pannotations = method.getParameterAnnotations();
 		Class<?>[] ptypes = method.getParameterTypes();
 		
-		this.parameters = new ParameterInfo[ptypes.length];
+		this.parameters = new ParameterDescriptor[ptypes.length];
 		for (int i = 0; i < ptypes.length; i++)
 		{
 			Source source = null;
@@ -158,6 +132,8 @@ public class MethodDescriptor
 					source = Source.PATH_QUERY;
 				else if (annotation.annotationType() == Content.class)
 					source = Source.CONTENT;
+				else if (annotation.annotationType() == ParameterMap.class)
+					source = Source.PARAMETER_MAP;
 				else if (annotation.annotationType() == Header.class)
 				{
 					source = Source.HEADER_VALUE;
@@ -191,35 +167,34 @@ public class MethodDescriptor
 				}
 			}
 			
-			this.parameters[i] = new ParameterInfo(source, scope, paramType, name);
+			this.parameters[i] = new ParameterDescriptor(source, scope, paramType, name);
 		}
 		
 	}
 
+	/**
+	 * The actual method that this describes.
+	 */
 	public Method getMethod()
 	{
 		return method;
 	}
 
+	/**
+	 * The method's return type.
+	 */
 	public Class<?> getType()
 	{
 		return type;
 	}
 
-	public Output getOutputType()
-	{
-		return outputType;
-	}
-
-	public ParameterInfo[] getParameters()
+	/**
+	 * The method's parameter info.
+	 */
+	public ParameterDescriptor[] getParameterInfo()
 	{
 		return parameters;
 	}
 
-	public boolean isNoCache()
-	{
-		return noCache;
-	}
-	
 }
 

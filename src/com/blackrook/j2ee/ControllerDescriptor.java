@@ -2,70 +2,68 @@ package com.blackrook.j2ee;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Iterator;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.j2ee.annotation.Attribute;
 import com.blackrook.j2ee.annotation.Controller;
 import com.blackrook.j2ee.annotation.Model;
-import com.blackrook.j2ee.annotation.RequestEntry;
-import com.blackrook.j2ee.component.Filter;
+import com.blackrook.j2ee.annotation.ControllerEntry;
 import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
 
 /**
- * Creates a controller profile to assist in re-calling controllers by
- * path and methods.
+ * Creates a controller profile to assist in re-calling controllers by path and methods.
  * @author Matthew Tropiano
  */
-class ControllerEntry
+class ControllerDescriptor
 {
+	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
+	
 	/** Controller instance. */
 	private Object instance;
 	/** Controller annotation. */
 	private Class<? extends ViewResolver> viewResolverClass;
+	/** Singular method map. */
+	private HashMap<RequestMethod, ControllerMethodDescriptor> defaultMethodMap;
 	/** Method map. */
-	private HashMap<RequestMethod, HashMap<String, MethodDescriptor>> methodMap;
+	private HashMap<RequestMethod, HashMap<String, ControllerMethodDescriptor>> methodMap;
 	/** Model map. */
-	private HashMap<String, MethodDescriptor> modelMap;
+	private HashMap<String, ControllerMethodDescriptor> modelMap;
 	/** Attribute map. */
-	private HashMap<String, MethodDescriptor> attributeMap;
-	/** Filter list. */
-	private Queue<Filter> filterQueue;
+	private HashMap<String, ControllerMethodDescriptor> attributeMap;
+	/** Filter class list. */
+	private Class<?>[] filterChain;
 	
 	/**
 	 * Creates the controller profile for a {@link Controller} class.
 	 * @param clazz the input class to profile.
 	 * @throws SimpleFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	ControllerEntry(Class<?> clazz)
+	ControllerDescriptor(Class<?> clazz)
 	{
 		Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
 		if (controllerAnnotation == null)
 			throw new SimpleFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 		
-		this.filterQueue = new Queue<Filter>();
-		this.methodMap = new HashMap<RequestMethod, HashMap<String, MethodDescriptor>>();
-		this.modelMap = new HashMap<String, MethodDescriptor>();
-		this.attributeMap = new HashMap<String, MethodDescriptor>();
+		this.filterChain = NO_FILTERS;
+		this.defaultMethodMap = new HashMap<RequestMethod, ControllerMethodDescriptor>();
+		this.methodMap = new HashMap<RequestMethod, HashMap<String, ControllerMethodDescriptor>>();
+		this.modelMap = new HashMap<String, ControllerMethodDescriptor>();
+		this.attributeMap = new HashMap<String, ControllerMethodDescriptor>();
 		this.viewResolverClass = controllerAnnotation.viewResolver();
 		
 		String methodPrefix = controllerAnnotation.methodPrefix();
 		
-		// TODO: Handle "onlyEntry".
+		// TODO: Add filter chain handling.
 		
 		for (Method m : clazz.getMethods())
 		{
 			if (isEntryMethod(m, methodPrefix))
 			{
-				RequestEntry anno = m.getAnnotation(RequestEntry.class);
+				ControllerEntry anno = m.getAnnotation(ControllerEntry.class);
 				if (Common.isEmpty(anno.value()))
 					continue;
 				
@@ -73,24 +71,35 @@ class ControllerEntry
 				String pagename = Character.toLowerCase(methodName.charAt(methodPrefix.length())) + 
 						methodName.substring(methodPrefix.length() + 1);
 				
-				MethodDescriptor ed = new MethodDescriptor(clazz.getSimpleName(), m);
+				ControllerMethodDescriptor md = new ControllerMethodDescriptor(m);
+				
 				for (RequestMethod rm : anno.value())
 				{
-					HashMap<String, MethodDescriptor> map = null;
-					if ((map = methodMap.get(rm)) == null)
-						methodMap.put(rm, map = new HashMap<String, MethodDescriptor>(4));
-					map.put(pagename, ed);
+					if (anno.defaultEntry())
+					{
+						if (defaultMethodMap.containsKey(rm))
+							throw new SimpleFrameworkSetupException("Controller already contains a default entry for this request method.");
+						else
+							defaultMethodMap.put(rm, md);
+					}
+					else
+					{
+						HashMap<String, ControllerMethodDescriptor> map = null;
+						if ((map = methodMap.get(rm)) == null)
+							methodMap.put(rm, map = new HashMap<String, ControllerMethodDescriptor>(4));
+						map.put(pagename, md);
+					}
 				}
 			}
 			else if (isModelConstructorMethod(m))
 			{
 				Model anno = m.getAnnotation(Model.class);
-				modelMap.put(anno.value(), new MethodDescriptor(clazz.getSimpleName(), m));
+				modelMap.put(anno.value(), new ControllerMethodDescriptor(m));
 			}
 			else if (isAttributeConstructorMethod(m))
 			{
 				Attribute anno = m.getAnnotation(Attribute.class);
-				attributeMap.put(anno.value(), new MethodDescriptor(clazz.getSimpleName(), m));
+				attributeMap.put(anno.value(), new ControllerMethodDescriptor(m));
 			}
 		}
 		
@@ -104,7 +113,7 @@ class ControllerEntry
 			(method.getModifiers() & Modifier.PUBLIC) != 0 
 			&& method.getName().startsWith(methodPrefix)
 			&& method.getName().length() > methodPrefix.length()
-			&& method.isAnnotationPresent(RequestEntry.class)
+			&& method.isAnnotationPresent(ControllerEntry.class)
 			;
 	}
 	
@@ -131,6 +140,18 @@ class ControllerEntry
 	}
 	
 	/**
+	 * Get the base page name parsed out of the page.
+	 */
+	private final String getPageNoExtension(String page)
+	{
+		int endIndex = page.indexOf('.');
+		if (endIndex >= 0)
+			return page.substring(0, endIndex);
+		else
+			return page; 
+	}
+
+	/**
 	 * Returns the class of the view resolver that this controller uses.
 	 */
 	public Class<? extends ViewResolver> getViewResolverClass()
@@ -143,13 +164,16 @@ class ControllerEntry
 	 * @param rm the request method.
 	 * @param pageString the page name (no extension).
 	 */
-	public MethodDescriptor getDescriptorUsingPath(RequestMethod rm, String pageString)
+	public ControllerMethodDescriptor getDescriptorUsingPath(RequestMethod rm, String pageString)
 	{
-		HashMap<String, MethodDescriptor> map = methodMap.get(rm);
+		HashMap<String, ControllerMethodDescriptor> map = methodMap.get(rm);
 		if (map == null)
-			return null;
+			return defaultMethodMap.get(rm);
 		
-		MethodDescriptor out = map.get(getPageNoExtension(pageString));
+		ControllerMethodDescriptor out = map.get(getPageNoExtension(pageString));
+		if (out == null)
+			return defaultMethodMap.get(rm);
+		
 		return out;
 	}
 	
@@ -157,7 +181,7 @@ class ControllerEntry
 	 * Gets a method on the controller that constructs an attribute. 
 	 * @param attribName the attribute name.
 	 */
-	public MethodDescriptor getAttributeConstructor(String attribName)
+	public ControllerMethodDescriptor getAttributeConstructor(String attribName)
 	{
 		return attributeMap.get(attribName);
 	}
@@ -166,50 +190,25 @@ class ControllerEntry
 	 * Gets a method on the controller that constructs a model object. 
 	 * @param modelName the model attribute name.
 	 */
-	public MethodDescriptor getModelConstructor(String modelName)
+	public ControllerMethodDescriptor getModelConstructor(String modelName)
 	{
 		return modelMap.get(modelName);
 	}
 	
-	/**
-	 * Get the base page name parsed out of the page.
-	 */
-	private final String getPageNoExtension(String page)
-	{
-		int endIndex = page.indexOf('.');
-		if (endIndex >= 0)
-			return page.substring(0, endIndex);
-		else
-			return page; 
-	}
-	
-	/**
-	 * Adds a filter to this controller.
-	 */
-	public void addFilter(Filter filter)
-	{
-		filterQueue.add(filter);
-	}
-
-	/**
-	 * Calls filters attached to a controller.
-	 * @return true if all filters were passed successfully.
-	 */
-	public boolean callFilters(RequestMethod method, String file, HttpServletRequest request, HttpServletResponse response, Object content)
-	{
-		Iterator<Filter> it = filterQueue.iterator();
-		boolean go = true;
-		while (go && it.hasNext())
-			go = it.next().onFilter(method, file, request, response, content);
-		return go;
-	}
-
 	/**
 	 * Returns the instantiated controller.
 	 */
 	public Object getInstance()
 	{
 		return instance;
+	}
+
+	/**
+	 * Returns the list of filters to call.
+	 */
+	public Class<?>[] getFilterChain()
+	{
+		return filterChain;
 	}
 	
 }

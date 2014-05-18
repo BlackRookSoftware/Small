@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method or method parameter for sets of request parameters from the
+ * Annotates a controller method or method parameter for sets of request parameters from the
  * request, session, and application (precedence is in that order).
  * <p>
  * The model is automatically persisted to the PAGE scope for the view.

@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -17,18 +19,19 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import com.blackrook.commons.AbstractChainedHashMap;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.MethodDescriptor.ParameterInfo;
-import com.blackrook.j2ee.component.Filter;
+import com.blackrook.j2ee.MethodDescriptor.ParameterDescriptor;
 import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.enums.ScopeType;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.lang.RFCParser;
 import com.blackrook.j2ee.multipart.MultipartParser;
 import com.blackrook.j2ee.multipart.MultipartParserException;
 import com.blackrook.j2ee.multipart.Part;
@@ -51,20 +54,17 @@ public final class DispatcherServlet extends HttpServlet
 	private static final String PREFIX_REDIRECT = "redirect:";
 	
 	/** The controllers that were instantiated. */
-	private HashMap<String, ControllerEntry> controllerCache;
+	private HashMap<String, ControllerDescriptor> controllerCache;
 	/** The filters that were instantiated. */
-	private HashMap<String, Filter> filterCache;
-	/** Map of package to filter classes. */
-	private HashMap<String, String[]> filterEntries;
+	private HashMap<Class<?>, FilterDescriptor> filterCache;
 	/** Map of view resolvers to instantiated view resolvers. */
 	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
 
 	// Default constructor.
 	public DispatcherServlet()
 	{
-		controllerCache = new HashMap<String, ControllerEntry>();
-		filterCache = new HashMap<String, Filter>();
-		filterEntries = new HashMap<String, String[]>();
+		controllerCache = new HashMap<String, ControllerDescriptor>();
+		filterCache = new HashMap<Class<?>, FilterDescriptor>();
 		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
 	}
 	
@@ -144,16 +144,16 @@ public final class DispatcherServlet extends HttpServlet
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = getPath(request);
-		ControllerEntry entry = getControllerUsingPath(path);
+		ControllerDescriptor entry = getControllerUsingPath(path);
 		if (entry == null)
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
 		{
 			String page = getPage(request);
-			if (!entry.callFilters(requestMethod, page, request, response, null))
-				return;
+
+			// TODO: Handle filter chain execution/instantiation.
 			
-			MethodDescriptor md = entry.getDescriptorUsingPath(requestMethod, page);
+			ControllerMethodDescriptor md = entry.getDescriptorUsingPath(requestMethod, page);
 			if (md != null)
 				handleRequestMethod(entry, requestMethod, request, response, md, entry.getInstance(), multiformPartMap);
 			else
@@ -164,12 +164,12 @@ public final class DispatcherServlet extends HttpServlet
 	/**
 	 * Completes a full request call.
 	 */
-	private void handleRequestMethod(ControllerEntry entry, RequestMethod requestMethod, HttpServletRequest request, 
-			HttpServletResponse response, MethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
+	private void handleRequestMethod(ControllerDescriptor entry, RequestMethod requestMethod, HttpServletRequest request, 
+			HttpServletResponse response, ControllerMethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		Object retval = null;
 		try {
-			retval = invokeControllerMethod(entry, requestMethod, request, response, descriptor, instance, multiformPartMap);
+			retval = invokeFrameworkMethod(entry, requestMethod, request, response, descriptor, instance, multiformPartMap);
 		} catch (Exception e) {
 			throw new SimpleFrameworkException("An exception occurred in a Controller method.",e);
 		}
@@ -180,7 +180,7 @@ public final class DispatcherServlet extends HttpServlet
 			response.setHeader("Pragma", "no-cache");
 		}
 		
-		switch (descriptor.getOutputType())
+		if (descriptor.getOutputType() != null) switch (descriptor.getOutputType())
 		{
 			case VIEW:
 			{
@@ -288,25 +288,19 @@ public final class DispatcherServlet extends HttpServlet
 	}
 
 	/**
-	 * 
-	 * @param entry
-	 * @param requestMethod
-	 * @param request
-	 * @param response
-	 * @param descriptor
-	 * @param instance
-	 * @param multiformPartMap
-	 * @return
+	 * Calls a method on a filter or controller.
+	 * Returns its return value.
 	 */
-	private Object invokeControllerMethod(ControllerEntry entry, RequestMethod requestMethod, HttpServletRequest request,
+	private Object invokeFrameworkMethod(ControllerDescriptor entry, RequestMethod requestMethod, HttpServletRequest request,
 			HttpServletResponse response, MethodDescriptor descriptor, Object instance, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		// get cookies from request.
 		HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
-		for (Cookie c : request.getCookies())
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) for (Cookie c : cookies)
 			cookieMap.put(c.getName(), c);
 		
-		ParameterInfo[] methodParams = descriptor.getParameters(); 
+		ParameterDescriptor[] methodParams = descriptor.getParameterInfo(); 
 		Object[] invokeParams = new Object[methodParams.length];
 
 		String path = null;
@@ -315,7 +309,7 @@ public final class DispatcherServlet extends HttpServlet
 		
 		for (int i = 0; i < methodParams.length; i++)
 		{
-			ParameterInfo pinfo = methodParams[i];
+			ParameterDescriptor pinfo = methodParams[i];
 			switch (pinfo.getSourceType())
 			{
 				case PATH:
@@ -358,6 +352,34 @@ public final class DispatcherServlet extends HttpServlet
 					invokeParams[i] = c;
 					break;
 				}
+				case PARAMETER_MAP:
+				{
+					if (Map.class.isAssignableFrom(pinfo.getType()))
+					{
+						Map<String, Object> map = new java.util.HashMap<String, Object>();
+						for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
+						{
+							String[] vals = paramEntry.getValue();
+							map.put(paramEntry.getKey(), vals.length == 1 ? vals[0] : Arrays.copyOf(vals, vals.length));
+						}
+						invokeParams[i] = map;
+					}
+					else if (AbstractChainedHashMap.class.isAssignableFrom(pinfo.getType()))
+					{
+						AbstractChainedHashMap<String, Object> map = new HashMap<String, Object>();
+						for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
+						{
+							String[] vals = paramEntry.getValue();
+							map.put(paramEntry.getKey(), vals.length == 1 ? vals[0] : Arrays.copyOf(vals, vals.length));
+						}
+						invokeParams[i] = map;
+					}
+					else
+					{
+						throw new SimpleFrameworkException("Parameter " + i + " is not a type that can store a key-value structure.");
+					}
+					break;
+				}
 				case PARAMETER:
 				{
 					String parameterName = pinfo.getName();
@@ -388,10 +410,10 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				case ATTRIBUTE:
 				{
-					MethodDescriptor attribDescriptor = entry.getAttributeConstructor(pinfo.getName());
+					ControllerMethodDescriptor attribDescriptor = entry.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = invokeControllerMethod(entry, requestMethod, request, response, attribDescriptor, instance, multiformPartMap);
+						Object attrib = invokeFrameworkMethod(entry, requestMethod, request, response, attribDescriptor, instance, multiformPartMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -424,10 +446,10 @@ public final class DispatcherServlet extends HttpServlet
 				}
 				case MODEL:
 				{
-					MethodDescriptor modelDescriptor = entry.getModelConstructor(pinfo.getName());
+					ControllerMethodDescriptor modelDescriptor = entry.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = invokeControllerMethod(entry, requestMethod, request, response, modelDescriptor, instance, multiformPartMap);
+						Object model = invokeFrameworkMethod(entry, requestMethod, request, response, modelDescriptor, instance, multiformPartMap);
 						FrameworkUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
@@ -512,7 +534,7 @@ public final class DispatcherServlet extends HttpServlet
 	 * This servlet sends a 404 back if this happens.
 	 * @throws SimpleFrameworkException if a huge error occurred.
 	 */
-	private ControllerEntry getControllerUsingPath(String path)
+	private ControllerDescriptor getControllerUsingPath(String path)
 	{
 		if (controllerCache.containsKey(path))
 			return controllerCache.get(path);
@@ -523,7 +545,7 @@ public final class DispatcherServlet extends HttpServlet
 			if (controllerCache.containsKey(path))
 				return controllerCache.get(path);
 			
-			ControllerEntry out = instantiateController(path);
+			ControllerDescriptor out = instantiateController(path);
 	
 			if (out == null)
 				return null;
@@ -535,7 +557,7 @@ public final class DispatcherServlet extends HttpServlet
 	}
 
 	// Instantiates a controller via root resolver.
-	private ControllerEntry instantiateController(String path)
+	private ControllerDescriptor instantiateController(String path)
 	{
 		String className = getClassNameForController(path);
 		
@@ -550,54 +572,12 @@ public final class DispatcherServlet extends HttpServlet
 			//throw new BRFrameworkException("Class in controller declaration could not be found: "+className);
 		}
 		
-		ControllerEntry out = null;
+		ControllerDescriptor out = null;
 		
 		try {
-			out = new ControllerEntry(controllerClass);
+			out = new ControllerDescriptor(controllerClass);
 		} catch (Exception e) {
 			throw new SimpleFrameworkException("Class in controller declaration could not be instantiated: "+className, e);
-		}
-		
-		int lastIndex = 0;
-		String[] filterClasses = null;
-		do {
-			lastIndex = className.lastIndexOf(".");
-			if (lastIndex >= 0)
-			{
-				className = className.substring(0, lastIndex);
-				filterClasses = filterEntries.get(className);
-			}
-		} while (lastIndex >= 0 && filterClasses == null);
-		
-		if (filterClasses != null) for (String fc : filterClasses)
-		{
-			Filter filter = null;
-			if ((filter = filterCache.get(fc)) == null)
-				filter = instantiateFilter(fc);
-			out.addFilter(filter);
-		}
-		
-		return out;
-	}
-
-	// Creates a filter by its entry.
-	private Filter instantiateFilter(String className)
-	{			
-		Class<?> filterClass = null;
-		try {
-			filterClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			throw new SimpleFrameworkException("Class in filter declaration could not be found: "+className);
-		}
-		
-		Filter out = null;
-		
-		try {
-			out = (Filter)FrameworkUtil.getBean(filterClass);
-		} catch (ClassCastException e) {
-			throw new SimpleFrameworkException("Class in filter declaration is not an instance of BRFilter: "+className);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in filter declaration could not be instantiated: "+className);
 		}
 		
 		return out;

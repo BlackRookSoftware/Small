@@ -10,8 +10,10 @@ import java.lang.annotation.Target;
  * <p>
  * Designates that the return value is the name of a view. If not String, the returned object's {@link String#valueOf(Object)} return value is used.
  * <p>
- * If the view starts with <code>"redirect:"</code>, then a redirect request is sent to the browser.
+ * If the view starts with "<code>redirect:</code>", then a redirect request is sent to the browser (<code>Location</code> header).
  * @author Matthew Tropiano
+ * @see Attachment
+ * @see Content
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
