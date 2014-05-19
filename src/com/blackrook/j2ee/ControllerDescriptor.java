@@ -109,13 +109,15 @@ class ControllerDescriptor implements ComponentDescriptor
 
 		String packageName = clazz.getPackage().getName();
 		do {
+			try{Class.forName(packageName);}catch(Throwable t){}
 			Package p = Package.getPackage(packageName);
-			if (p == null)
-				break;
-			if (p.isAnnotationPresent(FilterChain.class))
+			if (p != null)
 			{
-				FilterChain fc = clazz.getAnnotation(FilterChain.class);
-				packageFilters = Common.joinArrays(fc.value(), packageFilters);
+				if (p.isAnnotationPresent(FilterChain.class))
+				{
+					FilterChain fc = p.getAnnotation(FilterChain.class);
+					packageFilters = Common.joinArrays(fc.value(), packageFilters);
+				}
 			}
 		} while (packageName.lastIndexOf('.') > 0 && (packageName = packageName.substring(0, packageName.lastIndexOf('.'))).length() > 0);
 

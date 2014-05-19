@@ -17,27 +17,29 @@ import java.io.InputStream;
 import java.util.Iterator;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 import com.blackrook.commons.Common;
+import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
+import com.blackrook.j2ee.annotation.Controller;
 import com.blackrook.j2ee.component.QueryResolver;
+import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
 import com.blackrook.lang.xml.XMLStruct;
 import com.blackrook.lang.xml.XMLStructFactory;
-import com.blackrook.sql.SQLConnectionPool;
-import com.blackrook.sql.SQLConnector;
 
 /**
  * The main manager class through which all things are
- * pooled and lent out to servlets that request it. 
+ * pooled and lent out to controllers and other things that request it. 
  * @author Matthew Tropiano
  */
-public final class Toolkit
+public final class Toolkit implements ServletContextListener
 {
-	/** Name for Black Rook Toolkit Application attribute. */
-	public static final String DEFAULT_APPLICATION_NAME = "__BRTOOLKIT__";
 	/** Name for all default pools. */
 	public static final String DEFAULT_POOL_NAME = "default";
 	/** Application settings XML file. */
@@ -51,14 +53,6 @@ public final class Toolkit
 	private static final String XML_CONTROLLERROOT_SUFFIX = "suffix";
 	private static final String XML_CONTROLLERROOT_INDEXCONTROLLERCLASS = "indexclass";
 	
-	private static final String XML_SQL = "connectionpool";
-	private static final String XML_SQL_NAME = "name";
-	private static final String XML_SQL_DRIVER = "driver";
-	private static final String XML_SQL_URL = "url";
-	private static final String XML_SQL_USER = "user";
-	private static final String XML_SQL_PASSWORD = "password";
-	private static final String XML_SQL_CONNECTIONS = "connections";
-
 	/** Singleton toolkit instance. */
 	static Toolkit INSTANCE = null;
 
@@ -67,6 +61,14 @@ public final class Toolkit
 	/** Application context path. */
 	private String realAppPath;
 
+	/** The path to controller. */
+	private HashMap<String, Class<?>> pathCache;
+	/** The controllers that were instantiated. */
+	private HashMap<Class<?>, ControllerDescriptor> controllerCache;
+	/** The filters that were instantiated. */
+	private HashMap<Class<?>, FilterDescriptor> filterCache;
+	/** Map of view resolvers to instantiated view resolvers. */
+	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
 	/** The cache for queries. */
 	private HashMap<String, String> queryCache;
 	/** List of query resolvers. */
@@ -81,38 +83,72 @@ public final class Toolkit
 	/** Controller root index controller. */
 	private String controllerRootIndexClass;
 
-	/** Database connection pool. */
-	private HashMap<String, SQLConnectionPool> connectionPool;
-
 	/**
-	 * Constructs a new Toolkit.
-	 * @param context the servlet context.
+	 * Constructs the toolkit.
 	 */
-	synchronized static Toolkit create(ServletContext context)
+	public Toolkit()
 	{
-		if (INSTANCE != null)
-			return INSTANCE;
-		return INSTANCE = new Toolkit(context);
+		pathCache = new HashMap<String, Class<?>>();
+		controllerCache = new HashMap<Class<?>, ControllerDescriptor>();
+		filterCache = new HashMap<Class<?>, FilterDescriptor>();
+		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
+		queryCache = new CaseInsensitiveHashMap<String>(25);
+		queryResolvers = new List<QueryResolver>(25);
+	}
+	
+	@Override
+	public void contextInitialized(ServletContextEvent sce)
+	{
+		servletContext = sce.getServletContext();
+		realAppPath = servletContext.getRealPath("/");
+		
+		XMLStruct xml = null;
+		InputStream in = null;
+		
+		try {
+			in = getResourceAsStream(MAPPING_XML);
+			if (in == null)
+				throw new SimpleFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML);
+			xml = XMLStructFactory.readXML(in);
+			for (XMLStruct root : xml)
+			{
+				if (root.isName("config")) for (XMLStruct struct : root)
+				{
+					if (struct.isName(XML_QUERY))
+						initializeQueryResolver(struct);
+					else if (struct.isName(XML_CONTROLLERROOT))
+						initializeControllerRoot(struct);
+				}
+			}
+		} catch (Exception e) {
+			throw new SimpleFrameworkException(e);
+		} finally {
+			Common.close(in);
+		}
+		initVisibleControllers(ClassLoader.getSystemClassLoader());
+		initVisibleControllers(Thread.currentThread().getContextClassLoader());
+		INSTANCE = this;
 	}
 
-	public String getControllerRootPackage()
+	@Override
+	public void contextDestroyed(ServletContextEvent sce)
 	{
-		return controllerRootPackage;
+		// Do nothing.
 	}
 
-	public String getControllerRootPrefix()
+	private void initVisibleControllers(ClassLoader loader)
 	{
-		return controllerRootPrefix;
-	}
-
-	public String getControllerRootSuffix()
-	{
-		return controllerRootSuffix;
-	}
-
-	public String getControllerRootIndexClass()
-	{
-		return controllerRootIndexClass;
+		for (String className : Reflect.getClasses(controllerRootPackage, loader))
+		{
+			Class<?> controllerClass = null;
+			try {
+				controllerClass = Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				throw new SimpleFrameworkSetupException("Could not load class "+className+" from classpath.");
+			}
+			if (controllerClass.isAnnotationPresent(Controller.class))
+				controllerCache.put(controllerClass, instantiateController(controllerClass));
+		}
 	}
 
 	/**
@@ -180,20 +216,6 @@ public final class Toolkit
 	}
 
 	/**
-	 * Attempts to get a connection pool by a certain name.
-	 * @param name the name of the connection pool.
-	 * @return a valid connection pool.
-	 * @throws SimpleFrameworkException if the pool could not be found.
-	 */
-	SQLConnectionPool getSQLPool(String name)
-	{
-		SQLConnectionPool pool = connectionPool.get(name);
-		if (pool == null)
-			throw new SimpleFrameworkException("Connection pool \""+name+"\" does not exist.");
-		return pool;
-	}
-	
-	/**
 	 * Returns a list of cached query keyword names.
 	 */
 	String[] getCachedQueryKeywordNames()
@@ -202,21 +224,96 @@ public final class Toolkit
 	}
 	
 	/**
-	 * Returns a list of connection pool names.
+	 * Gets the controller to call using the requested path.
+	 * @param uriPath the path to resolve, no query string.
+	 * @return a controller, or null if no controller by that name. 
+	 * This servlet sends a 404 back if this happens.
+	 * @throws SimpleFrameworkException if a huge error occurred.
 	 */
-	String[] getConnectionPoolNames()
+	ControllerDescriptor getControllerUsingPath(String path)
 	{
-		return getKeys(connectionPool);
+		Class<?> controllerClass = null;
+		
+		if (pathCache.containsKey(path))
+			controllerClass = pathCache.get(path);
+		else synchronized (pathCache)
+		{
+			// in case a thread already completed it.
+			if (pathCache.containsKey(path))
+				controllerClass = pathCache.get(path);
+			else
+			{
+				String className = getClassNameForController(path);
+				try {
+					controllerClass = Class.forName(className);
+				} catch (ClassNotFoundException e) {
+					return null;
+				}
+			}
+		}
+		
+		if (controllerClass == null)
+			return null;
+		
+		if (controllerCache.containsKey(controllerClass))
+			return controllerCache.get(controllerClass);
+		else synchronized (controllerCache)
+		{
+			// in case a thread already completed it.
+			if (controllerCache.containsKey(controllerClass))
+				return controllerCache.get(controllerClass);
+			else
+			{
+				ControllerDescriptor out = instantiateController(controllerClass);
+				// add to cache and return.
+				controllerCache.put(controllerClass, out);
+				return out;
+			}
+		}
+		
 	}
-	
+
 	/**
-	 * Returns a database connection pool by key name.
-	 * @param key the name of the connection pool.
-	 * @return the connection pool connected to the key or null if none are attached to that name.
+	 * Gets the filter to call.
+	 * @throws SimpleFrameworkException if a huge error occurred.
 	 */
-	SQLConnectionPool getConnectionPool(String key)
+	FilterDescriptor getFilter(Class<?> clazz)
 	{
-		return connectionPool.get(key);
+		if (filterCache.containsKey(clazz))
+			return filterCache.get(clazz);
+		else synchronized (filterCache)
+		{
+			// in case a thread already completed it.
+			if (filterCache.containsKey(clazz))
+				return filterCache.get(clazz);
+			
+			FilterDescriptor out = instantiateFilter(clazz);
+			// add to cache and return.
+			filterCache.put(clazz, out);
+			return out;
+		}
+	}
+
+	/**
+	 * Returns the instance of view resolver to use for resolving views (duh).
+	 */
+	ViewResolver getViewResolver(Class<? extends ViewResolver> vclass)
+	{
+		if (!viewResolverMap.containsKey(vclass))
+		{
+			synchronized (viewResolverMap)
+			{
+				if (viewResolverMap.containsKey(vclass))
+					return viewResolverMap.get(vclass);
+				else
+				{
+					ViewResolver resolver = Reflect.create(vclass);
+					viewResolverMap.put(vclass, resolver);
+					return resolver;
+				}
+			}
+		}
+		return viewResolverMap.get(vclass);
 	}
 
 	// gets String keys from a map.
@@ -233,93 +330,6 @@ public final class Toolkit
 		return out;
 	}
 	
-	/**
-	 * Constructs a new root toolkit used by all servlets and filters.
-	 * @param context the servlet context to use.
-	 */
-	private Toolkit(ServletContext context)
-	{
-		servletContext = context;
-		queryCache = new CaseInsensitiveHashMap<String>(25);
-		queryResolvers = new List<QueryResolver>(25);
-		connectionPool = new CaseInsensitiveHashMap<SQLConnectionPool>();
-		
-		realAppPath = context.getRealPath("/");
-		
-		XMLStruct xml = null;
-		InputStream in = null;
-		
-		try {
-			in = getResourceAsStream(MAPPING_XML);
-			if (in == null)
-				throw new SimpleFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML);
-			xml = XMLStructFactory.readXML(in);
-			for (XMLStruct root : xml)
-			{
-				if (root.isName("config")) for (XMLStruct struct : root)
-				{
-					if (struct.isName(XML_SQL))
-						initializeSQL(struct);
-					else if (struct.isName(XML_QUERY))
-						initializeQueryResolver(struct);
-					else if (struct.isName(XML_CONTROLLERROOT))
-						initializeControllerRoot(struct);
-/*					else if (struct.isName(XML_FILTERPATH))
-						initializeFilter(struct);
-*/				}
-			}
-		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
-		} finally {
-			Common.close(in);
-		}
-	}
-
-	/**
-	 * Initializes an SQL connection pool.
-	 */
-	private void initializeSQL(XMLStruct struct)
-	{
-		SQLConnectionPool pool = null;
-		SQLConnector dbu = null;
-
-		String name = struct.getAttribute(XML_SQL_NAME, "default");
-
-		String driver = struct.getAttribute(XML_SQL_DRIVER);
-		if (driver.trim().length() == 0)
-			throw new SimpleFrameworkException("Missing driver for SQL server pool.");
-
-		String url = struct.getAttribute(XML_SQL_URL);
-		if (url.trim().length() == 0)
-			throw new SimpleFrameworkException("Missing URL for SQL server pool.");
-
-		String user = struct.getAttribute(XML_SQL_USER);
-		if (user != null) 
-			user = user.trim();
-		
-		String password = struct.getAttribute(XML_SQL_PASSWORD, "");
-
-		try {
-			dbu = new SQLConnector(driver, url);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
-		}
-
-		int conn = struct.getAttributeInt(XML_SQL_CONNECTIONS, 10);
-
-		try {
-			if (user != null)
-				pool = new SQLConnectionPool(dbu, conn, user, password);
-			else
-				pool = new SQLConnectionPool(dbu, conn);
-				
-		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
-		}
-		
-		connectionPool.put(name, pool);
-	}
-
 	/**
 	 * Initializes a query resolver.
 	 */
@@ -366,5 +376,59 @@ public final class Toolkit
 		controllerRootPackage = pkg;
 	}
 
+	// Gets the classname of a path.
+	private String getClassNameForController(String path)
+	{
+		String pkg = controllerRootPackage + ".";
+		String cls = "";
+		
+		if (Common.isEmpty(path))
+		{
+			if (controllerRootIndexClass == null)
+				return null;
+			cls = controllerRootIndexClass;
+			return cls;
+		}
+		else
+		{
+			String[] dirs = path.substring(1).split("[/]+");
+			if (dirs.length > 1)
+			{
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < dirs.length - 1; i++)
+				{
+					sb.append(dirs[i]);
+					sb.append('.');
+				}
+				pkg += sb.toString();
+	
+			}
+	
+			cls = dirs[dirs.length - 1];
+			cls = pkg + controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
+			
+			// if class is index folder without using root URL, do not permit use.
+			if (cls.equals(controllerRootIndexClass))
+				return null;
+	
+			return cls;
+		}
+	}
+
+	// Instantiates a controller via root resolver.
+	private ControllerDescriptor instantiateController(Class<?> clazz)
+	{
+		ControllerDescriptor out = null;
+		out = new ControllerDescriptor(clazz);
+		return out;
+	}
+	
+	// Instantiates a filter via root resolver.
+	private FilterDescriptor instantiateFilter(Class<?> clazz)
+	{
+		FilterDescriptor out = null;
+		out = new FilterDescriptor(clazz);
+		return out;
+	}
 
 }

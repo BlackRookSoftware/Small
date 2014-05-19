@@ -10,7 +10,10 @@ import com.blackrook.j2ee.component.QueryResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 
 /**
- * Default resolver for querie. 
+ * Default resolver for queries.
+ * <p>This resolver hints that all queries should be cached, and the keyword resolves to:
+ * <p><code>"/WEB-INF/sql/" + keyword + ".sql"</code>
+ * <p>on the application path.
  * @author Matthew Tropiano
  */
 public class DefaultQueryResolver implements QueryResolver

@@ -3,29 +3,53 @@ package com.blackrook.j2ee.component;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.blackrook.j2ee.SQLProvider;
-import com.blackrook.j2ee.component.DAOTransaction.Level;
+import com.blackrook.j2ee.DefaultQueryResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
-import com.blackrook.sql.SQLConnectionPool;
+import com.blackrook.j2ee.resources.SQLDataSource;
 import com.blackrook.sql.SQLResult;
+import com.blackrook.sql.SQLTransaction;
+import com.blackrook.sql.SQLTransaction.Level;
 import com.blackrook.sql.SQLUtil;
 
 /**
- * Data access object for submitting database queries.
+ * Data Access Object for submitting SQL-driven database queries.
  * @author Matthew Tropiano
  */
-public abstract class DAO extends SQLProvider
+public abstract class SQLDAO
 {
-	/** SQL Pool Name. */
-	private SQLConnectionPool connectionPool;
+	/** SQL Datasource. */
+	private SQLDataSource dataSource;
+	/** Query resolver class. */
+	private QueryResolver queryResolver;
 
 	/**
 	 * Base constructor.
+	 * @param dataSource the data source to use.
 	 */
-	protected DAO(SQLConnectionPool connectionPool)
+	protected SQLDAO(SQLDataSource dataSource)
 	{
-		super();
-		this.connectionPool = connectionPool;
+		this(dataSource, new DefaultQueryResolver());
+	}
+
+	/**
+	 * Base constructor.
+	 * @param dataSource the data source to use.
+	 * @param queryResolver the query resolver to use for query-by-keyword lookups.
+	 */
+	protected SQLDAO(SQLDataSource dataSource, QueryResolver queryResolver)
+	{
+		this.dataSource = dataSource;
+		this.queryResolver = queryResolver;
+	}
+
+	/**
+	 * Gets a query by keyword, using the current {@link QueryResolver} assigned
+	 * to this class.
+	 * @return the associated query or null if not found. 
+	 */
+	protected String getQueryByName(String keyword)
+	{
+		return queryResolver.resolveQuery(keyword);
 	}
 
 	/**
@@ -36,16 +60,13 @@ public abstract class DAO extends SQLProvider
 	 * @return a {@link SQLTransaction} object to handle a contiguous transaction.
 	 * @throws SimpleFrameworkException if the transaction could not be created.
 	 */
-	protected final DAOTransaction startTransaction(Level transactionLevel)
+	protected final SQLTransaction startTransaction(Level transactionLevel)
 	{
-		Connection connection = null;
 		try {
-			connection = connectionPool.getAvailableConnection();
+			return dataSource.startTransaction(transactionLevel);
 		} catch (InterruptedException e) {
 			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		}
-		
-		return new DAOTransaction(connection, transactionLevel);
 	}
 	
 	/**
@@ -61,7 +82,7 @@ public abstract class DAO extends SQLProvider
 		Connection conn = null;
 		SQLResult result = null;		
 		try {
-			conn = connectionPool.getAvailableConnection();
+			conn = dataSource.getAvailableConnection();
 			result = SQLUtil.doQuery(conn, query, parameters);
 		} catch (SQLException e) {
 			throw new SimpleFrameworkException(e);
@@ -164,7 +185,7 @@ public abstract class DAO extends SQLProvider
 		Connection conn = null;
 		T[] result = null;		
 		try {
-			conn = connectionPool.getAvailableConnection();
+			conn = dataSource.getAvailableConnection();
 			result = SQLUtil.doQuery(type, conn, query, parameters);
 		} catch (SQLException e) {
 			throw new SimpleFrameworkException(e);
@@ -189,7 +210,7 @@ public abstract class DAO extends SQLProvider
 		Connection conn = null;
 		SQLResult result = null;
 		try {
-			conn = connectionPool.getAvailableConnection();
+			conn = dataSource.getAvailableConnection();
 			result = SQLUtil.doQueryUpdate(conn, query, parameters);
 		} catch (SQLException e) {
 			throw new SimpleFrameworkException(e);

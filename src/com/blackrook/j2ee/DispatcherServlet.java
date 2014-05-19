@@ -20,14 +20,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import com.blackrook.commons.AbstractChainedHashMap;
-import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.MethodDescriptor.ParameterDescriptor;
-import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.enums.ScopeType;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
@@ -52,21 +50,6 @@ public final class DispatcherServlet extends HttpServlet
 	private static final long serialVersionUID = -5986230302849170240L;
 	
 	private static final String PREFIX_REDIRECT = "redirect:";
-	
-	/** The controllers that were instantiated. */
-	private HashMap<String, ControllerDescriptor> controllerCache;
-	/** The filters that were instantiated. */
-	private HashMap<Class<?>, FilterDescriptor> filterCache;
-	/** Map of view resolvers to instantiated view resolvers. */
-	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
-
-	// Default constructor.
-	public DispatcherServlet()
-	{
-		controllerCache = new HashMap<String, ControllerDescriptor>();
-		filterCache = new HashMap<Class<?>, FilterDescriptor>();
-		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
-	}
 	
 	@Override
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -144,7 +127,7 @@ public final class DispatcherServlet extends HttpServlet
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = getPath(request);
-		ControllerDescriptor entry = getControllerUsingPath(path);
+		ControllerDescriptor entry = Toolkit.INSTANCE.getControllerUsingPath(path);
 		if (entry == null)
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
@@ -162,14 +145,14 @@ public final class DispatcherServlet extends HttpServlet
 			{
 				for (Class<?> filterClass : entry.getFilterChain())
 				{
-					FilterDescriptor fd = getFilter(filterClass);
+					FilterDescriptor fd = Toolkit.INSTANCE.getFilter(filterClass);
 					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
 						return;
 				}
 
 				for (Class<?> filterClass : cmd.getFilterChain())
 				{
-					FilterDescriptor fd = getFilter(filterClass);
+					FilterDescriptor fd = Toolkit.INSTANCE.getFilter(filterClass);
 					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
 						return;
 				}
@@ -177,7 +160,7 @@ public final class DispatcherServlet extends HttpServlet
 				handleControllerMethod(entry, requestMethod, request, response, cmd, entry.getInstance(), cookieMap, multiformPartMap);
 			}
 			else
-				FrameworkUtil.sendCode(response, 405, "Entry point does not support this method.");
+				FrameworkUtil.sendCode(response, 404, "Not found.");
 		}
 	}
 
@@ -233,7 +216,7 @@ public final class DispatcherServlet extends HttpServlet
 				if (viewKey.startsWith(PREFIX_REDIRECT))
 					FrameworkUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
 				else
-					FrameworkUtil.sendToView(request, response, getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
+					FrameworkUtil.sendToView(request, response, Toolkit.INSTANCE.getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
 				break;
 			}
 			case CONTENT:
@@ -428,7 +411,7 @@ public final class DispatcherServlet extends HttpServlet
 				{
 					String parameterName = pinfo.getName();
 					Object value = null;
-					if (multiformPartMap != null)
+					if (multiformPartMap != null && multiformPartMap.containsKey(parameterName))
 					{
 						if (Reflect.isArray(pinfo.getType()))
 						{
@@ -571,152 +554,6 @@ public final class DispatcherServlet extends HttpServlet
 			return requestURI.substring(slashIndex + 1); 
 	}
 	
-	/**
-	 * Gets the controller to call using the requested path.
-	 * @param uriPath the path to resolve, no query string.
-	 * @return a controller, or null if no controller by that name. 
-	 * This servlet sends a 404 back if this happens.
-	 * @throws SimpleFrameworkException if a huge error occurred.
-	 */
-	private ControllerDescriptor getControllerUsingPath(String path)
-	{
-		if (controllerCache.containsKey(path))
-			return controllerCache.get(path);
-		
-		synchronized (controllerCache)
-		{
-			// in case a thread already completed it.
-			if (controllerCache.containsKey(path))
-				return controllerCache.get(path);
-			
-			ControllerDescriptor out = instantiateController(path);
-	
-			if (out == null)
-				return null;
-			
-			// add to cache and return.
-			controllerCache.put(path, out);
-			return out;
-		}
-	}
-
-	/**
-	 * Gets the filter to call.
-	 * @throws SimpleFrameworkException if a huge error occurred.
-	 */
-	private FilterDescriptor getFilter(Class<?> clazz)
-	{
-		if (filterCache.containsKey(clazz))
-			return filterCache.get(clazz);
-		
-		synchronized (filterCache)
-		{
-			// in case a thread already completed it.
-			if (filterCache.containsKey(clazz))
-				return filterCache.get(clazz);
-			
-			FilterDescriptor out = instantiateFilter(clazz);
-			// add to cache and return.
-			filterCache.put(clazz, out);
-			return out;
-		}
-	}
-
-	// Instantiates a controller via root resolver.
-	private ControllerDescriptor instantiateController(String path)
-	{
-		String className = getClassNameForController(path);
-		
-		if (className == null)
-			return null;
-		
-		Class<?> controllerClass = null;
-		try {
-			controllerClass = Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			return null;
-		}
-		
-		ControllerDescriptor out = null;
-		
-		try {
-			out = new ControllerDescriptor(controllerClass);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Controller could not be instantiated: "+className, e);
-		}
-		
-		return out;
-	}
-
-	// Instantiates a filter via root resolver.
-	private FilterDescriptor instantiateFilter(Class<?> clazz)
-	{
-		FilterDescriptor out = null;
-		out = new FilterDescriptor(clazz);
-		return out;
-	}
-
-	// Gets the classname of a path.
-	private String getClassNameForController(String path)
-	{
-		String pkg = Toolkit.INSTANCE.getControllerRootPackage() + ".";
-		String cls = "";
-		
-		if (Common.isEmpty(path))
-		{
-			if (Toolkit.INSTANCE.getControllerRootIndexClass() == null)
-				return null;
-			cls = Toolkit.INSTANCE.getControllerRootIndexClass();
-			return cls;
-		}
-		else
-		{
-			String[] dirs = path.substring(1).split("[/]+");
-			if (dirs.length > 1)
-			{
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < dirs.length - 1; i++)
-				{
-					sb.append(dirs[i]);
-					sb.append('.');
-				}
-				pkg += sb.toString();
-	
-			}
-	
-			cls = dirs[dirs.length - 1];
-			cls = pkg + Toolkit.INSTANCE.getControllerRootPrefix() + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + Toolkit.INSTANCE.getControllerRootSuffix();
-			
-			// if class is index folder without using root URL, do not permit use.
-			if (cls.equals(Toolkit.INSTANCE.getControllerRootIndexClass()))
-				return null;
-	
-			return cls;
-		}
-	}
-	
-	/**
-	 * Returns the instance of view resolver to use for resolving views (duh).
-	 */
-	private ViewResolver getViewResolver(Class<? extends ViewResolver> vclass)
-	{
-		if (!viewResolverMap.containsKey(vclass))
-		{
-			synchronized (viewResolverMap)
-			{
-				if (viewResolverMap.containsKey(vclass))
-					return viewResolverMap.get(vclass);
-				else
-				{
-					ViewResolver resolver = Reflect.create(vclass);
-					viewResolverMap.put(vclass, resolver);
-					return resolver;
-				}
-			}
-		}
-		return viewResolverMap.get(vclass);
-	}
-
 	/**
 	 * Get content data.
 	 */

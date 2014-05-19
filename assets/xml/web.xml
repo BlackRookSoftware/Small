@@ -1,7 +1,7 @@
 <!-- Black Rook J2EE Framework -->
 
 <listener>
-	<listener-class>com.blackrook.j2ee.Initializer</listener-class>
+	<listener-class>com.blackrook.j2ee.Toolkit</listener-class>
 </listener>
 
 <servlet>

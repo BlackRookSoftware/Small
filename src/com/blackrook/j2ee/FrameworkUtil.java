@@ -64,85 +64,6 @@ public final class FrameworkUtil implements EntityTables
 	}
 	
 	/**
-	 * Encodes a string so that it can be input safely into a URL string.
-	 */
-	public static String urlEncode(String inString)
-	{
-		StringBuffer sb = new StringBuffer();
-		char[] inChars = inString.toCharArray();
-		int i = 0;
-		while (i < inChars.length)
-		{
-			char c = inChars[i];
-			if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)))
-				sb.append(String.format("%%%02x", (short)c));
-			else
-				sb.append(c);
-			i++;
-		}
-		return sb.toString();
-	}
-	
-	/**
-	 * Decodes a URL-encoded string.
-	 */
-	public static String urlDecode(String inString)
-	{
-		StringBuffer sb = new StringBuffer();
-		char[] inChars = inString.toCharArray();
-		char[] chars = new char[2];
-		int x = 0;
-		
-		final int STATE_START = 0;
-		final int STATE_DECODE = 1;
-		int state = STATE_START;
-		
-		int i = 0;
-		while (i < inChars.length)
-		{
-			char c = inChars[i];
-			
-			switch (state)
-			{
-				case STATE_START:
-					if (c == '%')
-					{
-						x = 0;
-						state = STATE_DECODE;
-					}
-					else
-						sb.append(c);
-					break;
-				case STATE_DECODE:
-					chars[x++] = c;
-					if (x == 2)
-					{
-						int v = 0;
-						try {
-							v = Integer.parseInt(new String(chars), 16);
-							sb.append((char)(v & 0x0ff));
-					} catch (NumberFormatException e) {
-							sb.append('%').append(chars[0]).append(chars[1]);
-						}
-						state = STATE_START;
-					}
-					break;
-			}
-			
-			i++;
-		}
-		
-		if (state == STATE_DECODE)
-		{
-			sb.append('%');
-			for (int n = 0; n < x; n++)
-				sb.append(chars[n]);
-		}
-		
-		return sb.toString();
-	}
-	
-	/**
 	 * Converts a String to an HTML-safe string.
 	 * @param input the input string to convert.
 	 * @return the converted string.
@@ -444,7 +365,7 @@ public final class FrameworkUtil implements EntityTables
 	}
 
 	/**
-	 * Gets and auto-casts an object bean stored at the program level,
+	 * Gets and auto-casts a singleton object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
 	 * The bean is created and stored if it doesn't exist.
 	 * The name used is the fully-qualified class name.
@@ -458,7 +379,7 @@ public final class FrameworkUtil implements EntityTables
 	}
 
 	/**
-	 * Gets and auto-casts an object bean stored at the program level,
+	 * Gets and auto-casts a singleton object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
 	 * The bean is created and stored if it doesn't exist.
 	 * @param clazz the class type of the object that should be returned.
@@ -472,7 +393,7 @@ public final class FrameworkUtil implements EntityTables
 	}
 
 	/**
-	 * Gets and auto-casts an object bean stored at the program level,
+	 * Gets and auto-casts a singleton object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
@@ -739,7 +660,7 @@ public final class FrameworkUtil implements EntityTables
 		Date out = null;
 		try {
 			out = formatter.parse(getParameterString(request, paramName));
-	} catch (ParseException e) {
+		} catch (ParseException e) {
 			return null;
 		}
 		
@@ -811,7 +732,7 @@ public final class FrameworkUtil implements EntityTables
 					for (int i = 0; i < values.length; i++)
 					{
 						if (arrayType != String.class)
-							Array.set(newArray, i, getConvertedModelObject(fieldName, getParameterString(request, fieldName), arrayType));
+							Array.set(newArray, i, Reflect.createForType(fieldName, getParameterString(request, fieldName), arrayType));
 						else
 							Array.set(newArray, i, getParameterString(request, fieldName));
 					}
@@ -820,7 +741,7 @@ public final class FrameworkUtil implements EntityTables
 				else
 				{
 					if (setterType != String.class)
-						Reflect.setField(target, fieldName, getConvertedModelObject(fieldName, getParameterString(request, fieldName), setterType));
+						Reflect.setField(target, fieldName, Reflect.createForType(fieldName, getParameterString(request, fieldName), setterType));
 					else
 						Reflect.setField(target, fieldName, getParameterString(request, fieldName));
 				}
@@ -865,7 +786,7 @@ public final class FrameworkUtil implements EntityTables
 					for (int i = 0; i < values.length; i++)
 					{
 						if (arrayType != String.class)
-							Array.set(newArray, i, getConvertedModelObject(fieldName, values[i], arrayType));
+							Array.set(newArray, i, Reflect.createForType(fieldName, values[i], arrayType));
 						else
 							Array.set(newArray, i, getParameterString(request, fieldName));
 					}
@@ -874,7 +795,7 @@ public final class FrameworkUtil implements EntityTables
 				else
 				{
 					if (setterType != String.class)
-						Reflect.invokeBlind(signature.getMethod(), target, getConvertedModelObject(fieldName, getParameterString(request, fieldName), setterType));
+						Reflect.invokeBlind(signature.getMethod(), target, Reflect.createForType(fieldName, getParameterString(request, fieldName), setterType));
 					else
 						Reflect.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName));
 				}
@@ -898,125 +819,6 @@ public final class FrameworkUtil implements EntityTables
 		}
 		
 		return target;
-	}
-	
-	// Converts values.
-	private static Object getConvertedModelObject(String name, Object source, Class<?> type)
-	{
-		if (type == String.class)
-			return source != null ? String.valueOf(source) : null;
-		
-		if (source instanceof Boolean)
-		{
-			boolean b = (Boolean)source;
-			if (type == Boolean.TYPE)
-				return b;
-			else if (type == Boolean.class)
-				return b;
-			else if (type == Byte.TYPE)
-				return (byte)(b ? 1 : 0);
-			else if (type == Byte.class)
-				return (byte)(b ? 1 : 0);
-			else if (type == Short.TYPE)
-				return (short)(b ? 1 : 0);
-			else if (type == Short.class)
-				return (short)(b ? 1 : 0);
-			else if (type == Integer.TYPE)
-				return (b ? 1 : 0);
-			else if (type == Integer.class)
-				return (b ? 1 : 0);
-			else if (type == Float.TYPE)
-				return (b ? 1f : 0f);
-			else if (type == Float.class)
-				return (b ? 1f : 0f);
-			else if (type == Long.TYPE)
-				return (b ? 1L : 0L);
-			else if (type == Long.class)
-				return (b ? 1L : 0L);
-			else if (type == Double.TYPE)
-				return (b ? 1.0 : 0.0);
-			else if (type == Double.class)
-				return (b ? 1.0 : 0.0);
-			else if (type == String.class)
-				return String.valueOf(b);
-			else
-				throw new SimpleFrameworkException("Member "+name+" is boolean typed; target is not boolean typed.");
-		}
-		else if (source instanceof Number)
-		{
-			Number n = (Number)source;
-			
-			if (type == Boolean.TYPE)
-				return (n.doubleValue() != 0.0);
-			else if (type == Boolean.class)
-				return (!Double.isNaN(n.doubleValue()) && n.doubleValue() != 0.0);
-			else if (type == Byte.TYPE)
-				return n.byteValue();
-			else if (type == Byte.class)
-				return n.byteValue();
-			else if (type == Short.TYPE)
-				return n.shortValue();
-			else if (type == Short.class)
-				return n.shortValue();
-			else if (type == Integer.TYPE)
-				return n.intValue();
-			else if (type == Integer.class)
-				return n.intValue();
-			else if (type == Float.TYPE)
-				return n.floatValue();
-			else if (type == Float.class)
-				return n.floatValue();
-			else if (type == Long.TYPE)
-				return n.longValue();
-			else if (type == Long.class)
-				return n.longValue();
-			else if (type == Double.TYPE)
-				return n.doubleValue();
-			else if (type == Double.class)
-				return n.doubleValue();
-			else if (type == String.class)
-				return String.valueOf(n);
-			else
-				throw new SimpleFrameworkException("Cannot convert attribute "+name+".");
-		}
-		else if (source instanceof String)
-		{
-			String s = (String)source;
-			if (type == Boolean.TYPE)
-				return Common.parseBoolean(s);
-			else if (type == Boolean.class)
-				return Common.parseBoolean(s);
-			else if (type == Byte.TYPE)
-				return Common.parseByte(s);
-			else if (type == Byte.class)
-				return Common.parseByte(s);
-			else if (type == Short.TYPE)
-				return Common.parseShort(s);
-			else if (type == Short.class)
-				return Common.parseShort(s);
-			else if (type == Integer.TYPE)
-				return Common.parseInt(s);
-			else if (type == Integer.class)
-				return Common.parseInt(s);
-			else if (type == Float.TYPE)
-				return Common.parseFloat(s);
-			else if (type == Float.class)
-				return Common.parseFloat(s);
-			else if (type == Long.TYPE)
-				return Common.parseLong(s);
-			else if (type == Long.class)
-				return Common.parseLong(s);
-			else if (type == Double.TYPE)
-				return Common.parseDouble(s);
-			else if (type == Double.class)
-				return Common.parseDouble(s);
-			else if (type == String.class)
-				return s;
-			else
-				throw new SimpleFrameworkException("Cannot convert attribute "+name+".");
-		}
-		
-		throw new SimpleFrameworkException("Cannot convert attribute "+name+".");
 	}
 	
 	/**
