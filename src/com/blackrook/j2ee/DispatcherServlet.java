@@ -340,7 +340,7 @@ public final class DispatcherServlet extends HttpServlet
 			switch (pinfo.getSourceType())
 			{
 				case PATH:
-					path = path != null ? path : getFullPath(request);
+					path = path != null ? path : request.getRequestURI().substring(1);
 					invokeParams[i] = Reflect.createForType("Parameter " + i, path, pinfo.getType());
 					break;
 				case PATH_FILE:
@@ -522,20 +522,6 @@ public final class DispatcherServlet extends HttpServlet
 		int slashIndex = requestURI.lastIndexOf('/');
 		if (slashIndex >= 0)
 			return requestURI.substring(contextPathLen, slashIndex);
-		else
-			return requestURI.substring(contextPathLen); 
-	}
-
-	/**
-	 * Get the full path parsed out of the request URI.
-	 */
-	private String getFullPath(HttpServletRequest request)
-	{
-		String requestURI = request.getRequestURI();
-		int contextPathLen = request.getContextPath().length();
-		int qIndex = requestURI.indexOf('?');
-		if (qIndex >= 0)
-			return requestURI.substring(contextPathLen, qIndex);
 		else
 			return requestURI.substring(contextPathLen); 
 	}

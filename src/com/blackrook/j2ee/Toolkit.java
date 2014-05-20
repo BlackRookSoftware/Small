@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -22,16 +21,11 @@ import javax.servlet.ServletContextListener;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
-import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.annotation.Controller;
-import com.blackrook.j2ee.component.QueryResolver;
 import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
-import com.blackrook.lang.xml.XMLStruct;
-import com.blackrook.lang.xml.XMLStructFactory;
 
 /**
  * The main manager class through which all things are
@@ -40,18 +34,7 @@ import com.blackrook.lang.xml.XMLStructFactory;
  */
 public final class Toolkit implements ServletContextListener
 {
-	/** Name for all default pools. */
-	public static final String DEFAULT_POOL_NAME = "default";
-	/** Application settings XML file. */
-	public static final String MAPPING_XML = "/WEB-INF/simpleframework-config.xml";
-	
-	private static final String XML_QUERY = "queryresolver";
-	private static final String XML_QUERY_CLASS = "class";
-	private static final String XML_CONTROLLERROOT = "controllerroot";
-	private static final String XML_CONTROLLERROOT_PACKAGE = "package";
-	private static final String XML_CONTROLLERROOT_PREFIX = "prefix";
-	private static final String XML_CONTROLLERROOT_SUFFIX = "suffix";
-	private static final String XML_CONTROLLERROOT_INDEXCONTROLLERCLASS = "indexclass";
+	private static final String INIT_PARAM_CONTROLLER_ROOT = "simpleframework.controller.root";
 	
 	/** Singleton toolkit instance. */
 	static Toolkit INSTANCE = null;
@@ -69,19 +52,9 @@ public final class Toolkit implements ServletContextListener
 	private HashMap<Class<?>, FilterDescriptor> filterCache;
 	/** Map of view resolvers to instantiated view resolvers. */
 	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
-	/** The cache for queries. */
-	private HashMap<String, String> queryCache;
-	/** List of query resolvers. */
-	private List<QueryResolver> queryResolvers;
 
-	/** Controller root package. */
+	/** Controller root. */
 	private String controllerRootPackage;
-	/** Controller root prefix. */
-	private String controllerRootPrefix;
-	/** Controller root suffix. */
-	private String controllerRootSuffix;
-	/** Controller root index controller. */
-	private String controllerRootIndexClass;
 
 	/**
 	 * Constructs the toolkit.
@@ -89,42 +62,21 @@ public final class Toolkit implements ServletContextListener
 	public Toolkit()
 	{
 		pathCache = new HashMap<String, Class<?>>();
-		controllerCache = new HashMap<Class<?>, ControllerDescriptor>();
-		filterCache = new HashMap<Class<?>, FilterDescriptor>();
+		controllerCache = new HashMap<Class<?>, ControllerDescriptor>(10);
+		filterCache = new HashMap<Class<?>, FilterDescriptor>(10);
 		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
-		queryCache = new CaseInsensitiveHashMap<String>(25);
-		queryResolvers = new List<QueryResolver>(25);
 	}
 	
 	@Override
 	public void contextInitialized(ServletContextEvent sce)
 	{
 		servletContext = sce.getServletContext();
+		controllerRootPackage = servletContext.getInitParameter(INIT_PARAM_CONTROLLER_ROOT);
+		
+		if (Common.isEmpty(controllerRootPackage))
+			throw new SimpleFrameworkSetupException("The root package init parameter was not specified.");
+		
 		realAppPath = servletContext.getRealPath("/");
-		
-		XMLStruct xml = null;
-		InputStream in = null;
-		
-		try {
-			in = getResourceAsStream(MAPPING_XML);
-			if (in == null)
-				throw new SimpleFrameworkException("RootManager not initialized! Missing required resource: "+MAPPING_XML);
-			xml = XMLStructFactory.readXML(in);
-			for (XMLStruct root : xml)
-			{
-				if (root.isName("config")) for (XMLStruct struct : root)
-				{
-					if (struct.isName(XML_QUERY))
-						initializeQueryResolver(struct);
-					else if (struct.isName(XML_CONTROLLERROOT))
-						initializeControllerRoot(struct);
-				}
-			}
-		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
-		} finally {
-			Common.close(in);
-		}
 		initVisibleControllers(ClassLoader.getSystemClassLoader());
 		initVisibleControllers(Thread.currentThread().getContextClassLoader());
 		INSTANCE = this;
@@ -136,6 +88,10 @@ public final class Toolkit implements ServletContextListener
 		// Do nothing.
 	}
 
+	/**
+	 * Init visible controllers using a class loader.
+	 * @param loader the {@link ClassLoader} to look in.
+	 */
 	private void initVisibleControllers(ClassLoader loader)
 	{
 		for (String className : Reflect.getClasses(controllerRootPackage, loader))
@@ -147,7 +103,20 @@ public final class Toolkit implements ServletContextListener
 				throw new SimpleFrameworkSetupException("Could not load class "+className+" from classpath.");
 			}
 			if (controllerClass.isAnnotationPresent(Controller.class))
-				controllerCache.put(controllerClass, instantiateController(controllerClass));
+			{
+				Controller controllerAnnotation = controllerClass.getAnnotation(Controller.class);
+
+				// check for double-include. Skip.
+				if (controllerCache.containsKey(controllerClass))
+					continue;
+				
+				controllerCache.put(controllerClass, new ControllerDescriptor(controllerClass));
+				String path = controllerAnnotation.value();
+				if (!pathCache.containsKey(path))
+					pathCache.put(path, controllerClass);
+				else
+					throw new SimpleFrameworkSetupException("Path \""+ path +"\" already assigned to "+controllerClass.getName());
+			}
 		}
 	}
 
@@ -195,35 +164,6 @@ public final class Toolkit implements ServletContextListener
 	}
 
 	/**
-	 * Gets a query by keyword.
-	 * @return the associated query or null if not found. 
-	 */
-	String getQueryByName(String keyword)
-	{
-		String out = queryCache.get(keyword);
-		if  (out == null)
-		{
-			for (QueryResolver resolver : queryResolvers)
-				if ((out = resolver.resolveQuery(keyword)) != null)
-				{
-					if (!resolver.dontCacheQuery(keyword))
-						queryCache.put(keyword, out);
-					break;					
-				}
-		}
-		
-		return out;
-	}
-
-	/**
-	 * Returns a list of cached query keyword names.
-	 */
-	String[] getCachedQueryKeywordNames()
-	{
-		return getKeys(queryCache);
-	}
-	
-	/**
 	 * Gets the controller to call using the requested path.
 	 * @param uriPath the path to resolve, no query string.
 	 * @return a controller, or null if no controller by that name. 
@@ -236,41 +176,14 @@ public final class Toolkit implements ServletContextListener
 		
 		if (pathCache.containsKey(path))
 			controllerClass = pathCache.get(path);
-		else synchronized (pathCache)
-		{
-			// in case a thread already completed it.
-			if (pathCache.containsKey(path))
-				controllerClass = pathCache.get(path);
-			else
-			{
-				String className = getClassNameForController(path);
-				try {
-					controllerClass = Class.forName(className);
-				} catch (ClassNotFoundException e) {
-					return null;
-				}
-			}
-		}
 		
 		if (controllerClass == null)
 			return null;
 		
 		if (controllerCache.containsKey(controllerClass))
 			return controllerCache.get(controllerClass);
-		else synchronized (controllerCache)
-		{
-			// in case a thread already completed it.
-			if (controllerCache.containsKey(controllerClass))
-				return controllerCache.get(controllerClass);
-			else
-			{
-				ControllerDescriptor out = instantiateController(controllerClass);
-				// add to cache and return.
-				controllerCache.put(controllerClass, out);
-				return out;
-			}
-		}
 		
+		return null;
 	}
 
 	/**
@@ -287,7 +200,7 @@ public final class Toolkit implements ServletContextListener
 			if (filterCache.containsKey(clazz))
 				return filterCache.get(clazz);
 			
-			FilterDescriptor out = instantiateFilter(clazz);
+			FilterDescriptor out = new FilterDescriptor(clazz);
 			// add to cache and return.
 			filterCache.put(clazz, out);
 			return out;
@@ -314,121 +227,6 @@ public final class Toolkit implements ServletContextListener
 			}
 		}
 		return viewResolverMap.get(vclass);
-	}
-
-	// gets String keys from a map.
-	private String[] getKeys(HashMap<String, ?> map)
-	{
-		List<String> outList = new List<String>();
-		
-		Iterator<String> it = map.keyIterator();
-		while(it.hasNext())
-			outList.add(it.next());
-		
-		String[] out = new String[outList.size()];
-		outList.toArray(out);
-		return out;
-	}
-	
-	/**
-	 * Initializes a query resolver.
-	 */
-	private void initializeQueryResolver(XMLStruct struct)
-	{
-		String clazz = struct.getAttribute(XML_QUERY_CLASS).trim();
-		if (clazz.length() == 0)
-			throw new SimpleFrameworkException("Missing class in query resolver delaration.");
-		
-		Class<?> clz = null;
-		QueryResolver resolver = null;
-		
-		try {
-			clz = Class.forName(clazz);
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in query resolver could not be found: "+clazz);
-		}
-		
-		try {
-			resolver = (QueryResolver)FrameworkUtil.getBean(clz);
-		} catch (ClassCastException e) {
-			throw new SimpleFrameworkException("Class in query resolver is not an instance of BRQueryResolver: "+clz.getName());
-		} catch (Exception e) {
-			throw new SimpleFrameworkException("Class in query resolver could not be instantiated: "+clz.getName());
-		}
-
-		if (resolver != null)
-			queryResolvers.add(resolver);
-	}
-
-	/**
-	 * Initializes the controller root resolver.
-	 */
-	private void initializeControllerRoot(XMLStruct struct)
-	{
-		String pkg = struct.getAttribute(XML_CONTROLLERROOT_PACKAGE).trim();
-		controllerRootPrefix = struct.getAttribute(XML_CONTROLLERROOT_PREFIX, "").trim();
-		controllerRootSuffix = struct.getAttribute(XML_CONTROLLERROOT_SUFFIX, "Controller").trim();
-		controllerRootIndexClass = struct.getAttribute(XML_CONTROLLERROOT_INDEXCONTROLLERCLASS).trim();
-		
-		if (pkg == null)
-			throw new SimpleFrameworkException("Controller root declaration must specify a root package.");
-		
-		controllerRootPackage = pkg;
-	}
-
-	// Gets the classname of a path.
-	private String getClassNameForController(String path)
-	{
-		String pkg = controllerRootPackage + ".";
-		String cls = "";
-		
-		if (Common.isEmpty(path))
-		{
-			if (controllerRootIndexClass == null)
-				return null;
-			cls = controllerRootIndexClass;
-			return cls;
-		}
-		else
-		{
-			String[] dirs = path.substring(1).split("[/]+");
-			if (dirs.length > 1)
-			{
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < dirs.length - 1; i++)
-				{
-					sb.append(dirs[i]);
-					sb.append('.');
-				}
-				pkg += sb.toString();
-	
-			}
-	
-			cls = dirs[dirs.length - 1];
-			cls = pkg + controllerRootPrefix + Character.toUpperCase(cls.charAt(0)) + cls.substring(1) + controllerRootSuffix;
-			
-			// if class is index folder without using root URL, do not permit use.
-			if (cls.equals(controllerRootIndexClass))
-				return null;
-	
-			return cls;
-		}
-	}
-
-	// Instantiates a controller via root resolver.
-	private ControllerDescriptor instantiateController(Class<?> clazz)
-	{
-		ControllerDescriptor out = null;
-		out = new ControllerDescriptor(clazz);
-		return out;
-	}
-	
-	// Instantiates a filter via root resolver.
-	private FilterDescriptor instantiateFilter(Class<?> clazz)
-	{
-		FilterDescriptor out = null;
-		out = new FilterDescriptor(clazz);
-		return out;
 	}
 
 }

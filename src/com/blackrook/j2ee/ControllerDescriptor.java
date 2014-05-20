@@ -57,23 +57,19 @@ class ControllerDescriptor implements ComponentDescriptor
 		this.attributeMap = new HashMap<String, MethodDescriptor>(4);
 		this.viewResolverClass = controllerAnnotation.viewResolver();
 		
-		String methodPrefix = controllerAnnotation.methodPrefix();
-		
 		for (Method m : clazz.getMethods())
 		{
-			if (isEntryMethod(m, methodPrefix))
+			if (isEntryMethod(m))
 			{
 				ControllerEntry anno = m.getAnnotation(ControllerEntry.class);
-				if (Common.isEmpty(anno.value()))
+				if (Common.isEmpty(anno.method()))
 					continue;
 				
-				String methodName = m.getName();
-				String pagename = Character.toLowerCase(methodName.charAt(methodPrefix.length())) + 
-						methodName.substring(methodPrefix.length() + 1);
+				String pagename = anno.value();
 				
 				ControllerMethodDescriptor md = new ControllerMethodDescriptor(m);
 				
-				for (RequestMethod rm : anno.value())
+				for (RequestMethod rm : anno.method())
 				{
 					if (anno.defaultEntry())
 					{
@@ -132,12 +128,10 @@ class ControllerDescriptor implements ComponentDescriptor
 	}
 	
 	/** Checks if a method is a valid request entry. */
-	private boolean isEntryMethod(Method method, String methodPrefix)
+	private boolean isEntryMethod(Method method)
 	{
 		return
 			(method.getModifiers() & Modifier.PUBLIC) != 0 
-			&& method.getName().startsWith(methodPrefix)
-			&& method.getName().length() > methodPrefix.length()
 			&& method.isAnnotationPresent(ControllerEntry.class)
 			;
 	}

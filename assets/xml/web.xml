@@ -4,6 +4,11 @@
 	<listener-class>com.blackrook.j2ee.Toolkit</listener-class>
 </listener>
 
+<context-param>
+    <param-name>simpleframework.controller.root</param-name>
+    <param-value>com.add.controller.root.here</param-value>
+</context-param>
+
 <servlet>
 	<servlet-name>DispatcherServlet</servlet-name>
 	<servlet-class>com.blackrook.j2ee.DispatcherServlet</servlet-class>

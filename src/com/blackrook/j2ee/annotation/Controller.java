@@ -18,11 +18,10 @@ import com.blackrook.j2ee.component.ViewResolver;
 public @interface Controller
 {
 	/**
-	 * The prefix added to the requested page for the true method to invoke for the request type. 
-	 * Default is "<code>on</code>", if unspecified.
-	 * <p> Example: "<code>data</code>" would call "<code>onData(...)</code>". Case is very important on the method name.
+	 * The "directory" path to use for the controller.
+	 * Default is "/".
 	 */
-	String methodPrefix() default "on";
+	String value() default "";
 	/** 
 	 * The view resolver class to use.
 	 * Default is {@link DefaultViewResolver}. 

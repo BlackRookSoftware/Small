@@ -21,11 +21,13 @@ import com.blackrook.j2ee.enums.RequestMethod;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ControllerEntry
 {
+	/** The page name for the entry point. */
+	String value() default "";
 	/** The request methods that this entry point accepts. */
-	RequestMethod[] value() default { RequestMethod.GET };
+	RequestMethod[] method() default { RequestMethod.GET, RequestMethod.POST };
 	/** 
 	 * If true, this is the DEFAULT entry point, if no matching method is found.
-	 * You may not specify more than one in a controller. 
+	 * You may not specify more than one in a controller. Specified path is ignored.
 	 * <p>False by default. 
 	 */
 	boolean defaultEntry() default false;
