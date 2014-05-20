@@ -1,5 +1,6 @@
 package com.blackrook.j2ee.annotation;
 
+import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

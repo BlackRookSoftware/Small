@@ -23,7 +23,6 @@ import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.annotation.Controller;
-import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
 

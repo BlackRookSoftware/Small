@@ -1,6 +1,5 @@
 package com.blackrook.j2ee;
 
-import com.blackrook.j2ee.component.ViewResolver;
 
 /**
  * Default resolver for views.

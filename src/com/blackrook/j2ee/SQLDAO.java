@@ -1,9 +1,8 @@
-package com.blackrook.j2ee.component;
+package com.blackrook.j2ee;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.blackrook.j2ee.DefaultQueryResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.resources.SQLDataSource;
 import com.blackrook.sql.SQLResult;
@@ -12,7 +11,7 @@ import com.blackrook.sql.SQLTransaction.Level;
 import com.blackrook.sql.SQLUtil;
 
 /**
- * Data Access Object for submitting SQL-driven database queries.
+ * Base Data Access Object for submitting SQL-driven database queries.
  * @author Matthew Tropiano
  */
 public abstract class SQLDAO
@@ -55,7 +54,8 @@ public abstract class SQLDAO
 	/**
 	 * Generates a transaction for multiple queries in one set.
 	 * This transaction performs all of its queries through one connection.
-	 * The connection is held by this transaction until it is finished via {@link SQLTransaction#finish()}.
+	 * The connection is held by this transaction until it is finished via either {@link SQLTransaction#complete()}
+	 * or {@link SQLTransaction#abort()}.
 	 * @param transactionLevel the isolation level of the transaction.
 	 * @return a {@link SQLTransaction} object to handle a contiguous transaction.
 	 * @throws SimpleFrameworkException if the transaction could not be created.

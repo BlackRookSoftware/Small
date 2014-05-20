@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * <p>If on a package, all controllers in the package use this chain.
  * <p>If on a class with {@link Controller}, all entry points in the controller use this chain.
  * <p>If on a method in a class with {@link Controller}, this specific entry point in the controller uses this chain.
- * <p>All filters specified additive to the whole chain, from packages down to controllers, then methods.
+ * <p>All filters specified are additive to the whole chain, from packages down to controllers, then methods.
  * @author Matthew Tropiano
  */
 @Target({ElementType.TYPE, ElementType.PACKAGE, ElementType.METHOD})

@@ -12,7 +12,6 @@ import com.blackrook.j2ee.annotation.Controller;
 import com.blackrook.j2ee.annotation.FilterChain;
 import com.blackrook.j2ee.annotation.Model;
 import com.blackrook.j2ee.annotation.ControllerEntry;
-import com.blackrook.j2ee.component.ViewResolver;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;

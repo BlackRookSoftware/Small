@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.blackrook.j2ee.DefaultViewResolver;
-import com.blackrook.j2ee.component.ViewResolver;
+import com.blackrook.j2ee.ViewResolver;
 
 /**
  * Annotation that is used to signify that this object is a Controller with entry points.
@@ -19,7 +19,7 @@ public @interface Controller
 {
 	/**
 	 * The "directory" path to use for the controller.
-	 * Default is "/".
+	 * Default is "".
 	 */
 	String value() default "";
 	/** 

@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
 import com.blackrook.commons.Common;
-import com.blackrook.j2ee.component.QueryResolver;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 
 /**

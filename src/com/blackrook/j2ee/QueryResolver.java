@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.component;
+package com.blackrook.j2ee;
 
 /**
  * Classes that implement this interface return a full query

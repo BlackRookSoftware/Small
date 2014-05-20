@@ -1,247 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
 <!-- ====================================================================== 
-     Simple Framework Build File    
+     Black Rook Small Framework Build File    
      Matt Tropiano                                                                
      ====================================================================== -->
-<project name="project" default="compile">
+<project name="build" default="compile">
 
-	<description>Black Rook Simple J2EE Framework</description>
+	<description>Black Rook Small Framework</description>
 
 	<property file="build.properties" />
 
-	<!-- Class Dependencies -->
+	<!-- Dependencies -->
 	<property name="dev.base" value=".." />
-	<property name="lib.base" value="E:\JavaLibraries" />
-
-	<property name="common.lib" value="${dev.base}/Common/bin"/>
-	<property name="common.io.lib" value="${dev.base}/CommonIO/bin"/>
-	<property name="common.lang.lib" value="${dev.base}/CommonLang/bin"/>
-	<property name="common.sync.lib" value="${dev.base}/CommonSync/bin" />
-	<property name="db.lib" value="${dev.base}/DB/bin"/>
-
-	<property name="j2ee.libdir" value="${lib.base}/Tomcat 6 Libraries" />
-	<property name="j2ee.servlet.lib.jar" value="${j2ee.libdir}/servlet-api.jar" />
-	<property name="j2ee.jsp.lib.jar" value="${j2ee.libdir}/jsp-api.jar" />
-	
-	<!-- Project Info -->
-	<tstamp>
-		<format property="project.build.date" pattern="yyyy.MM.dd" locale="en,US"/>
-	</tstamp>
-	<property name="project.appendix" value="BUILD" />
-	<property name="project.versionnumber" value="" />
-	<property name="project.version" value="${project.build.date}-${project.versionnumber}${project.appendix}" />
-	<property name="project.archive" value="blackrook-j2ee-simpleframework" />
-	
-	<!-- Folders and File Names -->
 	<property name="S" value="${path.separator}" />
 
-	<property name="src.dir" value="src" />
-	<property name="bin.dir" value="bin" />
+	<!-- Project Libs -->
+	<property name="common.lib" value="${dev.base}/Common/bin" />
+	<property name="common.lang.lib" value="${dev.base}/CommonLang/bin" />
+	<property name="db.lib" value="${dev.base}/DB/bin" />
+	<property name="j2ee.lib" value="${dev.base}/J2EEServletContainer/bin" />
 
-	<property name="jar.dir" value="build/jar" />
-	<property name="docs.dir" value="build/docs" />
-	<property name="zip.dir" value="build/zip" />
-
-	<property name="jar.filename" value="${project.archive}.jar" />
-	<property name="jar.one.filename" value="${project.archive}-one.jar" />
-
-	<property name="zip.one.filename" value="${project.archive}-one-${project.version}.zip" />
-	<property name="zip.jar.filename" value="${project.archive}-bin-${project.version}.zip" />
-	<property name="zip.src.filename" value="${project.archive}-src-${project.version}.zip" />
-	<property name="zip.docs.filename" value="${project.archive}-javadocs-${project.version}.zip" />
+	<!-- Project Info -->
+	<property name="project.archive" value="blackrook-small" />
+	<property name="project.javadoc.title" value="Black Rook Small Framework" />
+	<property name="project.classpath" value="${common.lib}${S}${common.lang.lib}${S}${db.lib}${S}${j2ee.lib}"/>
+	<property name="project.javadoc.packages" value="
+		com.blackrook.j2ee,
+		com.blackrook.j2ee.annotation,
+		com.blackrook.j2ee.component,
+		com.blackrook.j2ee.enums,
+		com.blackrook.j2ee.exception,
+		com.blackrook.j2ee.lang,
+		com.blackrook.j2ee.multipart,
+		com.blackrook.j2ee.resources,
+		com.blackrook.j2ee.types,
+		"
+	/>
 	
-	<!-- Filesets -->
+	<import file="build-import.xml" />
 
-	<patternset id="pattern.classes.notest">
-		<include name="**/*.class" />
-		<exclude name="**/*Test*" />
-		<exclude name="**/test/*" />
-	</patternset>
-
-	<patternset id="pattern.source.notest">
-		<include name="**/*.java" />
-		<include name="**/*.txt" />
-		<exclude name="**/*Test*" />
-		<exclude name="**/test/*" />
-	</patternset>
-	
-	<fileset id="fileset.common.classes.notest" dir="${common.lib}">
-		<patternset refid="pattern.classes.notest" />
-	</fileset>
-	
-	<fileset id="fileset.common.io.classes.notest" dir="${common.io.lib}">
-		<patternset refid="pattern.classes.notest" />
-	</fileset>
-	
-	<fileset id="fileset.common.lang.classes.notest" dir="${common.lang.lib}">
-		<patternset refid="pattern.classes.notest" />
-	</fileset>
-
-	<fileset id="fileset.common.sync.classes.notest" dir="${common.sync.lib}">
-		<patternset refid="pattern.classes.notest" />
-	</fileset>
-
-	<fileset id="fileset.db.classes.notest" dir="${db.lib}">
-		<patternset refid="pattern.classes.notest" />
-	</fileset>
-
-	<!-- Targets -->
-
-	<target name="clean.compile">
-		<delete dir="${bin.dir}" includeemptydirs="true" casesensitive="false"/>
-	</target>
-
-	<target name="clean" depends="clean.compile">
-	</target>
-
-	<target name="clean.jar">
-		<delete dir="${jar.dir}" includeemptydirs="true" casesensitive="false"/>
-	</target>
-	
-	<target name="clean.docs">
-		<delete dir="${docs.dir}" includeemptydirs="true" casesensitive="false" /> 
-	</target>
-
-	<target name="clean.zip">
-		<delete dir="${zip.dir}" includeemptydirs="true" casesensitive="false" /> 
-	</target>
-
-	<target name="clean.all" depends="clean.jar, clean.docs, clean.zip">
-	</target>
-	
-	<target name="init.compile" depends="clean.compile">
-		<mkdir dir="${bin.dir}" />
-	</target>
-
-	<target name="init.docs" depends="clean.docs">
-		<mkdir dir="${docs.dir}" />
-	</target>
-
-	<target name="init.jar" depends="clean.jar">
-		<mkdir dir="${jar.dir}" />
-	</target>
-
-	<target name="init.zip" depends="clean.zip">
-		<mkdir dir="${zip.dir}" />
-	</target>
-
-	<target name="compile" depends="init.compile">
-		<javac 
-			source="1.6"
-			srcdir="${src.dir}" 
-			destdir="${bin.dir}"
-			classpath="
-				${common.lib}${S}
-				${common.io.lib}${S}
-				${common.lang.lib}${S}
-				${common.sync.lib}${S}
-				${db.lib}${S}
-				${j2ee.servlet.lib.jar}${S}
-	    		${j2ee.jsp.lib.jar}${S}
-			"
-            includeAntRuntime="false"
-			debug="off" 
-			/>
-	</target>
-
-    <target name="javadoc">
-        <javadoc access="protected" additionalparam="-J-Xmx512m  " author="true" 
-			classpath="
-				${common.lib}${S}
-				${common.io.lib}${S}
-				${common.lang.lib}${S}
-				${common.sync.lib}${S}
-				${db.lib}${S}
-				${j2ee.servlet.lib.jar}${S}
-        		${j2ee.jsp.lib.jar}${S}
-				${bin.dir}
-			"
-        	destdir="${docs.dir}" 
-        	doctitle="Black Rook Simple J2EE Framework" 
-        	nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" 
-        	packagenames="
-        		com.blackrook.j2ee,
-				com.blackrook.j2ee.annotation,
-				com.blackrook.j2ee.multipart,
-    			com.blackrook.j2ee.types,
-				com.blackrook.j2ee.util,
-    			"
-        	source="1.6" 
+	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
+        <javadoc access="protected" 
+        	additionalparam="-J-Xmx512m  " author="true" 
+        	classpath="${project.classpath}${path.separator}${bin.dir}" 
+        	doctitle="${project.javadoc.title}" 
         	sourcepath="${src.dir}" 
+        	packagenames="${project.javadoc.packages}"
+        	destdir="${docs.dir}" 
+    		source="1.7" 
         	splitindex="true" 
-        	stylesheetfile="docres/blackrooksheet.css" 
         	use="true" 
-        	version="true"
-        	>
-            <link href="http://blackrooksoftware.com/docs/common/" />
-            <link href="http://blackrooksoftware.com/docs/commonio/" />
-            <link href="http://blackrooksoftware.com/docs/commonlang/" />
-            <link href="http://blackrooksoftware.com/docs/commonync/" />
-            <link href="http://blackrooksoftware.com/docs/db/" />
-            <link href="http://download.oracle.com/javase/6/docs/api/" />
-        	<link href="http://download.oracle.com/javaee/5/api/" />
+        	version="true" 
+        	nodeprecated="false" 
+        	nodeprecatedlist="false" 
+        	noindex="false" 
+        	nonavbar="false" 
+        	notree="false"
+    		>
+            <link href="http://download.oracle.com/javase/6/docs/api/"/>
+            <link href="http://blackrooksoftware.com/docs/common/"/>
+            <link href="http://blackrooksoftware.com/docs/commonlang/"/>
+            <link href="http://blackrooksoftware.com/docs/db/"/>
         </javadoc>
-		<copy overwrite="true" todir="${docs.dir}">
-			<fileset casesensitive="false" dir="docres" />
-		</copy>
-    </target>
+    </target>	
 
-	<target name="jar" depends="init.jar" description="Jars up the compiled files.">
-		<jar destfile="${jar.dir}/${jar.filename}">
-			<fileset dir="${bin.dir}" excludes="**/test*" />
-		</jar>
-	</target>
-
-	<target name="jar.one" depends="init.jar" description="Jars up all of the required files.">
-		<jar destfile="${jar.dir}/${jar.one.filename}">
-			<fileset dir="${bin.dir}" excludes="**/test*" />
-		</jar>
-		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.common.classes.notest" />
-		</jar>
-		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.common.io.classes.notest" />
-		</jar>
-		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.common.lang.classes.notest" />
-		</jar>
-		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.common.sync.classes.notest" />
-		</jar>
-		<jar destfile="${jar.dir}/${jar.one.filename}" update="true">
-			<fileset refid="fileset.db.classes.notest" />
-		</jar>
-	</target>
-
-	<target name="zip.jar">
-		<delete file="${zip.dir}/${zip.jar.filename}" />
-		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.jar.filename}" compress="true"></zip>
-		<zip basedir="docs" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
-		<zip basedir="assets" destfile="${zip.dir}/${zip.jar.filename}" update="true"></zip>
-	</target>
-
-	<target name="zip.docs">
-		<delete file="${zip.dir}/${zip.docs.filename}" />
-		<zip basedir="${docs.dir}" destfile="${zip.dir}/${zip.docs.filename}" compress="true"></zip>
-	</target>
-	
-	<target name="zip.src">
-		<delete file="${zip.dir}/${zip.src.filename}" />
-		<zip basedir="${src.dir}" destfile="${zip.dir}/${zip.src.filename}" compress="true"></zip>
-		<zip basedir="docs" destfile="${zip.dir}/${zip.src.filename}" update="true"></zip>
-		<zip basedir="assets" destfile="${zip.dir}/${zip.src.filename}" update="true"></zip>
-	</target>
-	
-	<target name="zip.one">
-		<delete file="${zip.dir}/${zip.one.filename}" />
-		<zip basedir="${jar.dir}" destfile="${zip.dir}/${zip.one.filename}" compress="true">
-			<fileset file="${jar.one.filename}" />
-		</zip>
-		<zip basedir="docs" destfile="${zip.dir}/${zip.one.filename}" update="true"></zip>
-		<zip basedir="assets" destfile="${zip.dir}/${zip.one.filename}" update="true"></zip>
-	</target>
-
-	<target name="release" depends="compile, javadoc, jar, init.zip, zip.jar, zip.docs, zip.src">
-	</target>
-	
 </project>

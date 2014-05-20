@@ -174,7 +174,6 @@ public final class FrameworkUtil implements EntityTables
 	 * The bean is created and stored if it doesn't exist.
 	 * The name used is the fully-qualified class name prefixed with "$$".
 	 * @param request the source request object.
-	 * @param name the attribute name.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
@@ -235,7 +234,6 @@ public final class FrameworkUtil implements EntityTables
 	 * The name used is the fully-qualified class name prefixed with "$$".
 	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
-	 * @param name the attribute name.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
 	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.

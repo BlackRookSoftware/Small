@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.servlet.http.Cookie;
+
 /**
  * Annotates a method parameter for Cookie binding. Should be used in Controllers and Filters.
  * <p>

@@ -1,4 +1,4 @@
-<!-- Black Rook J2EE Framework -->
+<!-- Black Rook J2EE Small Framework -->
 
 <listener>
 	<listener-class>com.blackrook.j2ee.Toolkit</listener-class>

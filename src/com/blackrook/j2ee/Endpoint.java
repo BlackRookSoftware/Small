@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.component;
+package com.blackrook.j2ee;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,16 +12,16 @@ import java.util.concurrent.Future;
 import javax.websocket.Session;
 
 import com.blackrook.commons.Common;
-import com.blackrook.j2ee.ToolkitComponent;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 
 /**
  * A WebSocket endpoint helper class that exposes some useful functions to facilitate endpoint creation.
+ * Endpoints should extend this class.
  * @author Matthew Tropiano
  */
-public abstract class Endpoint extends ToolkitComponent
+public abstract class Endpoint
 {
 	
 	/** Alphabet for generating unique identifiers. */
