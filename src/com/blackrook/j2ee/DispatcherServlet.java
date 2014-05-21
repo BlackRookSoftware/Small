@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
-import com.blackrook.commons.AbstractChainedHashMap;
+import com.blackrook.commons.AbstractMap;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
@@ -391,9 +391,9 @@ public final class DispatcherServlet extends HttpServlet
 						}
 						invokeParams[i] = map;
 					}
-					else if (AbstractChainedHashMap.class.isAssignableFrom(pinfo.getType()))
+					else if (AbstractMap.class.isAssignableFrom(pinfo.getType()))
 					{
-						AbstractChainedHashMap<String, Object> map = new HashMap<String, Object>();
+						AbstractMap<String, Object> map = new HashMap<String, Object>();
 						for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
 						{
 							String[] vals = paramEntry.getValue();

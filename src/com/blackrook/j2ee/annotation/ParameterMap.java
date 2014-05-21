@@ -6,12 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Map;
 
-import com.blackrook.commons.AbstractChainedHashMap;
+import com.blackrook.commons.AbstractMap;
 
 /**
  * Annotates a method parameter for request parameter binding. Should be used in Controllers.
  * <p>
- * Turns the parameters on the request into a {@link Map} or {@link AbstractChainedHashMap}, depending on type.
+ * Turns the parameters on the request into a {@link Map} or {@link AbstractMap}, depending on type.
  * @author Matthew Tropiano
  */
 @Target(ElementType.PARAMETER)
