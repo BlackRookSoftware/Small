@@ -71,7 +71,7 @@ public class PathTrie<V extends Object> implements Sizable
 			if (current != null && current.value != null)
 			{
 				lastEligible = current.value;
-				lastOffset = offset;
+				lastOffset = offset + 1;
 			}
 			segindex++;
 		}

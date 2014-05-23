@@ -129,15 +129,18 @@ public final class DispatcherServlet extends HttpServlet
 	{
 		String path = getPath(request);
 		Result<Class<?>> controllerClass = Toolkit.INSTANCE.getControllerClassByPath(path);
-		if (controllerClass.getClass() == null)
+		if (controllerClass.getValue() == null)
+		{
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
+			return;
+		}
 
 		ControllerDescriptor entry = Toolkit.INSTANCE.getController(controllerClass.getValue());
 		if (entry == null)
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
 		{
-			String page = path.substring(controllerClass.getOffset());
+			String page = path.substring(controllerClass.getOffset()) + getPage(request);
 
 			// get cookies from request.
 			HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
@@ -526,7 +529,7 @@ public final class DispatcherServlet extends HttpServlet
 		int contextPathLen = request.getContextPath().length();
 		int slashIndex = requestURI.lastIndexOf('/');
 		if (slashIndex >= 0)
-			return requestURI.substring(contextPathLen, slashIndex);
+			return requestURI.substring(contextPathLen, slashIndex + 1);
 		else
 			return requestURI.substring(contextPathLen); 
 	}
