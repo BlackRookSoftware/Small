@@ -22,6 +22,7 @@ import javax.servlet.ServletContextListener;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.j2ee.PathTrie.Result;
 import com.blackrook.j2ee.annotation.Controller;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.exception.SimpleFrameworkSetupException;
@@ -43,8 +44,8 @@ public final class Toolkit implements ServletContextListener
 	/** Application context path. */
 	private String realAppPath;
 
-	/** The path to controller. */
-	private HashMap<String, Class<?>> pathCache;
+	/** The path to controller trie. */
+	private PathTrie<Class<?>> pathTrie;
 	/** The controllers that were instantiated. */
 	private HashMap<Class<?>, ControllerDescriptor> controllerCache;
 	/** The filters that were instantiated. */
@@ -60,7 +61,7 @@ public final class Toolkit implements ServletContextListener
 	 */
 	public Toolkit()
 	{
-		pathCache = new HashMap<String, Class<?>>();
+		pathTrie = new PathTrie<Class<?>>();
 		controllerCache = new HashMap<Class<?>, ControllerDescriptor>(10);
 		filterCache = new HashMap<Class<?>, FilterDescriptor>(10);
 		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
@@ -111,10 +112,11 @@ public final class Toolkit implements ServletContextListener
 				
 				controllerCache.put(controllerClass, new ControllerDescriptor(controllerClass));
 				String path = controllerAnnotation.value();
-				if (!pathCache.containsKey(path))
-					pathCache.put(path, controllerClass);
+				Class<?> existingClass = null;
+				if ((existingClass = pathTrie.get(path)) == null)
+					pathTrie.put(path, controllerClass);
 				else
-					throw new SimpleFrameworkSetupException("Path \""+ path +"\" already assigned to "+controllerClass.getName());
+					throw new SimpleFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
 			}
 		}
 	}
@@ -152,6 +154,7 @@ public final class Toolkit implements ServletContextListener
 	 * Opens an input stream to a resource using a path relative to the
 	 * application context path. 
 	 * Outside users should not be able to access this!
+	 * <p>REMINDER: Close the stream when you are done!
 	 * @param path the path to the resource to open.
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
 	 */
@@ -163,26 +166,26 @@ public final class Toolkit implements ServletContextListener
 	}
 
 	/**
-	 * Gets the controller to call using the requested path.
-	 * @param uriPath the path to resolve, no query string.
-	 * @return a controller, or null if no controller by that name. 
+	 * Gets the controller class to use using a URL path.
+	 * This searches the path tree until it hits a dead end.
+	 * @param path the path to use.
+	 * @return a controller, or null if no controller by that class. 
 	 * This servlet sends a 404 back if this happens.
-	 * @throws SimpleFrameworkException if a huge error occurred.
 	 */
-	ControllerDescriptor getControllerUsingPath(String path)
+	Result<Class<?>> getControllerClassByPath(String path)
 	{
-		Class<?> controllerClass = null;
-		
-		if (pathCache.containsKey(path))
-			controllerClass = pathCache.get(path);
-		
-		if (controllerClass == null)
-			return null;
-		
-		if (controllerCache.containsKey(controllerClass))
-			return controllerCache.get(controllerClass);
-		
-		return null;
+		return pathTrie.getPartial(path);
+	}
+
+	/**
+	 * Gets the controller to call.
+	 * @param clazz the controller class.
+	 * @return a controller, or null if no controller by that class. 
+	 * This servlet sends a 404 back if this happens.
+	 */
+	ControllerDescriptor getController(Class<?> clazz)
+	{
+		return controllerCache.get(clazz);
 	}
 
 	/**

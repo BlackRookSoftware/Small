@@ -26,6 +26,7 @@ import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.MethodDescriptor.ParameterDescriptor;
+import com.blackrook.j2ee.PathTrie.Result;
 import com.blackrook.j2ee.enums.RequestMethod;
 import com.blackrook.j2ee.enums.ScopeType;
 import com.blackrook.j2ee.exception.SimpleFrameworkException;
@@ -127,12 +128,16 @@ public final class DispatcherServlet extends HttpServlet
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = getPath(request);
-		ControllerDescriptor entry = Toolkit.INSTANCE.getControllerUsingPath(path);
+		Result<Class<?>> controllerClass = Toolkit.INSTANCE.getControllerClassByPath(path);
+		if (controllerClass.getClass() == null)
+			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
+
+		ControllerDescriptor entry = Toolkit.INSTANCE.getController(controllerClass.getValue());
 		if (entry == null)
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
 		{
-			String page = getPage(request);
+			String page = path.substring(controllerClass.getOffset());
 
 			// get cookies from request.
 			HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();

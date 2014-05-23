@@ -19,7 +19,6 @@ public @interface Controller
 {
 	/**
 	 * The "directory" path to use for the controller.
-	 * Default is "".
 	 */
 	String value() default "";
 	/** 
