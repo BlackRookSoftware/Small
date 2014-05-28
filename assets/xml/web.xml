@@ -1,11 +1,13 @@
 <!-- Black Rook J2EE Small Framework -->
 
+<xml>
+
 <listener>
 	<listener-class>com.blackrook.j2ee.Toolkit</listener-class>
 </listener>
 
 <context-param>
-    <param-name>simpleframework.controller.root</param-name>
+    <param-name>small.application.package.root</param-name>
     <param-value>com.add.controller.root.here</param-value>
 </context-param>
 
@@ -17,3 +19,5 @@
 	<servlet-name>DispatcherServlet</servlet-name>
 	<url-pattern>*.view</url-pattern>
 </servlet-mapping>
+
+</xml>
