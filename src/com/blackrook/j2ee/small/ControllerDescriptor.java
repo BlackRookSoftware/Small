@@ -13,8 +13,8 @@ import com.blackrook.j2ee.small.annotation.ControllerEntry;
 import com.blackrook.j2ee.small.annotation.FilterChain;
 import com.blackrook.j2ee.small.annotation.Model;
 import com.blackrook.j2ee.small.enums.RequestMethod;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkSetupException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 
 /**
  * Creates a controller profile to assist in re-calling controllers by path and methods.
@@ -42,13 +42,13 @@ class ControllerDescriptor implements ComponentDescriptor
 	/**
 	 * Creates the controller profile for a {@link Controller} class.
 	 * @param clazz the input class to profile.
-	 * @throws SimpleFrameworkException if this profile cannot be created due to an initialization problem.
+	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
 	ControllerDescriptor(Class<?> clazz)
 	{
 		Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
 		if (controllerAnnotation == null)
-			throw new SimpleFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
+			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 		
 		this.defaultMethodMap = new HashMap<RequestMethod, ControllerMethodDescriptor>();
 		this.methodMap = new HashMap<RequestMethod, HashMap<String, ControllerMethodDescriptor>>(4);
@@ -73,7 +73,7 @@ class ControllerDescriptor implements ComponentDescriptor
 					if (anno.defaultEntry())
 					{
 						if (defaultMethodMap.containsKey(rm))
-							throw new SimpleFrameworkSetupException("Controller already contains a default entry for this request method.");
+							throw new SmallFrameworkSetupException("Controller already contains a default entry for this request method.");
 						else
 							defaultMethodMap.put(rm, md);
 					}

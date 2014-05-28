@@ -24,7 +24,7 @@ import com.blackrook.commons.TypeProfile;
 import com.blackrook.commons.TypeProfile.MethodSignature;
 import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.types.MIMETypes;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
@@ -177,7 +177,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz)
 	{
@@ -194,7 +194,7 @@ public final class SmallUtil implements EntityTables
 	 * @param name the attribute name.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
@@ -208,7 +208,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param create if true, instantiate this class in the request (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the request.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
 	{
@@ -236,7 +236,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz)
 	{
@@ -253,7 +253,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
@@ -267,7 +267,7 @@ public final class SmallUtil implements EntityTables
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the session, a new instance if it doesn't exist, or null if the session is null.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
 	{
@@ -305,7 +305,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the application scope.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz)
 	{
@@ -322,7 +322,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz, String name)
 	{
@@ -336,7 +336,7 @@ public final class SmallUtil implements EntityTables
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the application's servlet context (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz, String name, boolean create)
 	{
@@ -369,7 +369,7 @@ public final class SmallUtil implements EntityTables
 	 * The name used is the fully-qualified class name.
 	 * @param clazz the class type of the object that should be returned.
 	 * @return a typecast object on the application scope.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getBean(Class<T> clazz)
 	{
@@ -383,7 +383,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getBean(Class<T> clazz, String name)
 	{
@@ -397,7 +397,7 @@ public final class SmallUtil implements EntityTables
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getBean(Class<T> clazz, String name, boolean create)
 	{
@@ -751,7 +751,7 @@ public final class SmallUtil implements EntityTables
 				if (field.getType() == objval.getClass())
 					Reflect.setField(target, fieldName, objval);
 				else
-					throw new SimpleFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
+					throw new SmallFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
 				foundFields.put(fieldName);
 			}
 			else if (context != null && getAttributeExist(context, fieldName))
@@ -760,7 +760,7 @@ public final class SmallUtil implements EntityTables
 				if (field.getType() == objval.getClass())
 					Reflect.setField(target, fieldName, objval);
 				else
-					throw new SimpleFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
+					throw new SmallFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
 				foundFields.put(fieldName);
 			}
 		}
@@ -804,7 +804,7 @@ public final class SmallUtil implements EntityTables
 				if (signature.getType() == objval.getClass())
 					Reflect.invokeBlind(signature.getMethod(), target, objval);
 				else
-					throw new SimpleFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
+					throw new SmallFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
 			}
 			else if (context != null && getAttributeExist(context, fieldName))
 			{
@@ -812,7 +812,7 @@ public final class SmallUtil implements EntityTables
 				if (signature.getType() == objval.getClass())
 					Reflect.invokeBlind(signature.getMethod(), target, objval);
 				else
-					throw new SimpleFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
+					throw new SmallFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
 			}
 		}
 		
@@ -821,13 +821,13 @@ public final class SmallUtil implements EntityTables
 	
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link SimpleFrameworkException},
+	 * Basically encloses the provided throwable in a {@link SmallFrameworkException},
 	 * which is a {@link RuntimeException}.
 	 * @param t the {@link Throwable} to encapsulate and throw.
 	 */
 	public static void throwException(Throwable t)
 	{
-		throw new SimpleFrameworkException(t);
+		throw new SmallFrameworkException(t);
 	}
 
 	/**
@@ -878,7 +878,7 @@ public final class SmallUtil implements EntityTables
 
 	/**
 	 * Sends back a JSON-ified object to the client.
-	 * Works best with POJOs and simple beans.
+	 * Works best with POJOs and Small beans.
 	 * The "Content-Type" portion of the header is changed to "application/json".
 	 * @param response the servlet response to write to.
 	 * @param object the Object to write to the request, which then is .

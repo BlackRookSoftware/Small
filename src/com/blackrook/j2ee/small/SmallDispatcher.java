@@ -28,7 +28,7 @@ import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.MethodDescriptor.ParameterDescriptor;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.lang.RFCParser;
 import com.blackrook.j2ee.small.multipart.MultipartParser;
 import com.blackrook.j2ee.small.multipart.MultipartParserException;
@@ -187,7 +187,7 @@ public final class SmallDispatcher extends HttpServlet
 		try {
 			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, cookieMap, multiformPartMap);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException("An exception occurred in a Filter method.", e);
+			throw new SmallFrameworkException("An exception occurred in a Filter method.", e);
 		}
 		
 		return (Boolean)retval;
@@ -207,7 +207,7 @@ public final class SmallDispatcher extends HttpServlet
 		try {
 			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, cookieMap, multiformPartMap);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException("An exception occurred in a Controller method.", e);
+			throw new SmallFrameworkException("An exception occurred in a Controller method.", e);
 		}
 		
 		if (descriptor.isNoCache())
@@ -277,7 +277,7 @@ public final class SmallDispatcher extends HttpServlet
 						(new XMLWriter()).writeXML((XMLStruct)retval, sw);
 						data = getStringData(sw.toString());
 					} catch (IOException e) {
-						throw new SimpleFrameworkException(e);
+						throw new SmallFrameworkException(e);
 					}
 					SmallUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
 				}
@@ -294,7 +294,7 @@ public final class SmallDispatcher extends HttpServlet
 					try {
 						data = getStringData(JSONWriter.writeJSONString((JSONObject)retval));
 					} catch (IOException e) {
-						throw new SimpleFrameworkException(e);
+						throw new SmallFrameworkException(e);
 					}
 					SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
 				}
@@ -311,7 +311,7 @@ public final class SmallDispatcher extends HttpServlet
 					try {
 						data = getStringData(JSONWriter.writeJSONString(retval));
 					} catch (IOException e) {
-						throw new SimpleFrameworkException(e);
+						throw new SmallFrameworkException(e);
 					}
 					SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
 				}
@@ -411,7 +411,7 @@ public final class SmallDispatcher extends HttpServlet
 					}
 					else
 					{
-						throw new SimpleFrameworkException("Parameter " + i + " is not a type that can store a key-value structure.");
+						throw new SmallFrameworkException("Parameter " + i + " is not a type that can store a key-value structure.");
 					}
 					break;
 				}
@@ -600,7 +600,7 @@ public final class SmallDispatcher extends HttpServlet
 		try {
 			return data.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -745,13 +745,13 @@ public final class SmallDispatcher extends HttpServlet
 
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link SimpleFrameworkException},
+	 * Basically encloses the provided throwable in a {@link SmallFrameworkException},
 	 * which is a {@link RuntimeException}.
 	 * @param t the {@link Throwable} to encapsulate and throw.
 	 */
 	private void throwException(Throwable t)
 	{
-		throw new SimpleFrameworkException(t);
+		throw new SmallFrameworkException(t);
 	}
 
 	/**
@@ -762,9 +762,9 @@ public final class SmallDispatcher extends HttpServlet
 		String classString = struct.getAttribute(XML_FILTERPATH_CLASSES);
 	
 		if (pkg == null)
-			throw new SimpleFrameworkException("Filter in declaration does not declare a package.");
+			throw new SmallFrameworkException("Filter in declaration does not declare a package.");
 		if (classString == null)
-			throw new SimpleFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
+			throw new SmallFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
 		
 		String[] classes = classString.split("(\\s|\\,)+");
 		

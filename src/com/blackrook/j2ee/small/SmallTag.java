@@ -7,7 +7,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.tagext.IterationTag;
 
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 
 /**
  * A body tag that provides access to the framework toolkit.
@@ -74,7 +74,7 @@ public abstract class SmallTag extends BodyTagSupport
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @return a typecast object on the application scope.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public final <T> T getPageBean(Class<T> clazz, String name)
 	{
@@ -88,7 +88,7 @@ public abstract class SmallTag extends BodyTagSupport
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
-	 * @throws SimpleFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
 	public final <T> T getPageBean(Class<T> clazz, String name, boolean create)
 	{
@@ -110,13 +110,13 @@ public abstract class SmallTag extends BodyTagSupport
 	
 	/**
 	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link SimpleFrameworkException},
+	 * Basically encloses the provided throwable in a {@link SmallFrameworkException},
 	 * which is a {@link RuntimeException}.
 	 * @param t the {@link Throwable} to encapsulate and throw.
 	 */
 	public final void throwException(Throwable t)
 	{
-		throw new SimpleFrameworkException(t);
+		throw new SmallFrameworkException(t);
 	}
 
 	/**

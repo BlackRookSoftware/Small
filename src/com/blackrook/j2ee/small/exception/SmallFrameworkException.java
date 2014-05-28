@@ -11,17 +11,17 @@
 package com.blackrook.j2ee.small.exception;
 
 /**
- * An exception that is thrown when the framework finds a problem with constructing controllers or filters.
+ * An exception that is thrown when the framework finds a problem.
  * @author Matthew Tropiano
  */
-public class SimpleFrameworkSetupException extends SimpleFrameworkException
+public class SmallFrameworkException extends RuntimeException
 {
 	private static final long serialVersionUID = 293213593023790633L;
 
 	/**
 	 * Creates a new exception.
 	 */
-	public SimpleFrameworkSetupException()
+	public SmallFrameworkException()
 	{
 		super();
 	}
@@ -29,7 +29,7 @@ public class SimpleFrameworkSetupException extends SimpleFrameworkException
 	/**
 	 * Creates a new exception.
 	 */
-	public SimpleFrameworkSetupException(String message)
+	public SmallFrameworkException(String message)
 	{
 		super(message);
 	}
@@ -37,7 +37,7 @@ public class SimpleFrameworkSetupException extends SimpleFrameworkException
 	/**
 	 * Creates a new exception.
 	 */
-	public SimpleFrameworkSetupException(Throwable exception)
+	public SmallFrameworkException(Throwable exception)
 	{
 		super(exception);
 	}
@@ -45,7 +45,7 @@ public class SimpleFrameworkSetupException extends SimpleFrameworkException
 	/**
 	 * Creates a new exception with a message.
 	 */
-	public SimpleFrameworkSetupException(String message, Throwable exception)
+	public SmallFrameworkException(String message, Throwable exception)
 	{
 		super(message, exception);
 	}

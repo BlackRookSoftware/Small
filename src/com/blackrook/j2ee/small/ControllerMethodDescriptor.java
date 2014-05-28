@@ -9,7 +9,7 @@ import com.blackrook.j2ee.small.annotation.ControllerEntry;
 import com.blackrook.j2ee.small.annotation.FilterChain;
 import com.blackrook.j2ee.small.annotation.NoCache;
 import com.blackrook.j2ee.small.annotation.View;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkSetupException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 
 /**
  * Method descriptor class, specifically for controllers.
@@ -54,23 +54,23 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 			if (method.isAnnotationPresent(Content.class))
 			{
 				if (type == Void.class || type == Void.TYPE)
-					throw new SimpleFrameworkSetupException("Entry methods that are annotated @Content cannot return void.");
+					throw new SmallFrameworkSetupException("Entry methods that are annotated @Content cannot return void.");
 				this.outputType = Output.CONTENT;
 			}
 			else if (method.isAnnotationPresent(Attachment.class))
 			{
 				if (type == Void.class || type == Void.TYPE)
-					throw new SimpleFrameworkSetupException("Entry methods that are annotated @Attachment cannot return void.");
+					throw new SmallFrameworkSetupException("Entry methods that are annotated @Attachment cannot return void.");
 				this.outputType = Output.ATTACHMENT;
 			}
 			else if (method.isAnnotationPresent(View.class))
 			{
 				if (type == Void.class || type == Void.TYPE)
-					throw new SimpleFrameworkSetupException("Entry methods that are annotated @View cannot return void.");
+					throw new SmallFrameworkSetupException("Entry methods that are annotated @View cannot return void.");
 				this.outputType = Output.VIEW;
 			}
 			else if (type != Void.class && type != Void.TYPE)
-				throw new SimpleFrameworkSetupException("Entry methods that don't return void must be annotated with @Content, @Attachment, or @View.");
+				throw new SmallFrameworkSetupException("Entry methods that don't return void must be annotated with @Content, @Attachment, or @View.");
 		}
 		
 		// Search backwards for relevant filters.

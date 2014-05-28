@@ -9,8 +9,8 @@ import com.blackrook.j2ee.small.annotation.Attribute;
 import com.blackrook.j2ee.small.annotation.Filter;
 import com.blackrook.j2ee.small.annotation.FilterEntry;
 import com.blackrook.j2ee.small.annotation.Model;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkSetupException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 
 /**
  * Creates a controller profile to assist in re-calling filters.
@@ -30,13 +30,13 @@ class FilterDescriptor implements ComponentDescriptor
 	/**
 	 * Creates the filter profile for a {@link Filter} class.
 	 * @param clazz the input class to profile.
-	 * @throws SimpleFrameworkException if this profile cannot be created due to an initialization problem.
+	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
 	FilterDescriptor(Class<?> clazz)
 	{
 		Filter controllerAnnotation = clazz.getAnnotation(Filter.class);
 		if (controllerAnnotation == null)
-			throw new SimpleFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Filter.");
+			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Filter.");
 
 		this.methodDescriptor = null; 
 		this.modelMap = new HashMap<String, MethodDescriptor>(3);
@@ -47,9 +47,9 @@ class FilterDescriptor implements ComponentDescriptor
 			if (isEntryMethod(m))
 			{
 				if (m.getReturnType() != Boolean.TYPE && m.getReturnType() != Boolean.class)
-					throw new SimpleFrameworkSetupException("Methods annotated with @FilterEntry must return a boolean.");
+					throw new SmallFrameworkSetupException("Methods annotated with @FilterEntry must return a boolean.");
 				else if (this.methodDescriptor != null)
-					throw new SimpleFrameworkSetupException("Filter already contains an entry point.");
+					throw new SmallFrameworkSetupException("Filter already contains an entry point.");
 				this.methodDescriptor = new MethodDescriptor(m);
 			}
 			else if (isModelConstructorMethod(m))

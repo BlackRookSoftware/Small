@@ -3,7 +3,7 @@ package com.blackrook.j2ee.small;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.resources.SQLDataSource;
 import com.blackrook.sql.SQLResult;
 import com.blackrook.sql.SQLTransaction;
@@ -58,14 +58,14 @@ public abstract class SmallSQLDAO
 	 * or {@link SQLTransaction#abort()}.
 	 * @param transactionLevel the isolation level of the transaction.
 	 * @return a {@link SQLTransaction} object to handle a contiguous transaction.
-	 * @throws SimpleFrameworkException if the transaction could not be created.
+	 * @throws SmallFrameworkException if the transaction could not be created.
 	 */
 	protected final SQLTransaction startTransaction(Level transactionLevel)
 	{
 		try {
 			return dataSource.startTransaction(transactionLevel);
 		} catch (InterruptedException e) {
-			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		}
 	}
 	
@@ -75,7 +75,7 @@ public abstract class SmallSQLDAO
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SmallFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
 	protected final SQLResult doQuery(String query, Object ... parameters)
 	{
@@ -85,9 +85,9 @@ public abstract class SmallSQLDAO
 			conn = dataSource.getAvailableConnection();
 			result = SQLUtil.doQuery(conn, query, parameters);
 		} catch (SQLException e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		} catch (InterruptedException e) {
-			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
 		}
@@ -177,7 +177,7 @@ public abstract class SmallSQLDAO
 	 * @param query the query to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the SQLResult returned.
-	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SmallFrameworkException if the query cannot be resolved or the query causes an error.
 	 * @throws ClassCastException if one object type cannot be converted to another.
 	 */
 	protected final <T> T[] doQuery(Class<T> type, String query, Object ... parameters)
@@ -188,9 +188,9 @@ public abstract class SmallSQLDAO
 			conn = dataSource.getAvailableConnection();
 			result = SQLUtil.doQuery(type, conn, query, parameters);
 		} catch (SQLException e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		} catch (InterruptedException e) {
-			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
 		}
@@ -203,7 +203,7 @@ public abstract class SmallSQLDAO
 	 * @param query the query statement to execute.
 	 * @param parameters list of parameters for parameterized queries.
 	 * @return the update result returned (usually number of rows affected).
-	 * @throws SimpleFrameworkException if the query cannot be resolved or the query causes an error.
+	 * @throws SmallFrameworkException if the query cannot be resolved or the query causes an error.
 	 */
 	protected final SQLResult doUpdateQuery(String query, Object ... parameters)
 	{
@@ -213,9 +213,9 @@ public abstract class SmallSQLDAO
 			conn = dataSource.getAvailableConnection();
 			result = SQLUtil.doQueryUpdate(conn, query, parameters);
 		} catch (SQLException e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		} catch (InterruptedException e) {
-			throw new SimpleFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
+			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
 			if (conn != null) try {conn.close();} catch (SQLException e) {};
 		}

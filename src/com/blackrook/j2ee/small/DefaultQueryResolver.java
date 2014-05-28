@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
 import com.blackrook.commons.Common;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 
 /**
  * Default resolver for queries.
@@ -47,7 +47,7 @@ public class DefaultQueryResolver implements QueryResolver
 				sb.append(line).append('\n');
 			}
 		} catch (Exception e) {
-			throw new SimpleFrameworkException("Could not read query contents from file: " + f.getAbsolutePath(), e);
+			throw new SmallFrameworkException("Could not read query contents from file: " + f.getAbsolutePath(), e);
 		} finally {
 			Common.close(br);
 			Common.close(in);

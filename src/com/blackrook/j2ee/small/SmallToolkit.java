@@ -24,14 +24,13 @@ import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkSetupException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.PathTrie;
 import com.blackrook.j2ee.small.struct.PathTrie.Result;
 
 /**
- * The main manager class through which all things are
- * pooled and lent out to controllers and other things that request it. 
+ * The main manager class through which all components are pooled and instantiated. 
  * @author Matthew Tropiano
  */
 public final class SmallToolkit implements ServletContextListener
@@ -76,7 +75,7 @@ public final class SmallToolkit implements ServletContextListener
 		controllerRootPackage = servletContext.getInitParameter(INIT_PARAM_CONTROLLER_ROOT);
 		
 		if (Common.isEmpty(controllerRootPackage))
-			throw new SimpleFrameworkSetupException("The root package init parameter was not specified.");
+			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
 		
 		realAppPath = servletContext.getRealPath("/");
 		initComponents(ClassLoader.getSystemClassLoader());
@@ -102,7 +101,7 @@ public final class SmallToolkit implements ServletContextListener
 			try {
 				componentClass = Class.forName(className);
 			} catch (ClassNotFoundException e) {
-				throw new SimpleFrameworkSetupException("Could not load class "+className+" from classpath.");
+				throw new SmallFrameworkSetupException("Could not load class "+className+" from classpath.");
 			}
 			if (componentClass.isAnnotationPresent(Controller.class))
 			{
@@ -118,7 +117,7 @@ public final class SmallToolkit implements ServletContextListener
 				if ((existingClass = pathTrie.get(path)) == null)
 					pathTrie.put(path, componentClass);
 				else
-					throw new SimpleFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
+					throw new SmallFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
 			}
 			else if (componentClass.isAnnotationPresent(Filter.class))
 			{
@@ -200,7 +199,7 @@ public final class SmallToolkit implements ServletContextListener
 
 	/**
 	 * Gets the filter to call.
-	 * @throws SimpleFrameworkException if a huge error occurred.
+	 * @throws SmallFrameworkException if a huge error occurred.
 	 */
 	FilterDescriptor getFilter(Class<?> clazz)
 	{

@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 import javax.websocket.Session;
 
 import com.blackrook.commons.Common;
-import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
+import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 
@@ -54,14 +54,14 @@ public abstract class SmallEndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param message the message string to pass back to the connected client.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendText(final Session session, String message)
 	{
 		try {
 			session.getBasicRemote().sendText(message);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 	
@@ -72,14 +72,14 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param message the (partial) message string to pass back to the connected client.
 	 * @param isLast if true, tells the client that this is the final part. if false, it is not the last part.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendTextPartial(final Session session, String message, boolean isLast)
 	{
 		try {
 			session.getBasicRemote().sendText(message, isLast);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -88,14 +88,14 @@ public abstract class SmallEndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendBinary(final Session session, ByteBuffer buffer)
 	{
 		try {
 			session.getBasicRemote().sendBinary(buffer);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 	
@@ -105,14 +105,14 @@ public abstract class SmallEndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendBinaryPartial(final Session session, ByteBuffer buffer, boolean isLast)
 	{
 		try {
 			session.getBasicRemote().sendBinary(buffer, isLast);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}			
 	}
 	
@@ -123,14 +123,14 @@ public abstract class SmallEndpoint
 	 * before it is sent. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendBinary(final Session session, byte[] buffer)
 	{
 		try {
 			sendBinary(session, ByteBuffer.wrap(buffer));
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 	
@@ -142,14 +142,14 @@ public abstract class SmallEndpoint
 	 * before it is sent. 
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendBinaryPartial(final Session session, byte[] buffer, boolean isLast)
 	{
 		try {
 			sendBinaryPartial(session, ByteBuffer.wrap(buffer), isLast);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 	
@@ -159,7 +159,7 @@ public abstract class SmallEndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final void sendJSON(final Session session, JSONObject object)
 	{
@@ -167,7 +167,7 @@ public abstract class SmallEndpoint
 		try {
 			JSONWriter.writeJSON(object, sw);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 		sendText(session, sw.toString());
 	}
@@ -178,7 +178,7 @@ public abstract class SmallEndpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
-	 * @throws SimpleFrameworkException on a send error or if an error occurs during conversion.
+	 * @throws SmallFrameworkException on a send error or if an error occurs during conversion.
 	 */
 	protected final void sendJSON(final Session session, Object object)
 	{
@@ -187,7 +187,7 @@ public abstract class SmallEndpoint
 			JSONWriter.writeJSON(JSONObject.create(object), sw);
 			sendText(session, sw.toString());
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 	
@@ -198,7 +198,7 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param in the input stream to read from.
 	 * @param bufferSize the size of the buffer to use during the send.
-	 * @throws SimpleFrameworkException on a send or read error.
+	 * @throws SmallFrameworkException on a send or read error.
 	 */
 	protected final void sendData(final Session session, InputStream in, int bufferSize)
 	{
@@ -214,7 +214,7 @@ public abstract class SmallEndpoint
 				bb.rewind();
 			}
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 	
@@ -224,7 +224,7 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param file the file to read.
 	 * @param bufferSize the size of the buffer to use during the send.
-	 * @throws SimpleFrameworkException on a send or read error.
+	 * @throws SmallFrameworkException on a send or read error.
 	 */
 	protected final void sendFileContents(final Session session, File file, int bufferSize)
 	{
@@ -233,7 +233,7 @@ public abstract class SmallEndpoint
 			fis = new FileInputStream(file);
 			sendData(session, fis, bufferSize);
 		} catch (IOException e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		} finally {
 			Common.close(fis);
 		}
@@ -244,7 +244,7 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param message the message string to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final Future<Void> sendAsyncText(final Session session, String message)
 	{
@@ -270,7 +270,7 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final Future<Void> sendAsyncBinary(final Session session, byte[] buffer)
 	{
@@ -283,7 +283,7 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SimpleFrameworkException on a send error.
+	 * @throws SmallFrameworkException on a send error.
 	 */
 	protected final Future<Void> sendAsyncJSON(final Session session, JSONObject object)
 	{
@@ -291,7 +291,7 @@ public abstract class SmallEndpoint
 		try {
 			JSONWriter.writeJSON(object, sw);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 		return sendAsyncText(session, sw.toString());
 	}
@@ -302,7 +302,7 @@ public abstract class SmallEndpoint
 	 * @param session the connection session.
 	 * @param object the JSON object to send.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SimpleFrameworkException on a send error or if an error occurs during conversion.
+	 * @throws SmallFrameworkException on a send error or if an error occurs during conversion.
 	 */
 	protected final Future<Void> sendAsyncJSON(final Session session, Object object)
 	{
@@ -310,7 +310,7 @@ public abstract class SmallEndpoint
 		try {
 			JSONWriter.writeJSON(JSONObject.create(object), sw);
 		} catch (Exception e) {
-			throw new SimpleFrameworkException(e);
+			throw new SmallFrameworkException(e);
 		}
 		return sendAsyncText(session, sw.toString());
 	}
