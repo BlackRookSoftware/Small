@@ -22,22 +22,24 @@ import javax.servlet.ServletContextListener;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.j2ee.small.PathTrie.Result;
 import com.blackrook.j2ee.small.annotation.Controller;
+import com.blackrook.j2ee.small.annotation.Filter;
 import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
 import com.blackrook.j2ee.small.exception.SimpleFrameworkSetupException;
+import com.blackrook.j2ee.small.struct.PathTrie;
+import com.blackrook.j2ee.small.struct.PathTrie.Result;
 
 /**
  * The main manager class through which all things are
  * pooled and lent out to controllers and other things that request it. 
  * @author Matthew Tropiano
  */
-public final class Toolkit implements ServletContextListener
+public final class SmallToolkit implements ServletContextListener
 {
 	private static final String INIT_PARAM_CONTROLLER_ROOT = "small.application.package.root";
 	
 	/** Singleton toolkit instance. */
-	static Toolkit INSTANCE = null;
+	static SmallToolkit INSTANCE = null;
 
 	/** Servlet context. */
 	private ServletContext servletContext;
@@ -59,7 +61,7 @@ public final class Toolkit implements ServletContextListener
 	/**
 	 * Constructs the toolkit.
 	 */
-	public Toolkit()
+	public SmallToolkit()
 	{
 		pathTrie = new PathTrie<Class<?>>();
 		controllerCache = new HashMap<Class<?>, ControllerDescriptor>(10);
@@ -77,8 +79,8 @@ public final class Toolkit implements ServletContextListener
 			throw new SimpleFrameworkSetupException("The root package init parameter was not specified.");
 		
 		realAppPath = servletContext.getRealPath("/");
-		initVisibleControllers(ClassLoader.getSystemClassLoader());
-		initVisibleControllers(Thread.currentThread().getContextClassLoader());
+		initComponents(ClassLoader.getSystemClassLoader());
+		initComponents(Thread.currentThread().getContextClassLoader());
 		INSTANCE = this;
 	}
 
@@ -92,31 +94,39 @@ public final class Toolkit implements ServletContextListener
 	 * Init visible controllers using a class loader.
 	 * @param loader the {@link ClassLoader} to look in.
 	 */
-	private void initVisibleControllers(ClassLoader loader)
+	private void initComponents(ClassLoader loader)
 	{
 		for (String className : Reflect.getClasses(controllerRootPackage, loader))
 		{
-			Class<?> controllerClass = null;
+			Class<?> componentClass = null;
 			try {
-				controllerClass = Class.forName(className);
+				componentClass = Class.forName(className);
 			} catch (ClassNotFoundException e) {
 				throw new SimpleFrameworkSetupException("Could not load class "+className+" from classpath.");
 			}
-			if (controllerClass.isAnnotationPresent(Controller.class))
+			if (componentClass.isAnnotationPresent(Controller.class))
 			{
-				Controller controllerAnnotation = controllerClass.getAnnotation(Controller.class);
+				Controller controllerAnnotation = componentClass.getAnnotation(Controller.class);
 
 				// check for double-include. Skip.
-				if (controllerCache.containsKey(controllerClass))
+				if (controllerCache.containsKey(componentClass))
 					continue;
 				
-				controllerCache.put(controllerClass, new ControllerDescriptor(controllerClass));
+				controllerCache.put(componentClass, new ControllerDescriptor(componentClass));
 				String path = controllerAnnotation.value();
 				Class<?> existingClass = null;
 				if ((existingClass = pathTrie.get(path)) == null)
-					pathTrie.put(path, controllerClass);
+					pathTrie.put(path, componentClass);
 				else
 					throw new SimpleFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
+			}
+			else if (componentClass.isAnnotationPresent(Filter.class))
+			{
+				// check for double-include. Skip.
+				if (filterCache.containsKey(componentClass))
+					continue;
+				
+				filterCache.put(componentClass, new FilterDescriptor(componentClass));
 			}
 		}
 	}

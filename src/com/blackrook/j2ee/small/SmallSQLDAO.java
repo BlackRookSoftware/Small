@@ -14,7 +14,7 @@ import com.blackrook.sql.SQLUtil;
  * Base Data Access Object for submitting SQL-driven database queries.
  * @author Matthew Tropiano
  */
-public abstract class SQLDAO
+public abstract class SmallSQLDAO
 {
 	/** SQL Datasource. */
 	private SQLDataSource dataSource;
@@ -25,7 +25,7 @@ public abstract class SQLDAO
 	 * Base constructor.
 	 * @param dataSource the data source to use.
 	 */
-	protected SQLDAO(SQLDataSource dataSource)
+	protected SmallSQLDAO(SQLDataSource dataSource)
 	{
 		this(dataSource, new DefaultQueryResolver());
 	}
@@ -35,7 +35,7 @@ public abstract class SQLDAO
 	 * @param dataSource the data source to use.
 	 * @param queryResolver the query resolver to use for query-by-keyword lookups.
 	 */
-	protected SQLDAO(SQLDataSource dataSource, QueryResolver queryResolver)
+	protected SmallSQLDAO(SQLDataSource dataSource, QueryResolver queryResolver)
 	{
 		this.dataSource = dataSource;
 		this.queryResolver = queryResolver;

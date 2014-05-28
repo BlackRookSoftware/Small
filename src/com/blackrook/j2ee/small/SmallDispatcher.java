@@ -26,7 +26,6 @@ import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.MethodDescriptor.ParameterDescriptor;
-import com.blackrook.j2ee.small.PathTrie.Result;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
 import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
@@ -34,6 +33,7 @@ import com.blackrook.j2ee.small.lang.RFCParser;
 import com.blackrook.j2ee.small.multipart.MultipartParser;
 import com.blackrook.j2ee.small.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.multipart.Part;
+import com.blackrook.j2ee.small.struct.PathTrie.Result;
 import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONReader;
@@ -46,7 +46,7 @@ import com.blackrook.lang.xml.XMLWriter;
  * The main dispatcher servlet for the controller portion of the framework.
  * @author Matthew Tropiano
  */
-public final class DispatcherServlet extends HttpServlet
+public final class SmallDispatcher extends HttpServlet
 {
 	private static final long serialVersionUID = -5986230302849170240L;
 	
@@ -128,14 +128,14 @@ public final class DispatcherServlet extends HttpServlet
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = getPath(request);
-		Result<Class<?>> controllerClass = Toolkit.INSTANCE.getControllerClassByPath(path);
+		Result<Class<?>> controllerClass = SmallToolkit.INSTANCE.getControllerClassByPath(path);
 		if (controllerClass.getValue() == null)
 		{
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 			return;
 		}
 
-		ControllerDescriptor entry = Toolkit.INSTANCE.getController(controllerClass.getValue());
+		ControllerDescriptor entry = SmallToolkit.INSTANCE.getController(controllerClass.getValue());
 		if (entry == null)
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
@@ -153,14 +153,14 @@ public final class DispatcherServlet extends HttpServlet
 			{
 				for (Class<?> filterClass : entry.getFilterChain())
 				{
-					FilterDescriptor fd = Toolkit.INSTANCE.getFilter(filterClass);
+					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
 					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
 						return;
 				}
 
 				for (Class<?> filterClass : cmd.getFilterChain())
 				{
-					FilterDescriptor fd = Toolkit.INSTANCE.getFilter(filterClass);
+					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
 					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
 						return;
 				}
@@ -168,7 +168,7 @@ public final class DispatcherServlet extends HttpServlet
 				handleControllerMethod(entry, requestMethod, request, response, cmd, entry.getInstance(), cookieMap, multiformPartMap);
 			}
 			else
-				FrameworkUtil.sendCode(response, 404, "Not found.");
+				SmallUtil.sendCode(response, 404, "Not found.");
 		}
 	}
 
@@ -222,9 +222,9 @@ public final class DispatcherServlet extends HttpServlet
 			{
 				String viewKey = String.valueOf(retval);
 				if (viewKey.startsWith(PREFIX_REDIRECT))
-					FrameworkUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
+					SmallUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
 				else
-					FrameworkUtil.sendToView(request, response, Toolkit.INSTANCE.getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
+					SmallUtil.sendToView(request, response, SmallToolkit.INSTANCE.getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
 				break;
 			}
 			case CONTENT:
@@ -233,26 +233,26 @@ public final class DispatcherServlet extends HttpServlet
 				{
 					File outfile = (File)retval;
 					if (outfile == null || !outfile.exists())
-						FrameworkUtil.sendCode(response, 404, "File not found.");
+						SmallUtil.sendCode(response, 404, "File not found.");
 					else
-						FrameworkUtil.sendFileContents(response, outfile);
+						SmallUtil.sendFileContents(response, outfile);
 				}
 				else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
-					FrameworkUtil.sendXML(response, (XMLStruct)retval);
+					SmallUtil.sendXML(response, (XMLStruct)retval);
 				else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
-					FrameworkUtil.sendJSON(response, (JSONObject)retval);
+					SmallUtil.sendJSON(response, (JSONObject)retval);
 				else if (String.class.isAssignableFrom(descriptor.getType()))
 				{
 					byte[] data =  getStringData(((String)retval));
-					FrameworkUtil.sendData(response, "text/plain; charset=utf-8", null, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "text/plain; charset=utf-8", null, new ByteArrayInputStream(data), data.length);
 				}
 				else if (byte[].class.isAssignableFrom(descriptor.getType()))
 				{
 					byte[] data = (byte[])retval;
-					FrameworkUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
 				}
 				else
-					FrameworkUtil.sendJSON(response, retval);
+					SmallUtil.sendJSON(response, retval);
 				break;
 			}
 			case ATTACHMENT:
@@ -264,9 +264,9 @@ public final class DispatcherServlet extends HttpServlet
 				{
 					File outfile = (File)retval;
 					if (outfile == null || !outfile.exists())
-						FrameworkUtil.sendCode(response, 404, "File not found.");
+						SmallUtil.sendCode(response, 404, "File not found.");
 					else
-						FrameworkUtil.sendFile(response, outfile);
+						SmallUtil.sendFile(response, outfile);
 				}
 				// XML output.
 				else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
@@ -279,13 +279,13 @@ public final class DispatcherServlet extends HttpServlet
 					} catch (IOException e) {
 						throw new SimpleFrameworkException(e);
 					}
-					FrameworkUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
 				}
 				// String data output.
 				else if (String.class.isAssignableFrom(descriptor.getType()))
 				{
 					byte[] data = getStringData(((String)retval));
-					FrameworkUtil.sendData(response, "text/plain; charset=utf-8", fname, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "text/plain; charset=utf-8", fname, new ByteArrayInputStream(data), data.length);
 				}
 				// JSON output.
 				else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
@@ -296,13 +296,13 @@ public final class DispatcherServlet extends HttpServlet
 					} catch (IOException e) {
 						throw new SimpleFrameworkException(e);
 					}
-					FrameworkUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
 				}
 				// binary output.
 				else if (byte[].class.isAssignableFrom(descriptor.getType()))
 				{
 					byte[] data = (byte[])retval;
-					FrameworkUtil.sendData(response, "application/octet-stream", fname, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "application/octet-stream", fname, new ByteArrayInputStream(data), data.length);
 				}
 				// Object JSON output.
 				else
@@ -313,7 +313,7 @@ public final class DispatcherServlet extends HttpServlet
 					} catch (IOException e) {
 						throw new SimpleFrameworkException(e);
 					}
-					FrameworkUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+					SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
 				}
 				break;
 			}
@@ -468,13 +468,13 @@ public final class DispatcherServlet extends HttpServlet
 					switch (scope)
 					{
 						case REQUEST:
-							invokeParams[i] = FrameworkUtil.getRequestBean(request, pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallUtil.getRequestBean(request, pinfo.getType(), pinfo.getName());
 							break;
 						case SESSION:
-							invokeParams[i] = FrameworkUtil.getSessionBean(request, pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallUtil.getSessionBean(request, pinfo.getType(), pinfo.getName());
 							break;
 						case APPLICATION:
-							invokeParams[i] = FrameworkUtil.getApplicationBean(request.getServletContext(), pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallUtil.getApplicationBean(request.getServletContext(), pinfo.getType(), pinfo.getName());
 							break;
 					}
 					break;
@@ -485,11 +485,11 @@ public final class DispatcherServlet extends HttpServlet
 					if (modelDescriptor != null)
 					{
 						Object model = invokeEntryMethod(entry, requestMethod, request, response, modelDescriptor, instance, cookieMap, multiformPartMap);
-						FrameworkUtil.setModelFields(request, model);
+						SmallUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
 					else
-						request.setAttribute(pinfo.getName(), invokeParams[i] = FrameworkUtil.setModelFields(request, pinfo.getType()));
+						request.setAttribute(pinfo.getName(), invokeParams[i] = SmallUtil.setModelFields(request, pinfo.getType()));
 					break;
 				}
 				case CONTENT:

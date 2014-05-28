@@ -3,7 +3,7 @@
 <xml>
 
 <listener>
-	<listener-class>com.blackrook.j2ee.Toolkit</listener-class>
+	<listener-class>com.blackrook.j2ee.small.SmallToolkit</listener-class>
 </listener>
 
 <context-param>
@@ -12,11 +12,11 @@
 </context-param>
 
 <servlet>
-	<servlet-name>DispatcherServlet</servlet-name>
-	<servlet-class>com.blackrook.j2ee.DispatcherServlet</servlet-class>
+	<servlet-name>SmallDispatcher</servlet-name>
+	<servlet-class>com.blackrook.j2ee.small.SmallDispatcher</servlet-class>
 </servlet>
 <servlet-mapping>
-	<servlet-name>DispatcherServlet</servlet-name>
+	<servlet-name>SmallDispatcher</servlet-name>
 	<url-pattern>*.view</url-pattern>
 </servlet-mapping>
 

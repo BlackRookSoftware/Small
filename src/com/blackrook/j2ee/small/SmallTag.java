@@ -13,7 +13,7 @@ import com.blackrook.j2ee.small.exception.SimpleFrameworkException;
  * A body tag that provides access to the framework toolkit.
  * @author Matthew Tropiano
  */
-public abstract class Tag extends BodyTagSupport
+public abstract class SmallTag extends BodyTagSupport
 {
 	private static final long serialVersionUID = -3952524726929216608L;
 	
@@ -22,8 +22,8 @@ public abstract class Tag extends BodyTagSupport
 	 */
 	public enum StartResponse
 	{
-		EVALUATE_BODY(Tag.EVAL_BODY_INCLUDE),
-		SKIP_BODY(Tag.SKIP_BODY);
+		EVALUATE_BODY(SmallTag.EVAL_BODY_INCLUDE),
+		SKIP_BODY(SmallTag.SKIP_BODY);
 		
 		private final int eval;
 		StartResponse(int eval) {this.eval = eval;}
@@ -34,10 +34,10 @@ public abstract class Tag extends BodyTagSupport
 	 */
 	public enum EndResponse
 	{
-		EVALUATE_BODY(Tag.EVAL_BODY_INCLUDE),
+		EVALUATE_BODY(SmallTag.EVAL_BODY_INCLUDE),
 		EVALUATE_BODY_AGAIN(IterationTag.EVAL_BODY_AGAIN),
-		EVALUATE_PAGE(Tag.EVAL_PAGE),
-		SKIP_PAGE(Tag.SKIP_PAGE);
+		EVALUATE_PAGE(SmallTag.EVAL_PAGE),
+		SKIP_PAGE(SmallTag.SKIP_PAGE);
 		
 		private final int eval;
 		EndResponse(int eval) {this.eval = eval;}

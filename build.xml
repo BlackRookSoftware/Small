@@ -27,12 +27,12 @@
 	<property name="project.javadoc.packages" value="
 		com.blackrook.j2ee.small,
 		com.blackrook.j2ee.small.annotation,
-		com.blackrook.j2ee.small.component,
 		com.blackrook.j2ee.small.enums,
 		com.blackrook.j2ee.small.exception,
 		com.blackrook.j2ee.small.lang,
 		com.blackrook.j2ee.small.multipart,
 		com.blackrook.j2ee.small.resources,
+		com.blackrook.j2ee.small.struct,
 		com.blackrook.j2ee.small.types,
 		"
 	/>

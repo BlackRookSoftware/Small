@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.struct;
 
 import com.blackrook.commons.AbstractMap;
 import com.blackrook.commons.Sizable;

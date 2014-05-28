@@ -21,7 +21,7 @@ import com.blackrook.lang.json.JSONWriter;
  * Endpoints should extend this class.
  * @author Matthew Tropiano
  */
-public abstract class Endpoint
+public abstract class SmallEndpoint
 {
 	
 	/** Alphabet for generating unique identifiers. */
@@ -31,7 +31,7 @@ public abstract class Endpoint
 	private String id;
 	
 	// Default Endpoint constructor.
-	protected Endpoint()
+	protected SmallEndpoint()
 	{
 		// generate random id string.
 		StringBuilder sb = new StringBuilder();

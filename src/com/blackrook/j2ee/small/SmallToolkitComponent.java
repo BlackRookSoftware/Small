@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ToolkitComponent
+public class SmallToolkitComponent
 {
 	/**
 	 * Gets a file that is on the application path. 
@@ -13,7 +13,7 @@ public class ToolkitComponent
 	 */
 	protected final File getApplicationFile(String path)
 	{
-		return Toolkit.INSTANCE.getApplicationFile(path);
+		return SmallToolkit.INSTANCE.getApplicationFile(path);
 	}
 
 	/**
@@ -23,7 +23,7 @@ public class ToolkitComponent
 	 */
 	protected final String getApplicationFilePath(String relativepath)
 	{
-		return Toolkit.INSTANCE.getApplicationFilePath(relativepath);
+		return SmallToolkit.INSTANCE.getApplicationFilePath(relativepath);
 	}
 
 	/**
@@ -36,7 +36,7 @@ public class ToolkitComponent
 	 */
 	protected final InputStream getResourceAsStream(String path) throws IOException
 	{
-		return Toolkit.INSTANCE.getResourceAsStream(path);
+		return SmallToolkit.INSTANCE.getResourceAsStream(path);
 	}
 
 }

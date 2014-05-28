@@ -28,7 +28,7 @@ public class DefaultQueryResolver implements QueryResolver
 	{
 		StringBuffer sb = new StringBuffer();
 		String src = "/WEB-INF/sql/" + keyword + ".sql";
-		File f = Toolkit.INSTANCE.getApplicationFile(src); 
+		File f = SmallToolkit.INSTANCE.getApplicationFile(src); 
 		FileInputStream in = null;
 		BufferedReader br = null;
 		try {

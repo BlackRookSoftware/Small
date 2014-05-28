@@ -36,7 +36,7 @@ import com.blackrook.lang.xml.XMLWriter;
  * Utility library for common or useful functions.
  * @author Matthew Tropiano
  */
-public final class FrameworkUtil implements EntityTables
+public final class SmallUtil implements EntityTables
 {
 	/** MIME Type Map. */
 	private static MIMETypes MIME_TYPE_MAP = new MIMETypes();
@@ -51,7 +51,7 @@ public final class FrameworkUtil implements EntityTables
 	/** Lag simulator seed. */
 	private static Random randomLagSimulator = new Random();
 
-	private FrameworkUtil() {}
+	private SmallUtil() {}
 	
 	/**
 	 * Gets the MIME type of a file (uses a database that is more complete than javax.activation).
@@ -920,7 +920,7 @@ public final class FrameworkUtil implements EntityTables
 	 */
 	public static void sendFile(HttpServletResponse response, File file)
 	{
-		sendFileContents(response, FrameworkUtil.getMIMEType(file.getName()), file, file.getName());
+		sendFileContents(response, SmallUtil.getMIMEType(file.getName()), file, file.getName());
 	}
 
 	/**
@@ -947,7 +947,7 @@ public final class FrameworkUtil implements EntityTables
 	 */
 	public static void sendFileContents(HttpServletResponse response, File file)
 	{
-		sendFileContents(response, FrameworkUtil.getMIMEType(file.getName()), file, null);
+		sendFileContents(response, SmallUtil.getMIMEType(file.getName()), file, null);
 	}
 
 	/**
