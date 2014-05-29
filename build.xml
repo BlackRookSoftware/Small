@@ -39,6 +39,8 @@
 	
 	<import file="build-import.xml" />
 
+	<property name="jar.one.filename" value="${project.archive}-${build.version}-one.jar" />
+
 	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
         <javadoc access="protected" 
         	additionalparam="-J-Xmx512m  " author="true" 
@@ -63,5 +65,12 @@
             <link href="http://blackrooksoftware.com/docs/db/"/>
         </javadoc>
     </target>	
+
+	<target name="jar.all" depends="init.jar, compile" description="JARs up all necessary classes (from required projects) into one JAR.">
+		<jar basedir="${bin.dir}" destfile="${jar.dir}/${jar.one.filename}" />
+		<jar basedir="${common.lib}" destfile="${jar.dir}/${jar.one.filename}" update="true" />
+		<jar basedir="${common.lang.lib}" destfile="${jar.dir}/${jar.one.filename}" update="true" />
+		<jar basedir="${db.lib}" destfile="${jar.dir}/${jar.one.filename}" update="true" />
+	</target>
 
 </project>
