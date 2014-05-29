@@ -1,6 +1,6 @@
 ==============================================================================
 Building this Project
-Black Rook Common Library
+Black Rook J2EE Small Framework Library
 (C) Black Rook Software, All rights reserved.
 http://www.blackrooksoftware.com
 ==============================================================================
@@ -38,4 +38,20 @@ dev.base
 build.dir
 	The base directory for built resources.
 	Default: "build"
-
+common.lib
+	The location of the Black Rook Commons Library binaries (for build 
+	classpath).
+	Default: "${dev.base}/Common/bin"
+common.lang.lib
+	The location of the Black Rook Common Lang binaries (for build 
+	classpath).
+	Default: "${dev.base}/CommonLang/bin"
+db.lib
+	The location of the Black Rook Database Utilities binaries (for build 
+	classpath).
+	Default: "${dev.base}/DB/bin"
+j2ee.lib
+	The location of a J2EE Servlet Container implementation library (for build 
+	classpath). Valid implementations should implement JSR-356 
+	(javax.websocket).
+	Default: "${dev.base}/J2EEServletContainer/bin"
