@@ -36,6 +36,7 @@ import com.blackrook.j2ee.small.struct.PathTrie.Result;
 public final class SmallToolkit implements ServletContextListener
 {
 	private static final String INIT_PARAM_CONTROLLER_ROOT = "small.application.package.root";
+	private static final String INIT_PARAM_TEMPDIR_PATH = "small.application.tempdir";
 	
 	/** Singleton toolkit instance. */
 	static SmallToolkit INSTANCE = null;
@@ -56,6 +57,8 @@ public final class SmallToolkit implements ServletContextListener
 
 	/** Controller root. */
 	private String controllerRootPackage;
+	/** Tempdir root. */
+	private File tempDir;
 
 	/**
 	 * Constructs the toolkit.
@@ -74,6 +77,12 @@ public final class SmallToolkit implements ServletContextListener
 		servletContext = sce.getServletContext();
 		controllerRootPackage = servletContext.getInitParameter(INIT_PARAM_CONTROLLER_ROOT);
 		
+		String tempPath = servletContext.getInitParameter(INIT_PARAM_TEMPDIR_PATH);
+		tempDir = tempPath != null ? new File(tempPath) : new File(System.getProperty("java.io.tmpdir"));
+		
+		if (!tempDir.exists() && !Common.createPath(tempPath))
+			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
+		
 		if (Common.isEmpty(controllerRootPackage))
 			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
 		
@@ -89,6 +98,14 @@ public final class SmallToolkit implements ServletContextListener
 		// Do nothing.
 	}
 
+	/**
+	 * Returns the temporary directory to use for multipart files.
+	 */
+	public File getTempDir()
+	{
+		return tempDir;
+	}
+	
 	/**
 	 * Init visible controllers using a class loader.
 	 * @param loader the {@link ClassLoader} to look in.

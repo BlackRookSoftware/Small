@@ -1,7 +1,6 @@
 package com.blackrook.j2ee.small.multipart;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,23 +16,24 @@ import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.lang.RFCParser;
 
 /**
- * Parser for multipart form requests.
+ * Abstract Multipart parser.
  * @author Matthew Tropiano
  */
-public class MultipartParser implements Iterable<Part>
+public abstract class MultipartParser implements Iterable<Part>
 {
-	/** Newline bytes. */
-	private final String NEWLINE = System.getProperty("line.separator");
-	private final byte[] NEWLINE_BYTES = NEWLINE.getBytes();
+	/** Newline. */
+	protected final String NEWLINE = System.getProperty("line.separator");
+	/** Newline as bytes. */
+	protected final byte[] NEWLINE_BYTES = NEWLINE.getBytes();
 	
 	/** Content type boundary piece. */
-	private static final String PIECE_BOUNDARY = "boundary=";
+	protected static final String PIECE_BOUNDARY = "boundary=";
 	/** Content type charset piece. */
-	private static final String PIECE_CHARSET = "charset=";
+	protected static final String PIECE_CHARSET = "charset=";
 	/** Content-Disposition. */
-	private static final String HEADER_DISPOSITION = "Content-Disposition:";
+	protected static final String HEADER_DISPOSITION = "Content-Disposition:";
 	/** Content-Disposition. */
-	private static final String HEADER_TYPE = "Content-Type:";
+	protected static final String HEADER_TYPE = "Content-Type:";
 
 	/** Random number generator. */
 	private Random random;
@@ -49,19 +49,33 @@ public class MultipartParser implements Iterable<Part>
 	private byte[] buffer;
 	
 	/**
-	 * Creates and parses a new request.
-	 * @param request the servlet request to parse. 
-	 * @param outputDir the temporary directory for read files.
+	 * Creates a new multipart parser.
 	 */
-	public MultipartParser(HttpServletRequest request, File outputDir) throws MultipartParserException, UnsupportedEncodingException
+	public MultipartParser()
 	{
 		this.random = new Random();
 		this.partList = new List<Part>();
 		this.charset = "ISO-8859-1";
-		this.buffer = new byte[8192]; 
-				
+		this.buffer = new byte[65536]; 
+	}
+
+	/**
+	 * Returns true if a request is a multiform request, false
+	 * otherwise.
+	 */
+	public static boolean isMultipart(HttpServletRequest request)
+	{
+		return request.getContentType().startsWith("multipart/");
+	}
+
+	/**
+	 * Parses the request content.
+	 * @param request the servlet request to parse. 
+	 * @param outputDir the temporary directory for read files.
+	 */
+	public void parse(HttpServletRequest request, File outputDir) throws MultipartParserException, UnsupportedEncodingException
+	{
 		String contentType = request.getContentType();
-		
 		RFCParser parser = new RFCParser(contentType);
 		while (parser.hasTokens())
 		{
@@ -74,130 +88,24 @@ public class MultipartParser implements Iterable<Part>
 		
 		String startBoundary = "--" + boundary;
 		String endBoundary = startBoundary + "--";
-		byte[] START_BOUNDARY_BYTES = startBoundary.getBytes(charset);
+		byte[] boundaryBytes = startBoundary.getBytes(charset);
 
-		final int STATE_HEADER = 1;
-		final int STATE_DATA = 2;
-		final int STATE_END = 3;
-		int state = STATE_HEADER;
-		
-		File outFile = null; 
-		Part currentPart = null;
-		
-		OutputStream out = null;
-		ServletInputStream sis = null;
-		
-		try {
-			sis = request.getInputStream();
-			String line = null;
-
-			currentPart = new Part();
-			partList.add(currentPart);
-			line = scanLine(sis);
-			if (!line.equals(startBoundary))
-				throw new MultipartParserException("Unexpected beginning of multipart form. Submission is malformed.");
-
-			while (state != STATE_END)
-			{
-				switch (state)
-				{
-					// Header Parsing.
-					case STATE_HEADER:
-						line = scanLine(sis);
-						if (line.startsWith(HEADER_DISPOSITION))
-							parseDisposition(line, currentPart);
-						else if (line.startsWith(HEADER_TYPE))
-							parseContentType(line, currentPart);
-						else if (line.length() == 0)
-						{
-							if (currentPart.fileName != null)
-							{
-								state = STATE_DATA;
-								outFile = generateTempFile(outputDir);
-								currentPart.file = outFile;
-								out = new FileOutputStream(outFile);
-							}
-							else
-							{
-								line = scanLine(sis);
-								if (line == null)
-									throw new MultipartParserException("Unexpected end of multipart form. Submission is malformed.");
-
-								boolean loop = true;
-								currentPart.value = line;
-								while (loop)
-								{
-									line = scanLine(sis);
-									if (line.equals(startBoundary))
-									{
-										state = STATE_HEADER;
-										currentPart = new Part();
-										partList.add(currentPart);
-										loop = false;
-									}
-									else if (line.equals(endBoundary))
-									{
-										state = STATE_END;
-										loop = false;
-									}
-									else
-										currentPart.value += "\n" + line;
-								}
-							}
-						}
-						else if (line.startsWith(startBoundary))
-							throw new MultipartParserException("Found boundary in header. Submission is malformed.");
-						break;
-						
-					// Data Reading.
-					case STATE_DATA:
-					{
-						scanDataUntilBoundary(sis, out, START_BOUNDARY_BYTES);
-						out.close();
-						out = null;
-						outFile = null;
-						line = scanLine(sis);
-						if (line.equals("--"))
-							state = STATE_END;
-						else if (line.length() == 0)
-						{
-							state = STATE_HEADER;
-							currentPart = new Part();
-							partList.add(currentPart);
-						}
-						else
-							throw new MultipartParserException("Data terminated with bad boundary. Submission is malformed.");
-					}
-						break;
-				}
-			}
-			
-	} catch (IOException e) {
-			throw new MultipartParserException("Could not read request body.", e);
-		} finally {
-			Common.close(out);
-		}
+		parseData(request, outputDir, startBoundary, endBoundary, boundaryBytes);
 	}
 	
 	/**
-	 * Returns true if a request is a multiform request, false
-	 * otherwise.
+	 * Parses the servlet content and generates.
+	 * @param request
+	 * @param outputDir
+	 * @param startBoundary
+	 * @param endBoudary
+	 * @param startBoundaryBytes
 	 */
-	public static boolean isMultipart(HttpServletRequest request)
-	{
-		return request.getContentType().startsWith("multipart/");
-	}
-
-	/**
-	 * Returns all of the parts parsed by this parser.
-	 */
-	public List<Part> getPartList()
-	{
-		return partList;
-	}
-
+	protected abstract void parseData(HttpServletRequest request, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
+		throws MultipartParserException, UnsupportedEncodingException;
+	
 	// Parses the disposition header.
-	private void parseDisposition(String line, Part part) throws MultipartParserException
+	protected void parseDisposition(String line, Part part) throws MultipartParserException
 	{
 		RFCParser hp = new RFCParser(line.substring(HEADER_DISPOSITION.length()));
 		while (hp.hasTokens())
@@ -234,31 +142,19 @@ public class MultipartParser implements Iterable<Part>
 	}
 
 	// Parses the content type header.
-	private void parseContentType(String line, Part part)
+	protected void parseContentType(String line, Part part)
 	{
 		String type = line.substring(HEADER_TYPE.length()).trim();
 		part.contentType = type;
 	}
-	
-	// Creates a temp file.
-	private File generateTempFile(File outputDir) throws IOException
-	{
-		final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		final String PREFIX = "/MULTIFORM";
-		final String SUFFIX = ".bin";
-		char[] out = new char[32];
-		for (int i = 0; i < out.length; i++)
-			out[i] = ALPHABET.charAt(random.nextInt(ALPHABET.length()));
-		
-		StringBuffer sb = new StringBuffer();
-		sb.append(PREFIX);
-		sb.append(out);
-		sb.append(SUFFIX);
-		return new File(outputDir.getCanonicalFile().getPath() + sb.toString());
-	}
 
-	// scans until finds the boundary.
-	private String scanLine(ServletInputStream sis) throws IOException
+	/**
+	 * Scans and returns the next line.
+	 * @param sis the servlet input stream (for request content).
+	 * @return the read string.
+	 * @throws IOException if the stream could not be read.
+	 */
+	protected String scanLine(ServletInputStream sis) throws IOException
 	{
 		StringBuilder sb = new StringBuilder();
 		int buf = 0;
@@ -267,30 +163,37 @@ public class MultipartParser implements Iterable<Part>
 			buf = sis.readLine(buffer, 0, buffer.length);
 			String s = new String(buffer, 0, buf, charset);
 			sb.append(s, 0, s.length() - NEWLINE.length());
-	} while (buf == buffer.length);
+		} while (buf == buffer.length);
 		 
 		return sb.toString();
 	}
-	
-	// scans until finds the boundary.
-	private void scanDataUntilBoundary(InputStream in, OutputStream out, byte[] startBoundary) throws IOException
+
+	/**
+	 * Scans an input stream until it hits a part boundary.
+	 * @param in the input stream.
+	 * @param out the output stream.
+	 * @param boundaryBytes the boundary as bytes.
+	 * @throws IOException if the input stream could not be 
+	 * read or the output stream could not be written to.
+	 */
+	protected void scanDataUntilBoundary(InputStream in, OutputStream out, byte[] boundaryBytes) throws IOException
 	{
 		byte b = 0;
 		int buf = 0;
 		int match = 0;
 		int nlmatch = 0;
 		
-		while (match != startBoundary.length && (buf = in.read()) != -1)
+		while (match != boundaryBytes.length && (buf = in.read()) != -1)
 		{
 			b = (byte)(buf & 0x0ff);
 			if (nlmatch == 2 || match > 0)
 			{
-				if (b == startBoundary[match])
+				if (b == boundaryBytes[match])
 					match++;
 				else
 				{
 					out.write(NEWLINE_BYTES, 0, nlmatch);
-					out.write(startBoundary, 0, match);
+					out.write(boundaryBytes, 0, match);
 					match = 0;
 					nlmatch = 0;
 					out.write(b);
@@ -298,7 +201,7 @@ public class MultipartParser implements Iterable<Part>
 			}
 			else if (nlmatch > 0)
 			{
-				if (b == startBoundary[match])
+				if (b == boundaryBytes[match])
 					match++;
 				else if (b == NEWLINE_BYTES[nlmatch])
 					nlmatch++;
@@ -315,7 +218,46 @@ public class MultipartParser implements Iterable<Part>
 				out.write(b);
 		}
 	}
+
+	/**
+	 * Creates a temporary file for read part data.
+	 * @param outputDir the temporary output directory.
+	 * @return the file created.
+	 * @throws IOException if the canonical path could not be read.
+	 */
+	protected File generateTempFile(String filename, File outputDir) throws IOException
+	{
+		final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		final String PREFIX = "/MULTIFORM";
+		final String SUFFIX = "." + Common.getFileExtension(filename);
+		char[] out = new char[32];
+		for (int i = 0; i < out.length; i++)
+			out[i] = ALPHABET.charAt(random.nextInt(ALPHABET.length()));
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append(PREFIX);
+		sb.append(out);
+		sb.append(SUFFIX);
+		return new File(outputDir.getCanonicalFile().getPath() + sb.toString());
+	}
 	
+	/**
+	 * Adds a part to the multipart parser.
+	 * @param part the part to add.
+	 */
+	protected void addPart(Part part)
+	{
+		partList.add(part);
+	}
+
+	/**
+	 * Returns all of the parts parsed by this parser.
+	 */
+	public List<Part> getPartList()
+	{
+		return partList;
+	}
+
 	@Override
 	public Iterator<Part> iterator()
 	{

@@ -30,6 +30,7 @@ import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.lang.RFCParser;
+import com.blackrook.j2ee.small.multipart.MultipartFormDataParser;
 import com.blackrook.j2ee.small.multipart.MultipartParser;
 import com.blackrook.j2ee.small.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.multipart.Part;
@@ -87,39 +88,42 @@ public final class SmallDispatcher extends HttpServlet
 	{
 		if (isFormEncoded(request))
 			callControllerEntry(request, response, RequestMethod.POST, null);
-		else if (MultipartParser.isMultipart(request))
+		else if (MultipartFormDataParser.isMultipart(request))
 		{
-			MultipartParser parser = null;
-			try {
-				parser = new MultipartParser(request, new File(System.getProperty("java.io.tmpdir")));
-			} catch (UnsupportedEncodingException e) {
-				sendError(response, 400, "The encoding type for the POST request is not supported.");
-			} catch (MultipartParserException e) {
-				sendError(response, 500, "The server could not parse the multiform request.");
-			}
-			
-			List<Part> parts = parser.getPartList();
-			
-			HashedQueueMap<String, Part> partMap = new HashedQueueMap<String, Part>();
-			for (Part part : parts)
-				partMap.enqueue(part.getName(), part);
-			
-			try {
-				callControllerEntry(request, response, RequestMethod.POST, partMap);
-			} finally {
-				// clean up files.
+			MultipartParser parser = getMultipartParser(request);
+			if (parser == null)
+				sendError(response, 400, "The multipart POST request type is not supported.");
+			else
+			{
+				try {
+					parser.parse(request, SmallToolkit.INSTANCE.getTempDir());
+				} catch (UnsupportedEncodingException e) {
+					sendError(response, 400, "The encoding type for the POST request is not supported.");
+				} catch (MultipartParserException e) {
+					sendError(response, 500, "The server could not parse the multiform request. " + e.getMessage());
+				}
+				
+				List<Part> parts = parser.getPartList();
+				
+				HashedQueueMap<String, Part> partMap = new HashedQueueMap<String, Part>();
 				for (Part part : parts)
-					if (part.isFile())
-					{
-						File tempFile = part.getFile();
-						tempFile.delete();
-					}
+					partMap.enqueue(part.getName(), part);
+				
+				try {
+					callControllerEntry(request, response, RequestMethod.POST, partMap);
+				} finally {
+					// clean up files.
+					for (Part part : parts)
+						if (part.isFile())
+						{
+							File tempFile = part.getFile();
+							tempFile.delete();
+						}
+				}
 			}
 		}
 		else
-		{
 			callControllerEntry(request, response, RequestMethod.POST, null);
-		}
 	}
 	
 	/**
@@ -728,6 +732,20 @@ public final class SmallDispatcher extends HttpServlet
 		return request.getContentType().equals("application/x-www-form-urlencoded");
 	}
 
+	/**
+	 * Returns the appropriate multipart parser for a request.
+	 * @param request the request.
+	 */
+	private MultipartParser getMultipartParser(HttpServletRequest request)
+	{
+		String contentType = request.getContentType();
+		
+		if (contentType.startsWith("multipart/form-data"))
+			return new MultipartFormDataParser();
+		else
+			return null;
+	}
+	
 	/**
 	 * Sends request to the error page with a status code.
 	 * @param response servlet response object.
