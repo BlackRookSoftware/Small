@@ -18,6 +18,7 @@ import com.blackrook.j2ee.small.lang.RFCParser;
 /**
  * Abstract Multipart parser.
  * @author Matthew Tropiano
+ * FIXME Kinda broken. Fix!
  */
 public abstract class MultipartParser implements Iterable<Part>
 {
@@ -194,6 +195,8 @@ public abstract class MultipartParser implements Iterable<Part>
 				{
 					out.write(NEWLINE_BYTES, 0, nlmatch);
 					out.write(boundaryBytes, 0, match);
+					if (match > 1)
+						Common.noop();
 					match = 0;
 					nlmatch = 0;
 					out.write(b);

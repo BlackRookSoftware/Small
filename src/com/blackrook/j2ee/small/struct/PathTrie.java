@@ -11,6 +11,8 @@ import com.blackrook.commons.hash.HashMap;
  */
 public class PathTrie<V extends Object> implements Sizable
 {
+	private static final String[] NO_STRINGS = new String[0];
+	
 	/** Root Node. */
 	private Node<V> root;
 	/** Current size. */
@@ -34,6 +36,8 @@ public class PathTrie<V extends Object> implements Sizable
 	{
 		key = key.startsWith("/") ? key.substring(1) : key;
 		key = key.endsWith("/") ? key.substring(0, key.length() - 1) : key;
+		if (key.length() == 0)
+			return NO_STRINGS;
 		return key.split("(\\/)+");
 	}
 	
@@ -62,7 +66,7 @@ public class PathTrie<V extends Object> implements Sizable
 		int offset = 0;
 		
 		Node<V> current = root;
-		V lastEligible = null;
+		V lastEligible = root.value;
 		int lastOffset = 0;
 		while (segindex < segments.length && current != null && current.hasEdges())
 		{
@@ -71,7 +75,7 @@ public class PathTrie<V extends Object> implements Sizable
 			if (current != null && current.value != null)
 			{
 				lastEligible = current.value;
-				lastOffset = offset + 1;
+				lastOffset = offset;
 			}
 			segindex++;
 		}

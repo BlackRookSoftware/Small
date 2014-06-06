@@ -160,6 +160,81 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
+	 * Trims slashes from the ends.
+	 */
+	public static String trimSlashes(String str)
+	{
+		return removeBeginningSlash(removeEndingSlash(str));
+	}
+	
+	/**
+	 * Adds a beginning slash to the string, if no beginning slash exists.
+	 * @param str the string.
+	 * @return the resulting string with a beginning slash.
+	 */
+	public static String addBeginningSlash(String str)
+	{
+		if (Common.isEmpty(str))
+			return "/";
+		
+		return str.charAt(0) == '/' ? str : '/' + str;
+	}
+	
+	/**
+	 * Removes the beginning slashes, if any, from a string.
+	 * @param str the string.
+	 * @return the resulting string without a beginning slash.
+	 */
+	public static String removeBeginningSlash(String str)
+	{
+		if (Common.isEmpty(str))
+			return str;
+		
+		int i = 0;
+		while (i < str.length() && str.charAt(i) == '/')
+			i++;
+		return i > 0 ? str.substring(i) : str;
+	}
+	
+	/**
+	 * Removes the ending slashes, if any, from a string.
+	 * @param str the string.
+	 * @return the resulting string without an ending slash.
+	 */
+	public static String removeEndingSlash(String str)
+	{
+		if (Common.isEmpty(str))
+			return str;
+		
+		int i = str.length();
+		while (i > 0 && str.charAt(i - 1) == '/')
+			i--;
+		return i > 0 ? str.substring(0, i) : str;
+	}
+	
+	/**
+	 * Removes the path extension, or rather, the part after the last dot in a path.
+	 * @param path the path string.
+	 * @return the resulting string without an extension.
+	 */
+	public static String removeExtension(String path)
+	{
+		if (Common.isEmpty(path))
+			return path;
+		
+		int i = path.length();
+		while (i > 0 && path.charAt(i - 1) != '.' && path.charAt(i - 1) != '/')
+			i--;
+		
+		if (i == 0)
+			return path;
+		else if (path.charAt(i - 1) == '.')
+			return path.substring(0, i - 1);
+		else
+			return path;
+	}
+	
+	/**
 	 * Gets the current connection's session id.
 	 * Meant to be a convenience method. 
 	 * @param request servlet request object.

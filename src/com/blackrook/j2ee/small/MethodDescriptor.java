@@ -18,6 +18,7 @@ import com.blackrook.j2ee.small.annotation.ParameterMap;
 import com.blackrook.j2ee.small.annotation.Path;
 import com.blackrook.j2ee.small.annotation.PathFile;
 import com.blackrook.j2ee.small.annotation.PathQuery;
+import com.blackrook.j2ee.small.annotation.PathRemainder;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
 
@@ -35,6 +36,7 @@ public class MethodDescriptor
 		PATH,
 		PATH_FILE,
 		PATH_QUERY,
+		PATH_REMAINDER,
 		SERVLET_REQUEST,
 		SERVLET_RESPONSE,
 		SESSION,
@@ -130,6 +132,8 @@ public class MethodDescriptor
 					source = Source.PATH_FILE;
 				else if (annotation.annotationType() == PathQuery.class)
 					source = Source.PATH_QUERY;
+				else if (annotation.annotationType() == PathRemainder.class)
+					source = Source.PATH_REMAINDER;
 				else if (annotation.annotationType() == Content.class)
 					source = Source.CONTENT;
 				else if (annotation.annotationType() == ParameterMap.class)

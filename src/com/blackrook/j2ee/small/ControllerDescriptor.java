@@ -64,7 +64,7 @@ class ControllerDescriptor implements ComponentDescriptor
 				if (Common.isEmpty(anno.method()))
 					continue;
 				
-				String pagename = anno.value();
+				String pagename = SmallUtil.trimSlashes(anno.value());
 				
 				ControllerMethodDescriptor md = new ControllerMethodDescriptor(m);
 				
@@ -104,7 +104,7 @@ class ControllerDescriptor implements ComponentDescriptor
 
 		String packageName = clazz.getPackage().getName();
 		do {
-			try{Class.forName(packageName);}catch(Throwable t){}
+			try{ Class.forName(packageName); } catch (Throwable t) {}
 			Package p = Package.getPackage(packageName);
 			if (p != null)
 			{
@@ -158,18 +158,6 @@ class ControllerDescriptor implements ComponentDescriptor
 	}
 	
 	/**
-	 * Get the base page name parsed out of the page.
-	 */
-	private final String getPageNoExtension(String page)
-	{
-		int endIndex = page.indexOf('.');
-		if (endIndex >= 0)
-			return page.substring(0, endIndex);
-		else
-			return page; 
-	}
-
-	/**
 	 * Returns the class of the view resolver that this controller uses.
 	 */
 	public Class<? extends ViewResolver> getViewResolverClass()
@@ -188,7 +176,7 @@ class ControllerDescriptor implements ComponentDescriptor
 		if (map == null)
 			return defaultMethodMap.get(rm);
 		
-		ControllerMethodDescriptor out = map.get(getPageNoExtension(pageString));
+		ControllerMethodDescriptor out = map.get(SmallUtil.removeExtension(pageString));
 		if (out == null)
 			return defaultMethodMap.get(rm);
 		

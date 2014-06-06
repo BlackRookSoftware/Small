@@ -131,7 +131,7 @@ public final class SmallDispatcher extends HttpServlet
 	 */
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
-		String path = getPath(request);
+		String path = SmallUtil.removeEndingSlash(request.getRequestURI());
 		Result<Class<?>> controllerClass = SmallToolkit.INSTANCE.getControllerClassByPath(path);
 		if (controllerClass.getValue() == null)
 		{
@@ -144,7 +144,7 @@ public final class SmallDispatcher extends HttpServlet
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
 		{
-			String page = path.substring(controllerClass.getOffset()) + getPage(request);
+			String pageRemainder = path.substring(controllerClass.getOffset());
 
 			// get cookies from request.
 			HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
@@ -152,24 +152,24 @@ public final class SmallDispatcher extends HttpServlet
 			if (cookies != null) for (Cookie c : cookies)
 				cookieMap.put(c.getName(), c);
 			
-			ControllerMethodDescriptor cmd = entry.getDescriptorUsingPath(requestMethod, page);
+			ControllerMethodDescriptor cmd = entry.getDescriptorUsingPath(requestMethod, SmallUtil.removeBeginningSlash(pageRemainder));
 			if (cmd != null)
 			{
 				for (Class<?> filterClass : entry.getFilterChain())
 				{
 					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
-					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
+					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), pageRemainder, cookieMap, multiformPartMap))
 						return;
 				}
 
 				for (Class<?> filterClass : cmd.getFilterChain())
 				{
 					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
-					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), cookieMap, multiformPartMap))
+					if (!handleFilterMethod(fd, requestMethod, request, response, fd.getMethodDescriptor(), fd.getInstance(), pageRemainder, cookieMap, multiformPartMap))
 						return;
 				}
 
-				handleControllerMethod(entry, requestMethod, request, response, cmd, entry.getInstance(), cookieMap, multiformPartMap);
+				handleControllerMethod(entry, requestMethod, request, response, cmd, entry.getInstance(), pageRemainder, cookieMap, multiformPartMap);
 			}
 			else
 				SmallUtil.sendCode(response, 404, "Not found.");
@@ -183,13 +183,13 @@ public final class SmallDispatcher extends HttpServlet
 	private boolean handleFilterMethod(
 		FilterDescriptor entry, 
 		RequestMethod requestMethod, HttpServletRequest request, HttpServletResponse response, 
-		MethodDescriptor descriptor, Object instance, 
+		MethodDescriptor descriptor, Object instance, String pathRemainder,
 		HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
 	)
 	{
 		Object retval = null;
 		try {
-			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, cookieMap, multiformPartMap);
+			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, pathRemainder, cookieMap, multiformPartMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Filter method.", e);
 		}
@@ -203,13 +203,13 @@ public final class SmallDispatcher extends HttpServlet
 	private void handleControllerMethod(
 		ControllerDescriptor entry, 
 		RequestMethod requestMethod, HttpServletRequest request, HttpServletResponse response, 
-		ControllerMethodDescriptor descriptor, Object instance, 
+		ControllerMethodDescriptor descriptor, Object instance, String pathRemainder,
 		HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
 	)
 	{
 		Object retval = null;
 		try {
-			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, cookieMap, multiformPartMap);
+			retval = invokeEntryMethod(entry, requestMethod, request, response, descriptor, instance, pathRemainder, cookieMap, multiformPartMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Controller method.", e);
 		}
@@ -335,7 +335,7 @@ public final class SmallDispatcher extends HttpServlet
 		ComponentDescriptor entry, 
 		RequestMethod requestMethod, HttpServletRequest request,
 		HttpServletResponse response, MethodDescriptor descriptor, 
-		Object instance, HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
+		Object instance, String pathRemainder, HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap
 	)
 	{
 		
@@ -361,6 +361,9 @@ public final class SmallDispatcher extends HttpServlet
 					break;
 				case PATH_QUERY:
 					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getQueryString(), pinfo.getType());
+					break;
+				case PATH_REMAINDER:
+					invokeParams[i] = Reflect.createForType("Parameter " + i, pathRemainder, pinfo.getType());
 					break;
 				case SERVLET_REQUEST:
 					invokeParams[i] = request;
@@ -452,7 +455,7 @@ public final class SmallDispatcher extends HttpServlet
 					MethodDescriptor attribDescriptor = entry.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = invokeEntryMethod(entry, requestMethod, request, response, attribDescriptor, instance, cookieMap, multiformPartMap);
+						Object attrib = invokeEntryMethod(entry, requestMethod, request, response, attribDescriptor, instance, pathRemainder, cookieMap, multiformPartMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -488,7 +491,7 @@ public final class SmallDispatcher extends HttpServlet
 					MethodDescriptor modelDescriptor = entry.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = invokeEntryMethod(entry, requestMethod, request, response, modelDescriptor, instance, cookieMap, multiformPartMap);
+						Object model = invokeEntryMethod(entry, requestMethod, request, response, modelDescriptor, instance, pathRemainder, cookieMap, multiformPartMap);
 						SmallUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
@@ -522,20 +525,6 @@ public final class SmallDispatcher extends HttpServlet
 		}
 		
 		return Reflect.invokeBlind(descriptor.getMethod(), instance, invokeParams);
-	}
-
-	/**
-	 * Get the base path (no file) parsed out of the request URI.
-	 */
-	private String getPath(HttpServletRequest request)
-	{
-		String requestURI = request.getRequestURI();
-		int contextPathLen = request.getContextPath().length();
-		int slashIndex = requestURI.lastIndexOf('/');
-		if (slashIndex >= 0)
-			return requestURI.substring(contextPathLen, slashIndex + 1);
-		else
-			return requestURI.substring(contextPathLen); 
 	}
 
 	/**
