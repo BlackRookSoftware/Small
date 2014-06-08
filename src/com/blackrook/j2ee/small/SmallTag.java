@@ -49,7 +49,7 @@ public abstract class SmallTag extends BodyTagSupport
 		return onStart(
 			(HttpServletRequest)pageContext.getRequest(),
 			(HttpServletResponse)pageContext.getResponse()
-			).eval;
+		).eval;
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public abstract class SmallTag extends BodyTagSupport
 		return onEnd(
 			(HttpServletRequest)pageContext.getRequest(),
 			(HttpServletResponse)pageContext.getResponse()
-			).eval;
+		).eval;
 	}
 	
 	/**
@@ -122,18 +122,20 @@ public abstract class SmallTag extends BodyTagSupport
 	/**
 	 * Called at the start of the tag evaluation.
 	 * Implementors are encouraged to override this method.
+	 * By default, returns {@link StartResponse#EVALUATE_BODY}.
 	 * @param request the servlet request.
 	 * @param response the servlet response.
 	 * @return a {@link StartResponse}.  
 	 */
 	public StartResponse onStart(HttpServletRequest request, HttpServletResponse response)
 	{
-		return StartResponse.SKIP_BODY;
+		return StartResponse.EVALUATE_BODY;
 	}
 
 	/**
 	 * Called at the end of the tag evaluation.
 	 * Implementors are encouraged to override this method.
+	 * By default, returns {@link EndResponse#EVALUATE_PAGE}.
 	 * @param request the servlet request.
 	 * @param response the servlet response.
 	 * @return an {@link EndResponse}.  

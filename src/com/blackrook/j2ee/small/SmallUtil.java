@@ -25,7 +25,6 @@ import com.blackrook.commons.TypeProfile.MethodSignature;
 import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
-import com.blackrook.j2ee.small.types.MIMETypes;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 import com.blackrook.lang.util.EntityTables;

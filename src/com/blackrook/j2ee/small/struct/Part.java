@@ -2,6 +2,8 @@ package com.blackrook.j2ee.small.struct;
 
 import java.io.File;
 
+import com.blackrook.lang.json.annotation.JSONIgnore;
+
 /**
  * Multipart part that is part of a multiform request.
  * @author Matthew Tropiano
@@ -9,15 +11,15 @@ import java.io.File;
 public class Part
 {
 	/** Part name. */
-	String name;
+	private String name;
 	/** Part filename, if file. */
-	String fileName;
+	private String fileName;
 	/** Part file handle. */
-	File file;
+	private File file;
 	/** Part content type. */
-	String contentType;
+	private String contentType;
 	/** Part value. */
-	String value;
+	private String value;
 
 	public Part() {}
 	
@@ -56,6 +58,7 @@ public class Part
 	 * If you need to keep this file around, it should be copied to another file!
 	 * @see #isFile()
 	 */
+	@JSONIgnore
 	public File getFile()
 	{
 		return file;

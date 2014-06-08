@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -467,7 +468,24 @@ public final class SmallDispatcher extends HttpServlet
 					if (Map.class.isAssignableFrom(pinfo.getType()))
 					{
 						Map<String, Object> map = new java.util.HashMap<String, Object>();
-						for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
+						if (multiformPartMap != null)
+						{
+							Iterator<String> it = multiformPartMap.keyIterator();
+							while (it.hasNext())
+							{
+								String pname = it.next();
+								Queue<Part> partlist = multiformPartMap.get(pname);
+								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
+								int x = 0;
+								for (Part p : partlist)
+									vout[x++] = getPartData(p, Part.class);
+								if (vout.length == 1)
+									map.put(pname, vout[0]);
+								else
+									map.put(pname, vout);
+							}
+						}
+						else for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
 						{
 							String[] vals = paramEntry.getValue();
 							map.put(paramEntry.getKey(), vals.length == 1 ? vals[0] : Arrays.copyOf(vals, vals.length));
@@ -477,6 +495,23 @@ public final class SmallDispatcher extends HttpServlet
 					else if (AbstractMap.class.isAssignableFrom(pinfo.getType()))
 					{
 						AbstractMap<String, Object> map = new HashMap<String, Object>();
+						if (multiformPartMap != null)
+						{
+							Iterator<String> it = multiformPartMap.keyIterator();
+							while (it.hasNext())
+							{
+								String pname = it.next();
+								Queue<Part> partlist = multiformPartMap.get(pname);
+								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
+								int x = 0;
+								for (Part p : partlist)
+									vout[x++] = getPartData(p, Part.class);
+								if (vout.length == 1)
+									map.put(pname, vout[0]);
+								else
+									map.put(pname, vout);
+							}
+						}
 						for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
 						{
 							String[] vals = paramEntry.getValue();
@@ -498,11 +533,12 @@ public final class SmallDispatcher extends HttpServlet
 					{
 						if (Reflect.isArray(pinfo.getType()))
 						{
+							Class<?> actualType = Reflect.getArrayType(pinfo.getType());
 							Queue<Part> partlist = multiformPartMap.get(parameterName);
-							Object[] vout = (Object[])Array.newInstance(pinfo.getType(), partlist.size());
+							Object[] vout = (Object[])Array.newInstance(actualType, partlist.size());
 							int x = 0;
 							for (Part p : partlist)
-								vout[x++] = getPartData(p, pinfo.getType());
+								vout[x++] = getPartData(p, actualType);
 							value = vout;
 						}
 						else
