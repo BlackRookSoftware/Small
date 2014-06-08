@@ -7,7 +7,10 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -20,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import com.blackrook.commons.AbstractMap;
+import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
@@ -29,11 +33,12 @@ import com.blackrook.j2ee.small.MethodDescriptor.ParameterDescriptor;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
-import com.blackrook.j2ee.small.lang.RFCParser;
-import com.blackrook.j2ee.small.multipart.MultipartFormDataParser;
-import com.blackrook.j2ee.small.multipart.MultipartParser;
-import com.blackrook.j2ee.small.multipart.MultipartParserException;
-import com.blackrook.j2ee.small.multipart.Part;
+import com.blackrook.j2ee.small.parser.MultipartParser;
+import com.blackrook.j2ee.small.parser.StringParser;
+import com.blackrook.j2ee.small.parser.RFCParser;
+import com.blackrook.j2ee.small.parser.multipart.MultipartFormDataParser;
+import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
+import com.blackrook.j2ee.small.struct.Part;
 import com.blackrook.j2ee.small.struct.PathTrie.Result;
 import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
@@ -101,6 +106,8 @@ public final class SmallDispatcher extends HttpServlet
 					sendError(response, 400, "The encoding type for the POST request is not supported.");
 				} catch (MultipartParserException e) {
 					sendError(response, 500, "The server could not parse the multiform request. " + e.getMessage());
+				} catch (IOException e) {
+					sendError(response, 500, "The server could not read the request. " + e.getMessage());
 				}
 				
 				List<Part> parts = parser.getPartList();
@@ -220,111 +227,118 @@ public final class SmallDispatcher extends HttpServlet
 			response.setHeader("Pragma", "no-cache");
 		}
 		
-		if (descriptor.getOutputType() != null) switch (descriptor.getOutputType())
+		if (descriptor.getOutputType() != null)
 		{
-			case VIEW:
+			String fname = null;
+			switch (descriptor.getOutputType())
 			{
-				String viewKey = String.valueOf(retval);
-				if (viewKey.startsWith(PREFIX_REDIRECT))
-					SmallUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
-				else
-					SmallUtil.sendToView(request, response, SmallToolkit.INSTANCE.getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
-				break;
-			}
-			case CONTENT:
-			{
-				if (File.class.isAssignableFrom(descriptor.getType()))
+				case VIEW:
 				{
-					File outfile = (File)retval;
-					if (outfile == null || !outfile.exists())
-						SmallUtil.sendCode(response, 404, "File not found.");
+					String viewKey = String.valueOf(retval);
+					if (viewKey.startsWith(PREFIX_REDIRECT))
+						SmallUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
 					else
-						SmallUtil.sendFileContents(response, outfile);
+						SmallUtil.sendToView(request, response, SmallToolkit.INSTANCE.getViewResolver(entry.getViewResolverClass()).resolveView(viewKey));
+					break;
 				}
-				else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
-					SmallUtil.sendXML(response, (XMLStruct)retval);
-				else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
-					SmallUtil.sendJSON(response, (JSONObject)retval);
-				else if (String.class.isAssignableFrom(descriptor.getType()))
+				case ATTACHMENT:
+					fname = getPage(request);
+					// fall through.
+				case CONTENT:
 				{
-					byte[] data =  getStringData(((String)retval));
-					SmallUtil.sendData(response, "text/plain; charset=utf-8", null, new ByteArrayInputStream(data), data.length);
-				}
-				else if (byte[].class.isAssignableFrom(descriptor.getType()))
-				{
-					byte[] data = (byte[])retval;
-					SmallUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
-				}
-				else
-					SmallUtil.sendJSON(response, retval);
-				break;
-			}
-			case ATTACHMENT:
-			{
-				String fname = getPage(request);
-				
-				// File output.
-				if (File.class.isAssignableFrom(descriptor.getType()))
-				{
-					File outfile = (File)retval;
-					if (outfile == null || !outfile.exists())
-						SmallUtil.sendCode(response, 404, "File not found.");
+					// File output.
+					if (File.class.isAssignableFrom(descriptor.getType()))
+					{
+						File outfile = (File)retval;
+						if (outfile == null || !outfile.exists())
+							SmallUtil.sendCode(response, 404, "File not found.");
+						else if (Common.isEmpty(descriptor.getMimeType()))
+							SmallUtil.sendFileContents(response, descriptor.getMimeType(), outfile);
+						else
+							SmallUtil.sendFileContents(response, outfile);
+					}
+					// XML output.
+					else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
+					{
+						byte[] data;
+						try {
+							StringWriter sw = new StringWriter();
+							(new XMLWriter()).writeXML((XMLStruct)retval, sw);
+							data = getStringData(request, sw.toString());
+						} catch (IOException e) {
+							throw new SmallFrameworkException(e);
+						}
+						SmallUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
+					}
+					// JSON output.
+					else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
+					{
+						byte[] data;
+						try {
+							data = getStringData(request, JSONWriter.writeJSONString((JSONObject)retval));
+						} catch (IOException e) {
+							throw new SmallFrameworkException(e);
+						}
+						SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+					}
+					// StringBuffer data output.
+					else if (StringBuffer.class.isAssignableFrom(descriptor.getType()))
+					{
+						sendStringData(request, response, descriptor.getMimeType(), fname, ((StringBuffer)retval).toString());
+					}
+					// StringBuilder data output.
+					else if (StringBuilder.class.isAssignableFrom(descriptor.getType()))
+					{
+						sendStringData(request, response, descriptor.getMimeType(), fname, ((StringBuilder)retval).toString());
+					}
+					// String data output.
+					else if (String.class.isAssignableFrom(descriptor.getType()))
+					{
+						sendStringData(request, response, descriptor.getMimeType(), fname, (String)retval);
+					}
+					// binary output.
+					else if (byte[].class.isAssignableFrom(descriptor.getType()))
+					{
+						byte[] data = (byte[])retval;
+						if (Common.isEmpty(descriptor.getMimeType()))
+							SmallUtil.sendData(response, descriptor.getMimeType(), null, new ByteArrayInputStream(data), data.length);
+						else
+							SmallUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
+					}
+					// Object JSON output.
 					else
-						SmallUtil.sendFile(response, outfile);
-				}
-				// XML output.
-				else if (XMLStruct.class.isAssignableFrom(descriptor.getType()))
-				{
-					byte[] data;
-					try {
-						StringWriter sw = new StringWriter();
-						(new XMLWriter()).writeXML((XMLStruct)retval, sw);
-						data = getStringData(sw.toString());
-					} catch (IOException e) {
-						throw new SmallFrameworkException(e);
+					{
+						byte[] data;
+						try {
+							data = getStringData(request, JSONWriter.writeJSONString(retval));
+						} catch (IOException e) {
+							throw new SmallFrameworkException(e);
+						}
+						SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
 					}
-					SmallUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
+					break;
 				}
-				// String data output.
-				else if (String.class.isAssignableFrom(descriptor.getType()))
-				{
-					byte[] data = getStringData(((String)retval));
-					SmallUtil.sendData(response, "text/plain; charset=utf-8", fname, new ByteArrayInputStream(data), data.length);
-				}
-				// JSON output.
-				else if (JSONObject.class.isAssignableFrom(descriptor.getType()))
-				{
-					byte[] data;
-					try {
-						data = getStringData(JSONWriter.writeJSONString((JSONObject)retval));
-					} catch (IOException e) {
-						throw new SmallFrameworkException(e);
-					}
-					SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
-				}
-				// binary output.
-				else if (byte[].class.isAssignableFrom(descriptor.getType()))
-				{
-					byte[] data = (byte[])retval;
-					SmallUtil.sendData(response, "application/octet-stream", fname, new ByteArrayInputStream(data), data.length);
-				}
-				// Object JSON output.
-				else
-				{
-					byte[] data;
-					try {
-						data = getStringData(JSONWriter.writeJSONString(retval));
-					} catch (IOException e) {
-						throw new SmallFrameworkException(e);
-					}
-					SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
-				}
-				break;
+				default:
+					// Do nothing.
+					break;
 			}
-			default:
-				// Do nothing.
-				break;
 		}
+	}
+
+	/**
+	 * Writes string data to the response.
+	 * @param response the response object.
+	 * @param descriptor the method descriptor.
+	 * @param fileName the file name.
+	 * @param data the string data to send.
+	 */
+	private void sendStringData(HttpServletRequest request, HttpServletResponse response, String mimeType, String fileName, String data)
+	{
+		byte[] bytedata = getStringData(request, data);
+		if (Common.isEmpty(mimeType))
+			SmallUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
+		else
+			SmallUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 	}
 
 	/**
@@ -380,10 +394,64 @@ public final class SmallDispatcher extends HttpServlet
 				case METHOD_TYPE:
 					invokeParams[i] = requestMethod;
 					break;
-				case HEADER_VALUE:
+				case HEADER:
 				{
 					String headerName = pinfo.getName();
-					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
+					if (StringParser.class.isAssignableFrom(pinfo.getType()))
+					{
+						try {
+							Constructor<?> constructor = pinfo.getType().getConstructor(String.class);
+							invokeParams[i] = constructor.newInstance(request.getHeader(headerName));
+						} catch (IllegalArgumentException e) {
+							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
+						} catch (InstantiationException e) {
+							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
+						} catch (IllegalAccessException e) {
+							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
+						} catch (InvocationTargetException e) {
+							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
+						} catch (SecurityException e) {
+							throw new SmallFrameworkException("Target class does not have a public constructor that takes a String as its sole parameter.");
+						} catch (NoSuchMethodException e) {
+							throw new SmallFrameworkException("Target class does not have a public constructor that takes a String as its sole parameter.");
+						}
+					}
+					else
+						invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
+					break;
+				}
+				case HEADER_MAP:
+				{
+					if (Map.class.isAssignableFrom(pinfo.getType()))
+					{
+						Map<String, String> map = new java.util.HashMap<String, String>();
+						
+						Enumeration<String> strenum = request.getHeaderNames();
+						while (strenum.hasMoreElements())
+						{
+							String header = strenum.nextElement();
+							map.put(header, request.getHeader(header));
+						}
+						
+						invokeParams[i] = map;
+					}
+					else if (AbstractMap.class.isAssignableFrom(pinfo.getType()))
+					{
+						AbstractMap<String, String> map = new HashMap<String, String>();
+
+						Enumeration<String> strenum = request.getHeaderNames();
+						while (strenum.hasMoreElements())
+						{
+							String header = strenum.nextElement();
+							map.put(header, request.getHeader(header));
+						}
+						
+						invokeParams[i] = map;
+					}
+					else
+					{
+						throw new SmallFrameworkException("Parameter " + i + " is not a type that can store a key-value structure.");
+					}
 					break;
 				}
 				case COOKIE:
@@ -588,7 +656,7 @@ public final class SmallDispatcher extends HttpServlet
 	/**
 	 * Converts a string to byte data.
 	 */
-	private byte[] getStringData(String data)
+	private byte[] getStringData(HttpServletRequest request, String data)
 	{
 		try {
 			return data.getBytes("UTF-8");
@@ -761,23 +829,4 @@ public final class SmallDispatcher extends HttpServlet
 		throw new SmallFrameworkException(t);
 	}
 
-	/**
-	 * Initializes a filter.
-	private void initializeFilter(XMLStruct struct)
-	{
-		String pkg = struct.getAttribute(XML_FILTERPATH_PACKAGE);
-		String classString = struct.getAttribute(XML_FILTERPATH_CLASSES);
-	
-		if (pkg == null)
-			throw new SmallFrameworkException("Filter in declaration does not declare a package.");
-		if (classString == null)
-			throw new SmallFrameworkException("Filter for package \""+pkg+"\" does not declare a class.");
-		
-		String[] classes = classString.split("(\\s|\\,)+");
-		
-		filterEntries.put(pkg, classes);
-	}
-	 */
-	
-	
 }

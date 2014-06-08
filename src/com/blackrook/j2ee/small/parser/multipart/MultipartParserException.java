@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.multipart;
+package com.blackrook.j2ee.small.parser.multipart;
 
 /**
  * Exception thrown when a multiform request is not parsed properly.

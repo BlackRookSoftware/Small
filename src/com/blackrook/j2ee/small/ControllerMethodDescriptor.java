@@ -3,6 +3,7 @@ package com.blackrook.j2ee.small;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import com.blackrook.commons.Common;
 import com.blackrook.j2ee.small.annotation.Attachment;
 import com.blackrook.j2ee.small.annotation.Content;
 import com.blackrook.j2ee.small.annotation.ControllerEntry;
@@ -29,6 +30,8 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 
 	/** Output content. */
 	private Output outputType;
+	/** Forced MIME type. */
+	private String mimeType;
 	/** No cache? */
 	private boolean noCache;
 	/** Filter class list. */
@@ -53,15 +56,19 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 			
 			if (method.isAnnotationPresent(Content.class))
 			{
+				Content c = method.getAnnotation(Content.class);
 				if (type == Void.class || type == Void.TYPE)
 					throw new SmallFrameworkSetupException("Entry methods that are annotated @Content cannot return void.");
 				this.outputType = Output.CONTENT;
+				this.mimeType = Common.isEmpty(c.value()) ? null : c.value();
 			}
 			else if (method.isAnnotationPresent(Attachment.class))
 			{
+				Attachment a = method.getAnnotation(Attachment.class);
 				if (type == Void.class || type == Void.TYPE)
 					throw new SmallFrameworkSetupException("Entry methods that are annotated @Attachment cannot return void.");
 				this.outputType = Output.ATTACHMENT;
+				this.mimeType = Common.isEmpty(a.value()) ? null : a.value();
 			}
 			else if (method.isAnnotationPresent(View.class))
 			{
@@ -75,6 +82,15 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 		
 		// Search backwards for relevant filters.
 		
+	}
+
+	/**
+	 * Returns the forced MIME type to use.
+	 * If null, the dispatcher decides it.
+	 */
+	public String getMimeType()
+	{
+		return mimeType;
 	}
 
 	/**

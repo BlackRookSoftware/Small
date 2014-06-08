@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.multipart;
+package com.blackrook.j2ee.small.parser.multipart;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -7,9 +7,10 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.commons.Common;
+import com.blackrook.j2ee.small.parser.MultipartParser;
+import com.blackrook.j2ee.small.struct.Part;
 
 /**
  * Parser for multipart form requests.
@@ -27,7 +28,7 @@ public class MultipartFormDataParser extends MultipartParser
 	}
 
 	@Override
-	protected void parseData(HttpServletRequest request, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
+	protected void parseData(ServletInputStream sis, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
 		throws MultipartParserException, UnsupportedEncodingException
 	{
 		final int STATE_HEADER = 1;
@@ -39,10 +40,8 @@ public class MultipartFormDataParser extends MultipartParser
 		Part currentPart = null;
 		
 		OutputStream out = null;
-		ServletInputStream sis = null;
 		
 		try {
-			sis = request.getInputStream();
 			String line = null;
 
 			currentPart = new Part();
@@ -57,18 +56,20 @@ public class MultipartFormDataParser extends MultipartParser
 				{
 					// Header Parsing.
 					case STATE_HEADER:
+						
 						line = scanLine(sis);
+						
 						if (line.startsWith(HEADER_DISPOSITION))
 							parseDisposition(line, currentPart);
 						else if (line.startsWith(HEADER_TYPE))
 							parseContentType(line, currentPart);
 						else if (line.length() == 0)
 						{
-							if (currentPart.fileName != null)
+							if (currentPart.getFileName() != null)
 							{
 								state = STATE_DATA;
-								outFile = generateTempFile(currentPart.fileName, outputDir);
-								currentPart.file = outFile;
+								outFile = generateTempFile(currentPart.getFileName(), outputDir);
+								currentPart.setFile(outFile);
 								out = new FileOutputStream(outFile);
 							}
 							else
@@ -78,7 +79,7 @@ public class MultipartFormDataParser extends MultipartParser
 									throw new MultipartParserException("Unexpected end of multipart form. Submission is malformed.");
 
 								boolean loop = true;
-								currentPart.value = line;
+								currentPart.setValue(line);
 								while (loop)
 								{
 									line = scanLine(sis);
@@ -95,7 +96,7 @@ public class MultipartFormDataParser extends MultipartParser
 										loop = false;
 									}
 									else
-										currentPart.value += "\n" + line;
+										currentPart.setValue(currentPart.getValue() + "\r\n" + line);
 								}
 							}
 						}

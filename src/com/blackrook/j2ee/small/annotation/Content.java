@@ -35,10 +35,12 @@ import com.blackrook.lang.xml.XMLStruct;
  * 		</ul>
  * </li>
  * <li>If return type is an {@link XMLStruct}, XML is sent back. Content type is <code>application/xml</code>.</li>
- * <li>If return type is a {@link String}, plain text is sent back. Content type is <code>text/plain</code>.</li>
+ * <li>If return type is a {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code>.</li>
  * <li>If return type is byte[], binary data is sent back. Content type is <code>application/octet-stream</code>.</li>
  * <li>If return type is {@link JSONObject}, {@link Object}, or anything else, it is converted to JSON and sent back. Content type is <code>application/json</code>.</li>
  * </ul>
+ * If a String value is given on this annotation, it is interpreted as the forced MIME-Type to use, but only for File, String and binary output.
+ * 
  * @author Matthew Tropiano
  * @see Attachment
  * @see View
@@ -47,4 +49,6 @@ import com.blackrook.lang.xml.XMLStruct;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Content
 {
+	/** Forced MIME-Type. */
+	String value() default "";
 }

@@ -12,6 +12,7 @@ import com.blackrook.j2ee.small.annotation.Attribute;
 import com.blackrook.j2ee.small.annotation.Content;
 import com.blackrook.j2ee.small.annotation.CookieParameter;
 import com.blackrook.j2ee.small.annotation.Header;
+import com.blackrook.j2ee.small.annotation.HeaderMap;
 import com.blackrook.j2ee.small.annotation.Model;
 import com.blackrook.j2ee.small.annotation.Parameter;
 import com.blackrook.j2ee.small.annotation.ParameterMap;
@@ -41,7 +42,8 @@ public class MethodDescriptor
 		SERVLET_RESPONSE,
 		SESSION,
 		SERVLET_CONTEXT,
-		HEADER_VALUE,
+		HEADER,
+		HEADER_MAP,
 		METHOD_TYPE,
 		COOKIE,
 		ATTRIBUTE,
@@ -138,9 +140,11 @@ public class MethodDescriptor
 					source = Source.CONTENT;
 				else if (annotation.annotationType() == ParameterMap.class)
 					source = Source.PARAMETER_MAP;
+				else if (annotation.annotationType() == HeaderMap.class)
+					source = Source.HEADER_MAP;
 				else if (annotation.annotationType() == Header.class)
 				{
-					source = Source.HEADER_VALUE;
+					source = Source.HEADER;
 					Header p = (Header)annotation;
 					name = p.value();
 				}

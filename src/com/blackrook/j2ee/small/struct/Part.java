@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.multipart;
+package com.blackrook.j2ee.small.struct;
 
 import java.io.File;
 
@@ -19,7 +19,7 @@ public class Part
 	/** Part value. */
 	String value;
 
-	Part() {}
+	public Part() {}
 	
 	/**
 	 * Gets the name of this part (parameter name).
@@ -76,6 +76,46 @@ public class Part
 	public String getValue()
 	{
 		return value;
+	}
+
+	/**
+	 * Sets the name of this Part.
+	 */
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+
+	/**
+	 * Sets the file name of this Part.
+	 */
+	public void setFileName(String fileName)
+	{
+		this.fileName = fileName;
+	}
+
+	/**
+	 * Sets the file on this part.
+	 */
+	public void setFile(File file)
+	{
+		this.file = file;
+	}
+
+	/**
+	 * Sets the content type on this part.
+	 */
+	public void setContentType(String contentType)
+	{
+		this.contentType = contentType;
+	}
+
+	/**
+	 * Sets the value of this part, if not a file.
+	 */
+	public void setValue(String value)
+	{
+		this.value = value;
 	}
 
 }

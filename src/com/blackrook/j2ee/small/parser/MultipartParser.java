@@ -1,8 +1,8 @@
-package com.blackrook.j2ee.small.multipart;
+package com.blackrook.j2ee.small.parser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
@@ -13,17 +13,17 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.small.lang.RFCParser;
+import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
+import com.blackrook.j2ee.small.struct.Part;
 
 /**
  * Abstract Multipart parser.
  * @author Matthew Tropiano
- * FIXME Kinda broken. Fix!
  */
 public abstract class MultipartParser implements Iterable<Part>
 {
 	/** Newline. */
-	protected final String NEWLINE = System.getProperty("line.separator");
+	protected final String NEWLINE = "\r\n";
 	/** Newline as bytes. */
 	protected final byte[] NEWLINE_BYTES = NEWLINE.getBytes();
 	
@@ -45,8 +45,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	
 	/** List of parsed parts. */
 	private List<Part> partList;
-	
-	/** Byte buffer. */
+	/** Buffer */
 	private byte[] buffer;
 	
 	/**
@@ -57,7 +56,7 @@ public abstract class MultipartParser implements Iterable<Part>
 		this.random = new Random();
 		this.partList = new List<Part>();
 		this.charset = "ISO-8859-1";
-		this.buffer = new byte[65536]; 
+		this.buffer = new byte[65536];
 	}
 
 	/**
@@ -74,7 +73,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @param request the servlet request to parse. 
 	 * @param outputDir the temporary directory for read files.
 	 */
-	public void parse(HttpServletRequest request, File outputDir) throws MultipartParserException, UnsupportedEncodingException
+	public void parse(HttpServletRequest request, File outputDir) throws MultipartParserException, IOException
 	{
 		String contentType = request.getContentType();
 		RFCParser parser = new RFCParser(contentType);
@@ -91,7 +90,7 @@ public abstract class MultipartParser implements Iterable<Part>
 		String endBoundary = startBoundary + "--";
 		byte[] boundaryBytes = startBoundary.getBytes(charset);
 
-		parseData(request, outputDir, startBoundary, endBoundary, boundaryBytes);
+		parseData(request.getInputStream(), outputDir, startBoundary, endBoundary, boundaryBytes);
 	}
 	
 	/**
@@ -102,7 +101,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @param endBoudary
 	 * @param startBoundaryBytes
 	 */
-	protected abstract void parseData(HttpServletRequest request, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
+	protected abstract void parseData(ServletInputStream inStream, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
 		throws MultipartParserException, UnsupportedEncodingException;
 	
 	// Parses the disposition header.
@@ -120,10 +119,10 @@ public abstract class MultipartParser implements Iterable<Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.name = Common.urlUnescape(value.substring(1, value.length() - 1));
+						part.setName(Common.urlUnescape(value.substring(1, value.length() - 1)));
 				}
 				else
-					part.name = value;
+					part.setName(value);
 			}
 			else if (token.startsWith("filename="))
 			{
@@ -133,10 +132,10 @@ public abstract class MultipartParser implements Iterable<Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.fileName = Common.urlUnescape(value.substring(1, value.length() - 1));
+						part.setFileName(Common.urlUnescape(value.substring(1, value.length() - 1)));
 				}
 				else
-					part.fileName = value;
+					part.setFileName(value);
 			}
 		}
 		
@@ -146,27 +145,31 @@ public abstract class MultipartParser implements Iterable<Part>
 	protected void parseContentType(String line, Part part)
 	{
 		String type = line.substring(HEADER_TYPE.length()).trim();
-		part.contentType = type;
+		part.setContentType(type);
 	}
 
 	/**
 	 * Scans and returns the next line.
-	 * @param sis the servlet input stream (for request content).
+	 * @param in the servlet input stream (for request content).
 	 * @return the read string.
 	 * @throws IOException if the stream could not be read.
 	 */
-	protected String scanLine(ServletInputStream sis) throws IOException
+	protected String scanLine(ServletInputStream in) throws IOException
 	{
-		StringBuilder sb = new StringBuilder();
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		int buf = 0;
 		
-		do {
-			buf = sis.readLine(buffer, 0, buffer.length);
-			String s = new String(buffer, 0, buf, charset);
-			sb.append(s, 0, s.length() - NEWLINE.length());
-		} while (buf == buffer.length);
-		 
-		return sb.toString();
+		while ((buf = in.readLine(buffer, 0, buffer.length)) == buffer.length)
+		{
+			if (buf < 0)
+				break;
+			bos.write(buffer, 0, buf);
+		}
+		if (buf > 0)
+			bos.write(buffer, 0, buf);
+		
+		String outstr = new String(bos.toByteArray(), charset);
+		return outstr.substring(0, outstr.length() - 2);
 	}
 
 	/**
@@ -177,49 +180,37 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @throws IOException if the input stream could not be 
 	 * read or the output stream could not be written to.
 	 */
-	protected void scanDataUntilBoundary(InputStream in, OutputStream out, byte[] boundaryBytes) throws IOException
+	protected int scanDataUntilBoundary(ServletInputStream in, OutputStream out, byte[] boundaryBytes) throws IOException
 	{
 		byte b = 0;
 		int buf = 0;
 		int match = 0;
-		int nlmatch = 0;
+		int count = 0;
 		
 		while (match != boundaryBytes.length && (buf = in.read()) != -1)
 		{
+			count++;
 			b = (byte)(buf & 0x0ff);
-			if (nlmatch == 2 || match > 0)
+			if (match > 0)
 			{
 				if (b == boundaryBytes[match])
 					match++;
 				else
 				{
-					out.write(NEWLINE_BYTES, 0, nlmatch);
 					out.write(boundaryBytes, 0, match);
-					if (match > 1)
-						Common.noop();
 					match = 0;
-					nlmatch = 0;
 					out.write(b);
 				}
 			}
-			else if (nlmatch > 0)
+			else if (b == boundaryBytes[0])
 			{
-				if (b == boundaryBytes[match])
-					match++;
-				else if (b == NEWLINE_BYTES[nlmatch])
-					nlmatch++;
-				else
-				{
-					out.write(NEWLINE_BYTES, 0, nlmatch);
-					out.write(b);
-					nlmatch = 0;
-				}
+				match++;
 			}
-			else if (b == NEWLINE_BYTES[nlmatch])
-				nlmatch++;
 			else
 				out.write(b);
 		}
+		
+		return count;
 	}
 
 	/**
