@@ -92,14 +92,16 @@ public abstract class MultipartParser implements Iterable<Part>
 
 		parseData(request.getInputStream(), outputDir, startBoundary, endBoundary, boundaryBytes);
 	}
-	
+
 	/**
-	 * Parses the servlet content and generates.
-	 * @param request
-	 * @param outputDir
-	 * @param startBoundary
-	 * @param endBoudary
-	 * @param startBoundaryBytes
+	 * Parses the servlet content and generates parts.
+	 * @param inStream the input servlet stream.
+	 * @param outputDir the output directory
+	 * @param startBoundary the boundary string for each part. 
+	 * @param endBoundary  the last boundary string.
+	 * @param startBoundaryBytes the boundary string for each part as bytes in the correct encoding.
+	 * @throws MultipartParserException if something is malformed in the request body.
+	 * @throws UnsupportedEncodingException if the part encoding is not supported.
 	 */
 	protected abstract void parseData(ServletInputStream inStream, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
 		throws MultipartParserException, UnsupportedEncodingException;
