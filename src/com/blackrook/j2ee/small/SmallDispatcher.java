@@ -226,6 +226,7 @@ public final class SmallDispatcher extends HttpServlet
 		{
 			response.setHeader("Cache-Control", "no-cache");
 			response.setHeader("Pragma", "no-cache");
+			response.setDateHeader("Expires", 0);
 		}
 		
 		if (descriptor.getOutputType() != null)
@@ -626,6 +627,11 @@ public final class SmallDispatcher extends HttpServlet
 					break;
 				}
 			}
+			
+			// check for trim-able object.
+			if (pinfo.getTrim() && invokeParams[i] != null && invokeParams[i].getClass() == String.class)
+				invokeParams[i] = ((String)invokeParams[i]).trim(); 
+			
 		}
 		
 		return Reflect.invokeBlind(descriptor.getMethod(), instance, invokeParams);

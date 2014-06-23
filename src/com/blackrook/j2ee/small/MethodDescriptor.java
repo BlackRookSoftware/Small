@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.blackrook.j2ee.small.annotation.Attribute;
+import com.blackrook.j2ee.small.annotation.AutoTrim;
 import com.blackrook.j2ee.small.annotation.Content;
 import com.blackrook.j2ee.small.annotation.CookieParameter;
 import com.blackrook.j2ee.small.annotation.Header;
@@ -62,13 +63,15 @@ public class MethodDescriptor
 		private Source sourceType;
 		private ScopeType sourceScopeType;
 		private String name;
+		private boolean trim;
 		
-		protected ParameterDescriptor(Source sourceType, ScopeType scope, Class<?> type, String name)
+		protected ParameterDescriptor(Source sourceType, ScopeType scope, Class<?> type, String name, boolean trim)
 		{
 			this.type = type;
 			this.sourceType = sourceType;
 			this.sourceScopeType = scope;
 			this.name = name;
+			this.trim = trim;
 		}
 
 		public String getName()
@@ -89,6 +92,11 @@ public class MethodDescriptor
 		public ScopeType getSourceScopeType()
 		{
 			return sourceScopeType;
+		}
+
+		public boolean getTrim()
+		{
+			return trim;
 		}
 	}
 
@@ -114,6 +122,7 @@ public class MethodDescriptor
 			ScopeType scope = null;
 			String name = null;
 			Class<?> paramType = ptypes[i];
+			boolean trim = false;
 			
 			if (paramType == RequestMethod.class)
 				source = Source.METHOD_TYPE;
@@ -128,6 +137,10 @@ public class MethodDescriptor
 			else for (int a = 0; a < pannotations[i].length; a++)
 			{
 				Annotation annotation = pannotations[i][a];
+				
+				if (annotation.annotationType() == AutoTrim.class)
+					trim = true;
+				
 				if (annotation.annotationType() == Path.class)
 					source = Source.PATH;
 				else if (annotation.annotationType() == PathFile.class)
@@ -175,7 +188,7 @@ public class MethodDescriptor
 				}
 			}
 			
-			this.parameters[i] = new ParameterDescriptor(source, scope, paramType, name);
+			this.parameters[i] = new ParameterDescriptor(source, scope, paramType, name, trim);
 		}
 		
 	}
