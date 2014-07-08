@@ -65,6 +65,15 @@ public class Part
 	}
 
 	/**
+	 * Returns the length of this part.
+	 * If file, this is the file length in bytes. If value, this is the value length in characters.
+	 */
+	public long getLength()
+	{
+		return isFile() ? file.length() : value.length();
+	}
+	
+	/**
 	 * Returns the content type of the uploaded file, or null if not a file.
 	 * @see #isFile()
 	 */

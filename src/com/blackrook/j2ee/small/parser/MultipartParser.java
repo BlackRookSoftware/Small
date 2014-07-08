@@ -3,6 +3,7 @@ package com.blackrook.j2ee.small.parser;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
@@ -45,8 +46,6 @@ public abstract class MultipartParser implements Iterable<Part>
 	
 	/** List of parsed parts. */
 	private List<Part> partList;
-	/** Buffer */
-	private byte[] buffer;
 	
 	/**
 	 * Creates a new multipart parser.
@@ -56,7 +55,6 @@ public abstract class MultipartParser implements Iterable<Part>
 		this.random = new Random();
 		this.partList = new List<Part>();
 		this.charset = "ISO-8859-1";
-		this.buffer = new byte[65536];
 	}
 
 	/**
@@ -104,7 +102,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @throws UnsupportedEncodingException if the part encoding is not supported.
 	 */
 	protected abstract void parseData(ServletInputStream inStream, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
-		throws MultipartParserException, UnsupportedEncodingException;
+		throws MultipartParserException, UnsupportedEncodingException, IOException;
 	
 	// Parses the disposition header.
 	protected void parseDisposition(String line, Part part) throws MultipartParserException
@@ -156,22 +154,39 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @return the read string.
 	 * @throws IOException if the stream could not be read.
 	 */
-	protected String scanLine(ServletInputStream in) throws IOException
+	protected String scanLine(InputStream in) throws IOException
 	{
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		int buf = 0;
+		boolean match = false;
 		
-		while ((buf = in.readLine(buffer, 0, buffer.length)) == buffer.length)
+		while (true)
 		{
-			if (buf < 0)
-				break;
-			bos.write(buffer, 0, buf);
+			buf = in.read();
+			if (buf >= 0)
+			{
+				if (!match)
+				{
+					if (buf == 0x0d) // \r
+						match = true;
+					else
+						bos.write(buf);
+				}
+				else
+				{
+					if (buf == 0x0a) // \n
+						break;
+					else
+					{
+						bos.write(0x0d);
+						bos.write(buf);
+					}
+				}
+			}
 		}
-		if (buf > 0)
-			bos.write(buffer, 0, buf);
 		
 		String outstr = new String(bos.toByteArray(), charset);
-		return outstr.substring(0, outstr.length() - 2);
+		return outstr.substring(0, outstr.length());
 	}
 
 	/**
@@ -182,7 +197,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @throws IOException if the input stream could not be 
 	 * read or the output stream could not be written to.
 	 */
-	protected int scanDataUntilBoundary(ServletInputStream in, OutputStream out, byte[] boundaryBytes) throws IOException
+	protected int scanDataUntilBoundary(InputStream in, OutputStream out, byte[] boundaryBytes) throws IOException
 	{
 		byte b = 0;
 		int buf = 0;

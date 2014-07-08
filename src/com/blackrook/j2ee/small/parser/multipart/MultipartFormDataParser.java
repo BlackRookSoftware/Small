@@ -1,8 +1,11 @@
 package com.blackrook.j2ee.small.parser.multipart;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
@@ -38,15 +41,19 @@ public class MultipartFormDataParser extends MultipartParser
 		
 		File outFile = null; 
 		Part currentPart = null;
-		
+
+		InputStream fin = null;		
 		OutputStream out = null;
 		
 		try {
+			
+			fin = new BufferedInputStream(sis, 65536);
+			
 			String line = null;
 
 			currentPart = new Part();
 			addPart(currentPart);
-			line = scanLine(sis);
+			line = scanLine(fin);
 			if (!line.equals(startBoundary))
 				throw new MultipartParserException("Unexpected beginning of multipart form. Submission is malformed.");
 
@@ -57,7 +64,7 @@ public class MultipartFormDataParser extends MultipartParser
 					// Header Parsing.
 					case STATE_HEADER:
 						
-						line = scanLine(sis);
+						line = scanLine(fin);
 						
 						if (line.startsWith(HEADER_DISPOSITION))
 							parseDisposition(line, currentPart);
@@ -70,11 +77,11 @@ public class MultipartFormDataParser extends MultipartParser
 								state = STATE_DATA;
 								outFile = generateTempFile(currentPart.getFileName(), outputDir);
 								currentPart.setFile(outFile);
-								out = new FileOutputStream(outFile);
+								out = new BufferedOutputStream(new FileOutputStream(outFile), 65536);
 							}
 							else
 							{
-								line = scanLine(sis);
+								line = scanLine(fin);
 								if (line == null)
 									throw new MultipartParserException("Unexpected end of multipart form. Submission is malformed.");
 
@@ -82,7 +89,7 @@ public class MultipartFormDataParser extends MultipartParser
 								currentPart.setValue(line);
 								while (loop)
 								{
-									line = scanLine(sis);
+									line = scanLine(fin);
 									if (line.equals(startBoundary))
 									{
 										state = STATE_HEADER;
@@ -107,11 +114,11 @@ public class MultipartFormDataParser extends MultipartParser
 					// Data Reading.
 					case STATE_DATA:
 					{
-						scanDataUntilBoundary(sis, out, startBoundaryBytes);
+						scanDataUntilBoundary(fin, out, startBoundaryBytes);
 						out.close();
 						out = null;
 						outFile = null;
-						line = scanLine(sis);
+						line = scanLine(fin);
 						if (line.equals("--"))
 							state = STATE_END;
 						else if (line.length() == 0)
@@ -130,8 +137,10 @@ public class MultipartFormDataParser extends MultipartParser
 		} catch (IOException e) {
 			throw new MultipartParserException("Could not read request body.", e);
 		} finally {
+			Common.close(fin);
 			Common.close(out);
 		}
+		
 	}
 
 }
