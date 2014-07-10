@@ -70,7 +70,7 @@ class ControllerDescriptor implements ComponentDescriptor
 				
 				for (RequestMethod rm : anno.method())
 				{
-					if (anno.defaultEntry())
+					if (Common.isEmpty(anno.value()))
 					{
 						if (defaultMethodMap.containsKey(rm))
 							throw new SmallFrameworkSetupException("Controller already contains a default entry for this request method.");
