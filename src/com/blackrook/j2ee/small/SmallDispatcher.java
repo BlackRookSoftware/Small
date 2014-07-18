@@ -40,7 +40,6 @@ import com.blackrook.j2ee.small.parser.RFCParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartFormDataParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.struct.Part;
-import com.blackrook.j2ee.small.struct.PathTrie.Result;
 import com.blackrook.lang.json.JSONConversionException;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONReader;
@@ -140,19 +139,20 @@ public final class SmallDispatcher extends HttpServlet
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
 		String path = SmallUtil.removeEndingSlash(request.getRequestURI());
-		Result<Class<?>> controllerClass = SmallToolkit.INSTANCE.getControllerClassByPath(path);
-		if (controllerClass.getValue() == null)
+		List<String> remainder = new List<String>(4);
+		Class<?> controllerClass = SmallToolkit.INSTANCE.getControllerClassByPath(path, remainder);
+		if (controllerClass == null)
 		{
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 			return;
 		}
 
-		ControllerDescriptor entry = SmallToolkit.INSTANCE.getController(controllerClass.getValue());
+		ControllerDescriptor entry = SmallToolkit.INSTANCE.getController(controllerClass);
 		if (entry == null)
 			sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
 		else
 		{
-			String pageRemainder = path.substring(controllerClass.getOffset());
+			String pageRemainder = "/" + Common.joinStrings("/", remainder);
 
 			// get cookies from request.
 			HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();

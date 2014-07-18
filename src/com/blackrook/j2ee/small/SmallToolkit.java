@@ -22,12 +22,12 @@ import javax.servlet.ServletContextListener;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.PathTrie;
-import com.blackrook.j2ee.small.struct.PathTrie.Result;
 
 /**
  * The main manager class through which all components are pooled and instantiated. 
@@ -198,9 +198,9 @@ public final class SmallToolkit implements ServletContextListener
 	 * @return a controller, or null if no controller by that class. 
 	 * This servlet sends a 404 back if this happens.
 	 */
-	Result<Class<?>> getControllerClassByPath(String path)
+	Class<?> getControllerClassByPath(String path, List<String> remainder)
 	{
-		return pathTrie.getPartial(path);
+		return pathTrie.getWithRemainderByKey(path, remainder, 0);
 	}
 
 	/**
