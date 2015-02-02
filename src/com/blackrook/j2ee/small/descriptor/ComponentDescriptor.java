@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.descriptor;
 
 /**
  * Interface for descriptors for component objects. 

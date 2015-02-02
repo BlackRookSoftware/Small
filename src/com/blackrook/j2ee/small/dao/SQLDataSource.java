@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.resources;
+package com.blackrook.j2ee.small.dao;
 
 import java.sql.SQLException;
 

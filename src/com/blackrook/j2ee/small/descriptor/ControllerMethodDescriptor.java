@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.descriptor;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public class ControllerMethodDescriptor extends MethodDescriptor
 	/** Filter class list. */
 	private Class<?>[] filterChain;
 
-	ControllerMethodDescriptor(Method method)
+	public ControllerMethodDescriptor(Method method)
 	{
 		super(method);
 		this.outputType = null;

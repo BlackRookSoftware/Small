@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.descriptor;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -7,6 +7,8 @@ import java.util.Arrays;
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.j2ee.small.SmallUtil;
+import com.blackrook.j2ee.small.ViewResolver;
 import com.blackrook.j2ee.small.annotation.Attribute;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.ControllerEntry;
@@ -20,7 +22,7 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
  * Creates a controller profile to assist in re-calling controllers by path and methods.
  * @author Matthew Tropiano
  */
-class ControllerDescriptor implements ComponentDescriptor
+public class ControllerDescriptor implements ComponentDescriptor
 {
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
 	
@@ -44,7 +46,7 @@ class ControllerDescriptor implements ComponentDescriptor
 	 * @param clazz the input class to profile.
 	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	ControllerDescriptor(Class<?> clazz)
+	public ControllerDescriptor(Class<?> clazz)
 	{
 		Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
 		if (controllerAnnotation == null)

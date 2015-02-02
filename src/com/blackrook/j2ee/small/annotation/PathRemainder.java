@@ -9,6 +9,7 @@ import java.lang.annotation.Target;
  * Annotates a method parameter. Should be used in Controllers and Filters.
  * <p>
  * Parameter type must be String, and will be set to the rest of the path not used by the controller resolver.
+ * Really only useful on "default" entry points.
  * @author Matthew Tropiano
  */
 @Target(ElementType.PARAMETER)

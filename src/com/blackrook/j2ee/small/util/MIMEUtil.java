@@ -8,7 +8,7 @@
  * Contributors:
  *     Matt Tropiano - initial API and implementation
  ******************************************************************************/
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.util;
 
 import com.blackrook.commons.hash.CaseInsensitiveHashMap;
 
@@ -16,10 +16,10 @@ import com.blackrook.commons.hash.CaseInsensitiveHashMap;
  * Map of MIME Types.
  * @author Matthew Tropiano
  */
-public final class MIMETypes extends CaseInsensitiveHashMap<String>  
+public final class MIMEUtil extends CaseInsensitiveHashMap<String>  
 {
 	/** Creates the MIME type lookup type. */
-	public MIMETypes()
+	public MIMEUtil()
 	{
 		put("323", "text/h323");
 		put("7z", "application/x-7z-compressed");
@@ -223,7 +223,7 @@ public final class MIMETypes extends CaseInsensitiveHashMap<String>
 	 * @return the common MIME type of the file extension, or 
 	 * <code>application/octet-stream</code> if not found in this map. 
 	 */
-	public String getType(String extension)
+	public String getTypeByExtension(String extension)
 	{
 		String out = get(extension);
 		return out != null ? out : "application/octet-stream";

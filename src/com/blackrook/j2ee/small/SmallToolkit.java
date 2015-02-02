@@ -14,10 +14,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.websocket.DeploymentException;
+import javax.websocket.Endpoint;
+import javax.websocket.server.ServerApplicationConfig;
+import javax.websocket.server.ServerContainer;
+import javax.websocket.server.ServerEndpoint;
+import javax.websocket.server.ServerEndpointConfig;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
@@ -25,6 +33,8 @@ import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
+import com.blackrook.j2ee.small.descriptor.ControllerDescriptor;
+import com.blackrook.j2ee.small.descriptor.FilterDescriptor;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.PathTrie;
@@ -49,12 +59,12 @@ public final class SmallToolkit implements ServletContextListener
 	/** The path to controller trie. */
 	private PathTrie<Class<?>> pathTrie;
 	/** The controllers that were instantiated. */
-	private HashMap<Class<?>, ControllerDescriptor> controllerCache;
+	private HashMap<Class<?>, ControllerDescriptor> controllerInstances;
 	/** The filters that were instantiated. */
-	private HashMap<Class<?>, FilterDescriptor> filterCache;
+	private HashMap<Class<?>, FilterDescriptor> filterInstances;
 	/** Map of view resolvers to instantiated view resolvers. */
 	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
-
+	
 	/** Controller root. */
 	private String controllerRootPackage;
 	/** Tempdir root. */
@@ -66,8 +76,8 @@ public final class SmallToolkit implements ServletContextListener
 	public SmallToolkit()
 	{
 		pathTrie = new PathTrie<Class<?>>();
-		controllerCache = new HashMap<Class<?>, ControllerDescriptor>(10);
-		filterCache = new HashMap<Class<?>, FilterDescriptor>(10);
+		controllerInstances = new HashMap<Class<?>, ControllerDescriptor>(10);
+		filterInstances = new HashMap<Class<?>, FilterDescriptor>(10);
 		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
 	}
 	
@@ -87,8 +97,8 @@ public final class SmallToolkit implements ServletContextListener
 			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
 		
 		realAppPath = servletContext.getRealPath("/");
-		initComponents(ClassLoader.getSystemClassLoader());
-		initComponents(Thread.currentThread().getContextClassLoader());
+		initComponents(servletContext, ClassLoader.getSystemClassLoader());
+		initComponents(servletContext, Thread.currentThread().getContextClassLoader());
 		INSTANCE = this;
 	}
 
@@ -110,7 +120,7 @@ public final class SmallToolkit implements ServletContextListener
 	 * Init visible controllers using a class loader.
 	 * @param loader the {@link ClassLoader} to look in.
 	 */
-	private void initComponents(ClassLoader loader)
+	private void initComponents(ServletContext servletContext, ClassLoader loader)
 	{
 		for (String className : Reflect.getClasses(controllerRootPackage, loader))
 		{
@@ -125,10 +135,10 @@ public final class SmallToolkit implements ServletContextListener
 				Controller controllerAnnotation = componentClass.getAnnotation(Controller.class);
 
 				// check for double-include. Skip.
-				if (controllerCache.containsKey(componentClass))
+				if (controllerInstances.containsKey(componentClass))
 					continue;
 				
-				controllerCache.put(componentClass, new ControllerDescriptor(componentClass));
+				controllerInstances.put(componentClass, new ControllerDescriptor(componentClass));
 				String path = controllerAnnotation.value();
 				Class<?> existingClass = null;
 				if ((existingClass = pathTrie.get(path)) == null)
@@ -139,10 +149,28 @@ public final class SmallToolkit implements ServletContextListener
 			else if (componentClass.isAnnotationPresent(Filter.class))
 			{
 				// check for double-include. Skip.
-				if (filterCache.containsKey(componentClass))
+				if (filterInstances.containsKey(componentClass))
 					continue;
 				
-				filterCache.put(componentClass, new FilterDescriptor(componentClass));
+				filterInstances.put(componentClass, new FilterDescriptor(componentClass));
+			}
+			else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
+			{
+				ServerContainer serverContainer = (ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer");
+				try {
+					serverContainer.addEndpoint(componentClass);
+				} catch (DeploymentException e) {
+					throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"!", e);
+				}
+			}
+			else if (Endpoint.class.isAssignableFrom(componentClass))
+			{
+				ServerContainer serverContainer = (ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer");
+				try {
+					serverContainer.addEndpoint(ServerEndpointConfig.Builder.create(componentClass, "/" + componentClass.getName()).build());
+				} catch (DeploymentException e) {
+					throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"!", e);
+				}
 			}
 		}
 	}
@@ -211,7 +239,7 @@ public final class SmallToolkit implements ServletContextListener
 	 */
 	ControllerDescriptor getController(Class<?> clazz)
 	{
-		return controllerCache.get(clazz);
+		return controllerInstances.get(clazz);
 	}
 
 	/**
@@ -220,17 +248,17 @@ public final class SmallToolkit implements ServletContextListener
 	 */
 	FilterDescriptor getFilter(Class<?> clazz)
 	{
-		if (filterCache.containsKey(clazz))
-			return filterCache.get(clazz);
-		else synchronized (filterCache)
+		if (filterInstances.containsKey(clazz))
+			return filterInstances.get(clazz);
+		else synchronized (filterInstances)
 		{
 			// in case a thread already completed it.
-			if (filterCache.containsKey(clazz))
-				return filterCache.get(clazz);
+			if (filterInstances.containsKey(clazz))
+				return filterInstances.get(clazz);
 			
 			FilterDescriptor out = new FilterDescriptor(clazz);
 			// add to cache and return.
-			filterCache.put(clazz, out);
+			filterInstances.put(clazz, out);
 			return out;
 		}
 	}

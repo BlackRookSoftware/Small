@@ -25,6 +25,7 @@ import com.blackrook.commons.TypeProfile.MethodSignature;
 import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.util.MIMEUtil;
 import com.blackrook.lang.json.JSONObject;
 import com.blackrook.lang.json.JSONWriter;
 import com.blackrook.lang.util.EntityTables;
@@ -38,7 +39,7 @@ import com.blackrook.lang.xml.XMLWriter;
 public final class SmallUtil implements EntityTables
 {
 	/** MIME Type Map. */
-	private static MIMETypes MIME_TYPE_MAP = new MIMETypes();
+	private static MIMEUtil MIME_TYPE_MAP = new MIMEUtil();
 	/** Singleton context for beans not attached to the application context. */
 	private static final HashMap<String, Object> SINGLETON_MAP = new HashMap<String, Object>();
 	/** Date format parser map. */
@@ -59,7 +60,7 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static String getMIMEType(String filename)
 	{
-		return MIME_TYPE_MAP.getType(Common.getFileExtension(filename));
+		return MIME_TYPE_MAP.getTypeByExtension(Common.getFileExtension(filename));
 	}
 	
 	/**

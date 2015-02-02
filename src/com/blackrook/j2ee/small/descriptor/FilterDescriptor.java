@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.descriptor;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -16,7 +16,7 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
  * Creates a controller profile to assist in re-calling filters.
  * @author Matthew Tropiano
  */
-class FilterDescriptor implements ComponentDescriptor
+public class FilterDescriptor implements ComponentDescriptor
 {
 	/** Filter instance. */
 	private Object instance;
@@ -32,7 +32,7 @@ class FilterDescriptor implements ComponentDescriptor
 	 * @param clazz the input class to profile.
 	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	FilterDescriptor(Class<?> clazz)
+	public FilterDescriptor(Class<?> clazz)
 	{
 		Filter controllerAnnotation = clazz.getAnnotation(Filter.class);
 		if (controllerAnnotation == null)

@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small;
+package com.blackrook.j2ee.small.descriptor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -107,7 +107,7 @@ public class MethodDescriptor
 	/** Parameter entry. */
 	private ParameterDescriptor[] parameters;
 
-	MethodDescriptor(Method method)
+	public MethodDescriptor(Method method)
 	{
 		this.method = method;
 		this.type = method.getReturnType();
