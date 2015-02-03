@@ -8,7 +8,7 @@
 
 <context-param>
     <param-name>small.application.package.root</param-name>
-    <param-value>com.add.controller.root.here</param-value>
+    <param-value>com.add.app.package.root.here</param-value>
 </context-param>
 
 <servlet>
