@@ -18,12 +18,6 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 public class DefaultQueryResolver implements QueryResolver
 {
 	@Override
-	public boolean dontCacheQuery(String keyword)
-	{
-		return false;
-	}
-
-	@Override
 	public String resolveQuery(String keyword)
 	{
 		StringBuffer sb = new StringBuffer();
