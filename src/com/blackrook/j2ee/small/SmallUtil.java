@@ -362,7 +362,7 @@ public final class SmallUtil implements EntityTables
 						session.setAttribute(name, obj);
 					}
 				}
-		} catch (Exception e) {
+			} catch (Exception e) {
 				throwException(e);
 			}
 		}
@@ -427,7 +427,7 @@ public final class SmallUtil implements EntityTables
 						context.setAttribute(name, obj);
 					}
 				}
-		} catch (Exception e) {
+			} catch (Exception e) {
 				throwException(e);
 			}
 		}

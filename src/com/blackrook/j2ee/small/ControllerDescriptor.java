@@ -1,19 +1,19 @@
-package com.blackrook.j2ee.small.descriptor;
+package com.blackrook.j2ee.small;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 import com.blackrook.commons.Common;
-import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
-import com.blackrook.j2ee.small.SmallUtil;
-import com.blackrook.j2ee.small.ViewResolver;
 import com.blackrook.j2ee.small.annotation.Attribute;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.ControllerEntry;
 import com.blackrook.j2ee.small.annotation.FilterChain;
 import com.blackrook.j2ee.small.annotation.Model;
+import com.blackrook.j2ee.small.descriptor.EntryPointDescriptor;
+import com.blackrook.j2ee.small.descriptor.ControllerMethodDescriptor;
+import com.blackrook.j2ee.small.descriptor.MethodDescriptor;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
@@ -22,7 +22,7 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
  * Creates a controller profile to assist in re-calling controllers by path and methods.
  * @author Matthew Tropiano
  */
-public class ControllerDescriptor implements ComponentDescriptor
+class ControllerDescriptor implements EntryPointDescriptor
 {
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
 	
@@ -44,9 +44,10 @@ public class ControllerDescriptor implements ComponentDescriptor
 	/**
 	 * Creates the controller profile for a {@link Controller} class.
 	 * @param clazz the input class to profile.
+	 * @param toolkit the toolkit to use for object instantiation.
 	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	public ControllerDescriptor(Class<?> clazz)
+	ControllerDescriptor(Class<?> clazz, SmallToolkit toolkit)
 	{
 		Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
 		if (controllerAnnotation == null)
@@ -125,7 +126,7 @@ public class ControllerDescriptor implements ComponentDescriptor
 		}
 		this.filterChain = Common.joinArrays(packageFilters, controllerFilters);
 		
-		this.instance = Reflect.create(clazz);
+		this.instance = toolkit.createOrGetComponent(clazz);
 	}
 	
 	/** Checks if a method is a valid request entry. */

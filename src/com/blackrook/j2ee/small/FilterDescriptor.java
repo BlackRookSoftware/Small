@@ -1,14 +1,16 @@
-package com.blackrook.j2ee.small.descriptor;
+package com.blackrook.j2ee.small;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.small.annotation.Attribute;
 import com.blackrook.j2ee.small.annotation.Filter;
 import com.blackrook.j2ee.small.annotation.FilterEntry;
 import com.blackrook.j2ee.small.annotation.Model;
+import com.blackrook.j2ee.small.descriptor.EntryPointDescriptor;
+import com.blackrook.j2ee.small.descriptor.ControllerMethodDescriptor;
+import com.blackrook.j2ee.small.descriptor.MethodDescriptor;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 
@@ -16,7 +18,7 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
  * Creates a controller profile to assist in re-calling filters.
  * @author Matthew Tropiano
  */
-public class FilterDescriptor implements ComponentDescriptor
+class FilterDescriptor implements EntryPointDescriptor
 {
 	/** Filter instance. */
 	private Object instance;
@@ -30,9 +32,10 @@ public class FilterDescriptor implements ComponentDescriptor
 	/**
 	 * Creates the filter profile for a {@link Filter} class.
 	 * @param clazz the input class to profile.
+	 * @param toolkit the toolkit to use for object instantiation.
 	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	public FilterDescriptor(Class<?> clazz)
+	FilterDescriptor(Class<?> clazz, SmallToolkit toolkit)
 	{
 		Filter controllerAnnotation = clazz.getAnnotation(Filter.class);
 		if (controllerAnnotation == null)
@@ -64,7 +67,7 @@ public class FilterDescriptor implements ComponentDescriptor
 			}
 		}
 		
-		this.instance = Reflect.create(clazz);
+		this.instance = toolkit.createOrGetComponent(clazz);
 	}
 
 	/**

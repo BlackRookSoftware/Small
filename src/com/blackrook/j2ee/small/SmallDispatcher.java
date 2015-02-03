@@ -28,10 +28,8 @@ import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.small.descriptor.ComponentDescriptor;
-import com.blackrook.j2ee.small.descriptor.ControllerDescriptor;
+import com.blackrook.j2ee.small.descriptor.EntryPointDescriptor;
 import com.blackrook.j2ee.small.descriptor.ControllerMethodDescriptor;
-import com.blackrook.j2ee.small.descriptor.FilterDescriptor;
 import com.blackrook.j2ee.small.descriptor.MethodDescriptor;
 import com.blackrook.j2ee.small.descriptor.MethodDescriptor.ParameterDescriptor;
 import com.blackrook.j2ee.small.enums.RequestMethod;
@@ -103,7 +101,7 @@ public final class SmallDispatcher extends HttpServlet
 			else
 			{
 				try {
-					parser.parse(request, SmallToolkit.INSTANCE.getTempDir());
+					parser.parse(request, SmallToolkit.INSTANCE.getTemporaryDirectory());
 				} catch (UnsupportedEncodingException e) {
 					ResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
 				} catch (MultipartParserException e) {
@@ -350,7 +348,7 @@ public final class SmallDispatcher extends HttpServlet
 	 * Returns its return value.
 	 */
 	private Object invokeEntryMethod(
-		ComponentDescriptor entry, 
+		EntryPointDescriptor entry, 
 		RequestMethod requestMethod, HttpServletRequest request,
 		HttpServletResponse response, MethodDescriptor descriptor, 
 		Object instance, String pathRemainder, HashMap<String, Cookie> cookieMap, HashedQueueMap<String, Part> multiformPartMap

@@ -4,7 +4,7 @@ package com.blackrook.j2ee.small.descriptor;
  * Interface for descriptors for component objects. 
  * @author Matthew Tropiano
  */
-public interface ComponentDescriptor
+public interface EntryPointDescriptor
 {
 
 	/**
