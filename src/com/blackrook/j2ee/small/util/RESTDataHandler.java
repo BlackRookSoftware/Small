@@ -40,7 +40,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
      * @param primaryKeys the keys to use for retrieval.
      * @return an array of the results of retrieving each respective record
      * 		for each key.
-     * @see #get(K)
+     * @see #get(Object)
      */
 	public T[] getMultiple(K ... primaryKeys);
 
@@ -76,7 +76,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
 	 * effectiveness of this call. If this returns true, {@link #get(Object)} must
 	 * succeed, if conditions do not change.
 	 * @return true if the record exists in storage, false if not.
-	 * @see #get(K)
+	 * @see #get(Object)
 	 */
 	public boolean contains(K key);
 
@@ -88,7 +88,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
 	 * effectiveness of this call. If this returns true, {@link #getMultiple(Object...)} must
 	 * succeed and not contain nulls, if conditions do not change.
 	 * @return true if the record exists in storage, false if not.
-	 * @see #getMultiple(K ...)
+	 * @see #getMultiple(Object...)
 	 */
 	public boolean containsAll(K ... keys);
 
@@ -100,7 +100,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
 	 * effectiveness of this call. If this returns true, {@link #getMultiple(Object...)} must
 	 * succeed and contain at least one non-null record, if conditions do not change.
 	 * @return true if the record exists in storage, false if not.
-	 * @see #getMultiple(K ...)
+	 * @see #getMultiple(Object...)
 	 */
 	public boolean containsOne(K ... keys);
 
