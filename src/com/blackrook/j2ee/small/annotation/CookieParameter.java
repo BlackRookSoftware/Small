@@ -13,6 +13,8 @@ import javax.servlet.http.Cookie;
  * Matched type must be {@link Cookie}, and if the Cookie name does not exist,
  * it is created for the response.
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

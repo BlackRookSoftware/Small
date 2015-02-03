@@ -13,6 +13,8 @@ import com.blackrook.commons.AbstractMap;
  * <p>
  * Turns the parameters on the request into a {@link Map} or {@link AbstractMap}, depending on type.
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

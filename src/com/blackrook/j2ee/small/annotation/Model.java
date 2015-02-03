@@ -10,7 +10,10 @@ import java.lang.annotation.Target;
  * request, session, and application (precedence is in that order).
  * <p>
  * The model is automatically persisted to the PAGE scope for the view.
+ * Any model that is not constructed is created (via default constructor or matching annotated method in the same class).
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

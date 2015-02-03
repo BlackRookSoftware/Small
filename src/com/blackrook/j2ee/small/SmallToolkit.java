@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -136,33 +137,29 @@ public final class SmallToolkit implements ServletContextListener
 	@SuppressWarnings("unchecked")
 	private <T> Constructor<T> getAnnotatedConstructor(Class<T> clazz)
 	{
+		Constructor<T> out = null;
+		boolean hasDefaultConstructor = false;
 		for (Constructor<T> cons : (Constructor<T>[])clazz.getConstructors())
 		{
-			if (!cons.isAnnotationPresent(ConstructorMain.class))
-				continue;
-			else
-				return cons;
+			if (cons.isAnnotationPresent(ConstructorMain.class))
+			{
+				if (out != null)
+					throw new SmallFrameworkSetupException("Found more than one constructor annotated with @ConstructorMain in class "+clazz.getName());
+				else
+					out = cons;
+			}
+			else if (cons.getParameterCount() == 0 && (cons.getModifiers() & Modifier.PUBLIC) != 0)
+			{
+				hasDefaultConstructor = true;
+			}	
+		}
+
+		if (out == null && !hasDefaultConstructor)
+		{
+			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" has no viable constructors.");
 		}
 		
-		return null;
-	}
-
-	/**
-	 * Creates or gets an engine singleton component by class.
-	 * @param clazz the class to create/retrieve.
-	 */
-	@SuppressWarnings("unchecked")
-	<T> T createOrGetComponent(Class<T> clazz)
-	{
-		T instance = null;
-		if ((instance = (T)componentInstances.get(clazz)) != null)
-			return instance;
-		else
-		{
-			instance = createComponent(clazz, getAnnotatedConstructor(clazz));
-			componentInstances.put(clazz, instance);
-			return instance;
-		}
+		return out;
 	}
 
 	/**
@@ -218,7 +215,11 @@ public final class SmallToolkit implements ServletContextListener
 				throw new SmallFrameworkSetupException("Could not load class "+className+" from classpath.");
 			}
 			
-			if (componentClass.isAnnotationPresent(Controller.class))
+			if (componentClass.isAnnotationPresent(Component.class))
+			{
+				createOrGetComponent(componentClass);
+			}
+			else if (componentClass.isAnnotationPresent(Controller.class))
 			{
 				Controller controllerAnnotation = componentClass.getAnnotation(Controller.class);
 
@@ -264,6 +265,24 @@ public final class SmallToolkit implements ServletContextListener
 					throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"!", e);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Creates or gets an engine singleton component by class.
+	 * @param clazz the class to create/retrieve.
+	 */
+	@SuppressWarnings("unchecked")
+	<T> T createOrGetComponent(Class<T> clazz)
+	{
+		T instance = null;
+		if ((instance = (T)componentInstances.get(clazz)) != null)
+			return instance;
+		else
+		{
+			instance = createComponent(clazz, getAnnotatedConstructor(clazz));
+			componentInstances.put(clazz, instance);
+			return instance;
 		}
 	}
 

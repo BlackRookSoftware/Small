@@ -7,8 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Public methods with this annotation in {@link Filter}-annotated objects declare the filter entry point. 
- * <p>The annotated method must return a boolean. 
+ * <p>The annotated method must return a boolean. if the method returns true, the filter chain continues.
+ * If it returns false, the chain is not continued.
  * @author Matthew Tropiano
+ * @see Filter
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

@@ -11,6 +11,8 @@ import java.lang.annotation.Target;
  * Parameter type must be String, and will be set to the rest of the path not used by the controller resolver.
  * Really only useful on "default" entry points.
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

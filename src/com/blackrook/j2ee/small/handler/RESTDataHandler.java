@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.util;
+package com.blackrook.j2ee.small.handler;
 
 import com.blackrook.commons.AbstractMap;
 import com.blackrook.commons.AbstractVector;

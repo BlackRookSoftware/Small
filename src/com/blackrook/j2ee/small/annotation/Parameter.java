@@ -13,6 +13,8 @@ import java.lang.annotation.Target;
  * If the request body type is <code>multipart/**</code>, the parameter type can be {@link File},
  * which matches an uploaded file.
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

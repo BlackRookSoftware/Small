@@ -10,6 +10,8 @@ import java.lang.annotation.Target;
  * <p>
  * Parameter type must be String, and will be set to the request path.
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

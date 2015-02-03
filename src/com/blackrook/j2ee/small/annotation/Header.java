@@ -8,6 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Annotates a method parameter for request header value binding. Should be used in Controllers and Filters. 
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

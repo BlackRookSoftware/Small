@@ -11,8 +11,10 @@ import com.blackrook.j2ee.small.enums.ScopeType;
  * Annotates a controller method or method parameter for attribute binding. Should be used in Controllers and Filters.
  * <p>
  * Matched type is NOT converted. Any value created by this parameter is persisted to the scope declared.
- * Any value that does not already exist is created (via default constructor or method).
+ * Any value that does not already exist is created (via default constructor or matching annotated method in the same class).
  * @author Matthew Tropiano
+ * @see ControllerEntry
+ * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
