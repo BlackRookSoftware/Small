@@ -31,7 +31,7 @@ import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.annotation.Component;
-import com.blackrook.j2ee.small.annotation.ConstructorMain;
+import com.blackrook.j2ee.small.annotation.ComponentConstructor;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
@@ -141,7 +141,7 @@ public final class SmallToolkit implements ServletContextListener
 		boolean hasDefaultConstructor = false;
 		for (Constructor<T> cons : (Constructor<T>[])clazz.getConstructors())
 		{
-			if (cons.isAnnotationPresent(ConstructorMain.class))
+			if (cons.isAnnotationPresent(ComponentConstructor.class))
 			{
 				if (out != null)
 					throw new SmallFrameworkSetupException("Found more than one constructor annotated with @ConstructorMain in class "+clazz.getName());

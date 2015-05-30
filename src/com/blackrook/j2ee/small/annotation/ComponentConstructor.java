@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.CONSTRUCTOR)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ConstructorMain
+public @interface ComponentConstructor
 {
 
 }

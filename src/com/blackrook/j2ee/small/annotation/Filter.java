@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * <p>Popular uses are secure protocol redirects, attribute and session setup, and authorization gateways.   
  * <p>
  * This object may have dependency singleton {@link Component} objects
- * injected into them via {@link ConstructorMain}-annotated constructors. 
+ * injected into them via {@link ComponentConstructor}-annotated constructors. 
  * Only one constructor can be annotated with one.
  * @author Matthew Tropiano
  * @see FilterEntry

@@ -14,7 +14,7 @@ import com.blackrook.j2ee.small.ViewResolver;
  * <p>Requests are handled via {@link ControllerEntry}-annotated methods.
  * <p>
  * This object may have dependency singleton {@link Component} objects
- * injected into them via {@link ConstructorMain}-annotated constructors. 
+ * injected into them via {@link ComponentConstructor}-annotated constructors. 
  * Only one constructor can be annotated with one.
  * @author Matthew Tropiano
  * @see ControllerEntry
