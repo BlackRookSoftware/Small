@@ -231,7 +231,6 @@ public final class EndpointUtil
 	 * @param session the connection session.
 	 * @param buffer the buffer of data to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws IOException on a send error.
 	 */
 	public static Future<Void> sendAsyncBinary(final Session session, ByteBuffer buffer)
 	{
