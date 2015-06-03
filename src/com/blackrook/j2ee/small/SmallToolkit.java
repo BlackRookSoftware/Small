@@ -20,6 +20,10 @@ import java.lang.reflect.Modifier;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.http.HttpSessionAttributeListener;
+import javax.servlet.http.HttpSessionBindingEvent;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 import javax.websocket.DeploymentException;
 import javax.websocket.Endpoint;
 import javax.websocket.server.ServerContainer;
@@ -28,7 +32,9 @@ import javax.websocket.server.ServerEndpointConfig;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
+import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.annotation.ComponentConstructor;
@@ -42,7 +48,7 @@ import com.blackrook.j2ee.small.struct.PathTrie;
  * The main manager class through which all components are pooled and instantiated. 
  * @author Matthew Tropiano
  */
-public final class SmallToolkit implements ServletContextListener
+public final class SmallToolkit implements ServletContextListener, HttpSessionListener, HttpSessionAttributeListener
 {
 	private static final String INIT_PARAM_CONTROLLER_ROOT = "small.application.package.root";
 	
@@ -65,7 +71,14 @@ public final class SmallToolkit implements ServletContextListener
 	/** The path to controller trie. */
 	private PathTrie<Class<?>> pathTrie;
 
-	/** The component that are instantiated. */
+	/** List of components that listen for session events. */
+	private Queue<HttpSessionListener> sessionListeners;
+	/** List of components that listen for session attribute events. */
+	private Queue<HttpSessionAttributeListener> sessionAttributeListeners;
+
+	/** Components-in-construction set. */
+	private Hash<Class<?>> componentsConstructing;
+	/** The components that are instantiated. */
 	private HashMap<Class<?>, Object> componentInstances;
 	/** The controllers that were instantiated. */
 	private HashMap<Class<?>, ControllerDescriptor> controllerInstances;
@@ -80,6 +93,11 @@ public final class SmallToolkit implements ServletContextListener
 	public SmallToolkit()
 	{
 		pathTrie = new PathTrie<Class<?>>();
+		
+		sessionListeners = new Queue<HttpSessionListener>();
+		sessionAttributeListeners = new Queue<HttpSessionAttributeListener>();
+		
+		componentsConstructing = new Hash<Class<?>>();
 		componentInstances = new HashMap<Class<?>, Object>();
 		controllerInstances = new HashMap<Class<?>, ControllerDescriptor>(10);
 		filterInstances = new HashMap<Class<?>, FilterDescriptor>(10);
@@ -104,6 +122,10 @@ public final class SmallToolkit implements ServletContextListener
 			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
 		
 		contextApplicationPath = servletContext.getRealPath("/");
+		
+		componentInstances.put(ServletContext.class, servletContext);
+		componentInstances.put(servletContext.getClass(), servletContext);
+		
 		initComponents(servletContext, ClassLoader.getSystemClassLoader());
 		initComponents(servletContext, Thread.currentThread().getContextClassLoader());
 		INSTANCE = this;
@@ -113,6 +135,41 @@ public final class SmallToolkit implements ServletContextListener
 	public void contextDestroyed(ServletContextEvent sce)
 	{
 		// Do nothing.
+	}
+
+	@Override
+	public void sessionCreated(HttpSessionEvent httpse)
+	{
+		for (HttpSessionListener listener : sessionListeners)
+			listener.sessionCreated(httpse);
+	}
+
+	@Override
+	public void sessionDestroyed(HttpSessionEvent httpse)
+	{
+		for (HttpSessionListener listener : sessionListeners)
+			listener.sessionDestroyed(httpse);
+	}
+
+	@Override
+	public void attributeAdded(HttpSessionBindingEvent httpsbe)
+	{
+		for (HttpSessionAttributeListener listener : sessionAttributeListeners)
+			listener.attributeAdded(httpsbe);
+	}
+
+	@Override
+	public void attributeRemoved(HttpSessionBindingEvent httpsbe)
+	{
+		for (HttpSessionAttributeListener listener : sessionAttributeListeners)
+			listener.attributeRemoved(httpsbe);
+	}
+
+	@Override
+	public void attributeReplaced(HttpSessionBindingEvent httpsbe)
+	{
+		for (HttpSessionAttributeListener listener : sessionAttributeListeners)
+			listener.attributeReplaced(httpsbe);
 	}
 
 	/**
@@ -144,7 +201,7 @@ public final class SmallToolkit implements ServletContextListener
 			if (cons.isAnnotationPresent(ComponentConstructor.class))
 			{
 				if (out != null)
-					throw new SmallFrameworkSetupException("Found more than one constructor annotated with @ConstructorMain in class "+clazz.getName());
+					throw new SmallFrameworkSetupException("Found more than one constructor annotated with @ComponentConstructor in class "+clazz.getName());
 				else
 					out = cons;
 			}
@@ -179,15 +236,19 @@ public final class SmallToolkit implements ServletContextListener
 		}
 		else
 		{
+			componentsConstructing.put(clazz);
+
 			Class<?>[] types = constructor.getParameterTypes();
 			Object[] params = new Object[types.length]; 
 			for (int i = 0; i < types.length; i++)
 			{
-				if (types[i].equals(clazz))
-					throw new SmallFrameworkSetupException("Circular dependency detected: class "+types[i].getSimpleName()+" is the same as this one: "+clazz.getSimpleName());
+				if (componentsConstructing.contains(types[i]))
+					throw new SmallFrameworkSetupException("Circular dependency detected in class "+clazz.getSimpleName()+": "+types[i].getSimpleName()+" has not finished constructing.");
 				else
 				{
-					if (!types[i].isAnnotationPresent(Component.class))
+					if (ServletContext.class.isAssignableFrom(types[i])) // should already exist
+						createOrGetComponent(types[i]);
+					else if (!types[i].isAnnotationPresent(Component.class))
 						throw new SmallFrameworkSetupException("Class "+types[i].getSimpleName()+" is not annotated with @Component.");
 					
 					params[i] = createOrGetComponent(types[i]);
@@ -195,6 +256,7 @@ public final class SmallToolkit implements ServletContextListener
 			}
 			
 			object = Reflect.construct(constructor, params);
+			componentsConstructing.remove(clazz);
 			return object;
 		}
 	}
@@ -281,6 +343,12 @@ public final class SmallToolkit implements ServletContextListener
 		else
 		{
 			instance = createComponent(clazz, getAnnotatedConstructor(clazz));
+
+			if (HttpSessionListener.class.isAssignableFrom(clazz))
+				sessionListeners.add((HttpSessionListener)instance);
+			if (HttpSessionAttributeListener.class.isAssignableFrom(clazz))
+				sessionAttributeListeners.add((HttpSessionAttributeListener)instance);
+
 			componentInstances.put(clazz, instance);
 			return instance;
 		}

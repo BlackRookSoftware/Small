@@ -294,7 +294,7 @@ public final class SmallUtil implements EntityTables
 				obj = clazz.newInstance();
 				request.setAttribute(name, obj);
 		} catch (Exception e) {
-				throwException(e);
+				throw new SmallFrameworkException(e);
 			}
 		}
 	
@@ -363,7 +363,7 @@ public final class SmallUtil implements EntityTables
 					}
 				}
 			} catch (Exception e) {
-				throwException(e);
+				throw new SmallFrameworkException(e);
 			}
 		}
 	
@@ -428,7 +428,7 @@ public final class SmallUtil implements EntityTables
 					}
 				}
 			} catch (Exception e) {
-				throwException(e);
+				throw new SmallFrameworkException(e);
 			}
 		}
 	
@@ -488,7 +488,7 @@ public final class SmallUtil implements EntityTables
 						obj = clazz.newInstance();
 						SINGLETON_MAP.put(name, obj);
 				} catch (Exception e) {
-						throwException(e);
+						throw new SmallFrameworkException(e);
 					}
 				}
 			}
@@ -895,17 +895,6 @@ public final class SmallUtil implements EntityTables
 	}
 	
 	/**
-	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link SmallFrameworkException},
-	 * which is a {@link RuntimeException}.
-	 * @param t the {@link Throwable} to encapsulate and throw.
-	 */
-	public static void throwException(Throwable t)
-	{
-		throw new SmallFrameworkException(t);
-	}
-
-	/**
 	 * Includes the output of a view in the response.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
@@ -916,7 +905,7 @@ public final class SmallUtil implements EntityTables
 		try{
 			request.getRequestDispatcher(path).include(request, response);
 		} catch (Exception e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -931,7 +920,7 @@ public final class SmallUtil implements EntityTables
 		try{
 			request.getRequestDispatcher(path).forward(request, response);
 		} catch (Exception e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -947,7 +936,7 @@ public final class SmallUtil implements EntityTables
 		try {
 			JSONWriter.writeJSON(jsonObject, response.getWriter());
 		} catch (IOException e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -964,7 +953,7 @@ public final class SmallUtil implements EntityTables
 		try {
 			JSONWriter.writeJSON(JSONObject.create(object), response.getWriter());
 		} catch (IOException e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -980,7 +969,7 @@ public final class SmallUtil implements EntityTables
 		try {
 			(new XMLWriter()).writeXML(xml, response.getWriter());
 		} catch (IOException e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -1054,7 +1043,7 @@ public final class SmallUtil implements EntityTables
 			fis = new FileInputStream(file);
 			sendData(response, mimeType, fileName, fis, file.length());
 		} catch (IOException e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		} finally {
 			Common.close(fis);
 		}
@@ -1111,7 +1100,7 @@ public final class SmallUtil implements EntityTables
 				);
 			}
 		} catch (IOException e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -1126,7 +1115,7 @@ public final class SmallUtil implements EntityTables
 		try{
 			response.sendError(statusCode, message);
 		} catch (Exception e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 
@@ -1140,7 +1129,7 @@ public final class SmallUtil implements EntityTables
 		try{
 			response.sendRedirect(url);
 		} catch (Exception e) {
-			throwException(e);
+			throw new SmallFrameworkException(e);
 		}
 	}
 

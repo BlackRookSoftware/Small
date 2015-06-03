@@ -98,8 +98,8 @@ public abstract class SmallTag extends BodyTagSupport
 			try {
 				obj = create ? clazz.newInstance() : null;
 				pageContext.setAttribute(name, obj);
-		} catch (Exception e) {
-				throwException(e);
+			} catch (Exception e) {
+				throw new SmallFrameworkException(e);
 			}
 		}
 	
@@ -108,17 +108,6 @@ public abstract class SmallTag extends BodyTagSupport
 		return clazz.cast(obj);
 	} 
 	
-	/**
-	 * Forces an exception to propagate up to the dispatcher.
-	 * Basically encloses the provided throwable in a {@link SmallFrameworkException},
-	 * which is a {@link RuntimeException}.
-	 * @param t the {@link Throwable} to encapsulate and throw.
-	 */
-	public final void throwException(Throwable t)
-	{
-		throw new SmallFrameworkException(t);
-	}
-
 	/**
 	 * Called at the start of the tag evaluation.
 	 * Implementors are encouraged to override this method.
