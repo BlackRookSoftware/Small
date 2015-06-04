@@ -25,16 +25,20 @@
 	<property name="project.javadoc.title" value="Black Rook Small Framework" />
 	<property name="project.classpath" value="${common.lib}${S}${common.lang.lib}${S}${db.lib}${S}${j2ee.lib}"/>
 	<property name="project.javadoc.packages" value="
-		com.blackrook.j2ee.small,
-		com.blackrook.j2ee.small.annotation,
-		com.blackrook.j2ee.small.dao,
-		com.blackrook.j2ee.small.descriptor,
-		com.blackrook.j2ee.small.enums,
-		com.blackrook.j2ee.small.exception,
-		com.blackrook.j2ee.small.parser,
-		com.blackrook.j2ee.small.parser.multipart,
-		com.blackrook.j2ee.small.struct,
-		com.blackrook.j2ee.small.util
+		com.blackrook.j2ee.small
+		,com.blackrook.j2ee.small.annotation
+		,com.blackrook.j2ee.small.annotation.attribs
+		,com.blackrook.j2ee.small.annotation.parameters
+		,com.blackrook.j2ee.small.dao
+		,com.blackrook.j2ee.small.descriptor
+		,com.blackrook.j2ee.small.enums
+		,com.blackrook.j2ee.small.exception
+		,com.blackrook.j2ee.small.handler
+		,com.blackrook.j2ee.small.parser
+		,com.blackrook.j2ee.small.parser.multipart
+		,com.blackrook.j2ee.small.resolver
+		,com.blackrook.j2ee.small.struct
+		,com.blackrook.j2ee.small.util
 		"
 	/>
 	
