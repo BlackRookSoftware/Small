@@ -1,10 +1,12 @@
-package com.blackrook.j2ee.small.annotation;
+package com.blackrook.j2ee.small.annotation.attribs;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.j2ee.small.annotation.ControllerEntry;
+import com.blackrook.j2ee.small.annotation.FilterEntry;
 import com.blackrook.j2ee.small.enums.ScopeType;
 
 /**

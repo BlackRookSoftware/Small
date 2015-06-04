@@ -11,9 +11,6 @@
 package com.blackrook.j2ee.small;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
@@ -40,6 +37,8 @@ import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.annotation.ComponentConstructor;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
+import com.blackrook.j2ee.small.descriptor.ControllerDescriptor;
+import com.blackrook.j2ee.small.descriptor.FilterDescriptor;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.PathTrie;
@@ -57,8 +56,6 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 
 	/** Servlet context. */
 	private ServletContext servletContext;
-	/** Application context path. */
-	private String contextApplicationPath;
 
 	/** WebSocket Server container instance. Can be null if not present. */
 	private ServerContainer serverContainer;
@@ -81,12 +78,10 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	/** The components that are instantiated. */
 	private HashMap<Class<?>, Object> componentInstances;
 	/** The controllers that were instantiated. */
-	private HashMap<Class<?>, ControllerDescriptor> controllerInstances;
+	private HashMap<Class<?>, ControllerDescriptor> controllerComponents;
 	/** The filters that were instantiated. */
-	private HashMap<Class<?>, FilterDescriptor> filterInstances;
-	/** Map of view resolvers to instantiated view resolvers. */
-	private HashMap<Class<? extends ViewResolver>, ViewResolver> viewResolverMap;
-	
+	private HashMap<Class<?>, FilterDescriptor> filterComponents;
+
 	/**
 	 * Constructs the toolkit.
 	 */
@@ -99,9 +94,8 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		
 		componentsConstructing = new Hash<Class<?>>();
 		componentInstances = new HashMap<Class<?>, Object>();
-		controllerInstances = new HashMap<Class<?>, ControllerDescriptor>(10);
-		filterInstances = new HashMap<Class<?>, FilterDescriptor>(10);
-		viewResolverMap = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
+		controllerComponents = new HashMap<Class<?>, ControllerDescriptor>(10);
+		filterComponents = new HashMap<Class<?>, FilterDescriptor>(10);
 	}
 	
 	@Override
@@ -120,8 +114,6 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		
 		if (Common.isEmpty(controllerRootPackage))
 			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
-		
-		contextApplicationPath = servletContext.getRealPath("/");
 		
 		componentInstances.put(ServletContext.class, servletContext);
 		componentInstances.put(servletContext.getClass(), servletContext);
@@ -279,31 +271,35 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 			
 			if (componentClass.isAnnotationPresent(Component.class))
 			{
-				createOrGetComponent(componentClass);
-			}
-			else if (componentClass.isAnnotationPresent(Controller.class))
-			{
-				Controller controllerAnnotation = componentClass.getAnnotation(Controller.class);
+				Object component = createOrGetComponent(componentClass);
 
-				// check for double-include. Skip.
-				if (controllerInstances.containsKey(componentClass))
-					continue;
-				
-				controllerInstances.put(componentClass, new ControllerDescriptor(componentClass, this));
-				String path = controllerAnnotation.value();
-				Class<?> existingClass = null;
-				if ((existingClass = pathTrie.get(path)) == null)
-					pathTrie.put(path, componentClass);
-				else
-					throw new SmallFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
-			}
-			else if (componentClass.isAnnotationPresent(Filter.class))
-			{
-				// check for double-include. Skip.
-				if (filterInstances.containsKey(componentClass))
-					continue;
-				
-				filterInstances.put(componentClass, new FilterDescriptor(componentClass, this));
+				if (componentClass.isAnnotationPresent(Controller.class))
+				{
+					if (componentClass.isAnnotationPresent(Filter.class))
+						throw new SmallFrameworkSetupException("Class " + componentClass+ " is already a Controller. Can't annotate with @Filter!");
+					
+					Controller controllerAnnotation = componentClass.getAnnotation(Controller.class);
+
+					// check for double-include. Skip.
+					if (controllerComponents.containsKey(componentClass))
+						continue;
+					
+					controllerComponents.put(componentClass, new ControllerDescriptor(component));
+					String path = controllerAnnotation.value();
+					Class<?> existingClass = null;
+					if ((existingClass = pathTrie.get(path)) == null)
+						pathTrie.put(path, componentClass);
+					else
+						throw new SmallFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
+				}
+				else if (componentClass.isAnnotationPresent(Filter.class))
+				{
+					// check for double-include. Skip.
+					if (filterComponents.containsKey(componentClass))
+						continue;
+					
+					filterComponents.put(componentClass, new FilterDescriptor(component));
+				}
 			}
 			else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
 			{
@@ -355,47 +351,11 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	}
 
 	/**
-	 * Gets a file that is on the application path. 
-	 * @param path the path to the file to get.
-	 * @return a file representing the specified resource or null if it couldn't be found.
-	 */
-	File getApplicationFile(String path)
-	{
-		File inFile = new File(contextApplicationPath+"/"+path);
-		return inFile.exists() ? inFile : null;
-	}
-
-	/**
-	 * Gets a file path that is on the application path. 
-	 * @param relativepath the relative path to the file to get.
-	 * @return a file representing the specified resource or null if it couldn't be found.
-	 */
-	String getApplicationFilePath(String relativepath)
-	{
-		return contextApplicationPath + "/" + relativepath;
-	}
-
-	/**
 	 * Returns servlet context that constructed this.
 	 */
 	ServletContext getServletContext()
 	{
 		return servletContext;
-	}
-
-	/**
-	 * Opens an input stream to a resource using a path relative to the
-	 * application context path. 
-	 * Outside users should not be able to access this!
-	 * <p>REMINDER: Close the stream when you are done!
-	 * @param path the path to the resource to open.
-	 * @return an open input stream to the specified resource or null if it couldn't be opened.
-	 */
-	@SuppressWarnings("resource")
-	InputStream getResourceAsStream(String path) throws IOException
-	{
-		File inFile = getApplicationFile(path);
-		return inFile != null ? new FileInputStream(inFile) : null;
 	}
 
 	/**
@@ -418,50 +378,16 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 */
 	ControllerDescriptor getController(Class<?> clazz)
 	{
-		return controllerInstances.get(clazz);
+		return controllerComponents.get(clazz);
 	}
 
 	/**
 	 * Gets the filter to call.
-	 * @throws SmallFrameworkException if a huge error occurred.
+	 * @param clazz the filter class.
 	 */
 	FilterDescriptor getFilter(Class<?> clazz)
 	{
-		if (filterInstances.containsKey(clazz))
-			return filterInstances.get(clazz);
-		else synchronized (filterInstances)
-		{
-			// in case a thread already completed it.
-			if (filterInstances.containsKey(clazz))
-				return filterInstances.get(clazz);
-			
-			FilterDescriptor out = new FilterDescriptor(clazz, this);
-			// add to cache and return.
-			filterInstances.put(clazz, out);
-			return out;
-		}
-	}
-
-	/**
-	 * Returns the instance of view resolver to use for resolving views (duh).
-	 */
-	ViewResolver getViewResolver(Class<? extends ViewResolver> vclass)
-	{
-		if (!viewResolverMap.containsKey(vclass))
-		{
-			synchronized (viewResolverMap)
-			{
-				if (viewResolverMap.containsKey(vclass))
-					return viewResolverMap.get(vclass);
-				else
-				{
-					ViewResolver resolver = Reflect.create(vclass);
-					viewResolverMap.put(vclass, resolver);
-					return resolver;
-				}
-			}
-		}
-		return viewResolverMap.get(vclass);
+		return filterComponents.get(clazz);
 	}
 
 }

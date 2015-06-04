@@ -3,7 +3,6 @@ package com.blackrook.j2ee.small.dao;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.blackrook.j2ee.small.DefaultQueryResolver;
 import com.blackrook.j2ee.small.QueryResolver;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.sql.SQLResult;
@@ -21,15 +20,6 @@ public abstract class SmallSQLDAO
 	private SQLDataSource dataSource;
 	/** Query resolver class. */
 	private QueryResolver queryResolver;
-
-	/**
-	 * Base constructor.
-	 * @param dataSource the data source to use.
-	 */
-	protected SmallSQLDAO(SQLDataSource dataSource)
-	{
-		this(dataSource, new DefaultQueryResolver());
-	}
 
 	/**
 	 * Base constructor.

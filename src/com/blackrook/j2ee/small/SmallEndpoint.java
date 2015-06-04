@@ -8,8 +8,10 @@ import com.blackrook.j2ee.small.annotation.Component;
 
 /**
  * A base Endpoint that contains useful stuff for instantiated endpoints.
- * Endpoints that extend this class should use the {@link ServerEndpoint} annotation to declare
- * itself.
+ * Endpoints that extend this class should use the {@link ServerEndpoint} annotation to declare itself.
+ * <p>
+ * You should use this class for finding components created in Small, as this provides access for retrieving
+ * those components once this class is instantiated by the Servlet Container (see {@link #getComponent(Class)}. 
  * @author Matthew Tropiano
  */
 public class SmallEndpoint

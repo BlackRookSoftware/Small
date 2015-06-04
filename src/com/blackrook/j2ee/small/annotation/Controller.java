@@ -5,11 +5,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.j2ee.small.DefaultViewResolver;
-import com.blackrook.j2ee.small.ViewResolver;
+import com.blackrook.j2ee.small.resolver.DefaultViewResolver;
+import com.blackrook.j2ee.small.resolver.ViewResolver;
 
 /**
  * Annotation that is used to signify that this object is a Controller with entry points.
+ * Must be on a class also annotated with {@link Component}.
  * <p>All HTTP calls find their way here, and these objects handle the incoming request.
  * <p>Requests are handled via {@link ControllerEntry}-annotated methods.
  * <p>

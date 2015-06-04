@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.annotation;
+package com.blackrook.j2ee.small.annotation.parameters;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,6 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import javax.servlet.http.Cookie;
+
+import com.blackrook.j2ee.small.annotation.ControllerEntry;
+import com.blackrook.j2ee.small.annotation.FilterEntry;
 
 /**
  * Annotates a method parameter for Cookie binding. Should be used in Controllers and Filters.

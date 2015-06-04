@@ -438,6 +438,44 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
+	 * Gets a file that is on the application path. 
+	 * @param context the servlet context to use. 
+	 * @param relativePath the path to the file to get via a path relative to the application root.
+	 * @return a file representing the specified resource or null if it couldn't be found.
+	 */
+	public static File getApplicationFile(ServletContext context, String relativePath)
+	{
+		File inFile = new File(getApplicationFilePath(context, relativePath));
+		return inFile.exists() ? inFile : null;
+	}
+
+	/**
+	 * Gets a file path that is on the application path.
+	 * @param context the servlet context to use. 
+	 * @param relativePath the relative path to the file to get.
+	 * @return a file representing the specified resource or null if it couldn't be found.
+	 */
+	public static String getApplicationFilePath(ServletContext context, String relativePath)
+	{
+		return context.getRealPath("/") + "/" + SmallUtil.removeBeginningSlash(relativePath);
+	}
+
+	/**
+	 * Opens an input stream to a resource using a path relative to the application context path. 
+	 * Outside users should not be able to access this!
+	 * @param context the servlet context to use. 
+	 * @param path the path to the resource to open.
+	 * @return an open input stream to the specified resource or null if it couldn't be opened.
+	 * @throws IOException if the stream cannot be opened.
+	 */
+	@SuppressWarnings("resource")
+	public static InputStream getApplicationFileAsStream(ServletContext context, String path) throws IOException
+	{
+		File inFile = getApplicationFile(context, path);
+		return inFile != null ? new FileInputStream(inFile) : null;
+	}
+
+	/**
 	 * Gets and auto-casts a singleton object bean stored at the program level,
 	 * accessible always, and not attached to a servlet context.
 	 * The bean is created and stored if it doesn't exist.

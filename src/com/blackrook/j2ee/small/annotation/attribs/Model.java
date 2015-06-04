@@ -1,9 +1,12 @@
-package com.blackrook.j2ee.small.annotation;
+package com.blackrook.j2ee.small.annotation.attribs;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.blackrook.j2ee.small.annotation.ControllerEntry;
+import com.blackrook.j2ee.small.annotation.FilterEntry;
 
 /**
  * Annotates a controller method or method parameter for sets of request parameters from the

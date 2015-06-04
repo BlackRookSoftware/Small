@@ -1,6 +1,6 @@
 package com.blackrook.j2ee.small.parser;
 
-import com.blackrook.j2ee.small.annotation.Header;
+import com.blackrook.j2ee.small.annotation.parameters.Header;
 
 /**
  * Parser for Strings.
