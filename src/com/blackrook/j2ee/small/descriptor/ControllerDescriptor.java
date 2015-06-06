@@ -180,7 +180,6 @@ public class ControllerDescriptor extends EntryPointDescriptor
 		HttpServletRequest request, 
 		HttpServletResponse response, 
 		ControllerMethodDescriptor descriptor, 
-		Object instance, 
 		String pathRemainder,
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
@@ -188,7 +187,7 @@ public class ControllerDescriptor extends EntryPointDescriptor
 	{
 		Object retval = null;
 		try {
-			retval = invokeEntryMethod(requestMethod, request, response, descriptor, instance, pathRemainder, cookieMap, multiformPartMap);
+			retval = invokeEntryMethod(requestMethod, request, response, descriptor, pathRemainder, cookieMap, multiformPartMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Controller method.", e);
 		}

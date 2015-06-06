@@ -141,18 +141,18 @@ public final class SmallDispatcher extends HttpServlet
 				for (Class<?> filterClass : entry.getFilterChain())
 				{
 					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
-					if (!fd.handleCall(requestMethod, request, response, fd.getFilterEntryMethodDescriptor(), fd.getInstance(), pageRemainder, cookieMap, multiformPartMap))
+					if (!fd.handleCall(requestMethod, request, response, pageRemainder, cookieMap, multiformPartMap))
 						return;
 				}
 
 				for (Class<?> filterClass : cmd.getFilterChain())
 				{
 					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
-					if (!fd.handleCall(requestMethod, request, response, fd.getFilterEntryMethodDescriptor(), fd.getInstance(), pageRemainder, cookieMap, multiformPartMap))
+					if (!fd.handleCall(requestMethod, request, response, pageRemainder, cookieMap, multiformPartMap))
 						return;
 				}
 
-				entry.handleCall(requestMethod, request, response, cmd, entry.getInstance(), pageRemainder, cookieMap, multiformPartMap);
+				entry.handleCall(requestMethod, request, response, cmd, pageRemainder, cookieMap, multiformPartMap);
 			}
 			else
 				SmallUtil.sendCode(response, 404, "Not found.");

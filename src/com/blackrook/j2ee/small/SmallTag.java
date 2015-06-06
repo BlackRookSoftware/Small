@@ -62,7 +62,7 @@ public abstract class SmallTag extends BodyTagSupport
 	}
 	
 	/**
-	 * Returns the writer for writing directly to the page's output stream. 
+	 * @return the writer for writing directly to the page's output stream. 
 	 */
 	public final JspWriter getWriter()
 	{
@@ -73,6 +73,7 @@ public abstract class SmallTag extends BodyTagSupport
 	 * Gets and auto-casts an object bean stored at the page context level.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
+	 * @param <T> object type.
 	 * @return a typecast object on the application scope.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -87,6 +88,7 @@ public abstract class SmallTag extends BodyTagSupport
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param <T> object type.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */

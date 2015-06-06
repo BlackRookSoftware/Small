@@ -81,8 +81,6 @@ public class FilterDescriptor extends EntryPointDescriptor
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
-		MethodDescriptor descriptor, 
-		Object instance, 
 		String pathRemainder,
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
@@ -90,7 +88,7 @@ public class FilterDescriptor extends EntryPointDescriptor
 	{
 		Object retval = null;
 		try {
-			retval = invokeEntryMethod(requestMethod, request, response, descriptor, instance, pathRemainder, cookieMap, multiformPartMap);
+			retval = invokeEntryMethod(requestMethod, request, response, filterEntryMethodDescriptor, pathRemainder, cookieMap, multiformPartMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Filter method.", e);
 		}

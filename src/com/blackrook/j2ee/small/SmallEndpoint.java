@@ -34,7 +34,7 @@ public class SmallEndpoint
 	}
 	
 	/**
-	 * Returns this endpoint's unique id.
+	 * @return this endpoint's unique id.
 	 */
 	public String getId()
 	{
@@ -42,7 +42,10 @@ public class SmallEndpoint
 	}
 
 	/**
-	 * Gets a singleton component annotated with {@link Component} by class.
+	 * Returns a singleton component instantiated by Small.
+	 * @param componentClass the component class.
+	 * @param <T> the object type.
+	 * @return a singleton component annotated with {@link Component} by class.
 	 */
 	protected <T> T getComponent(Class<T> componentClass)
 	{

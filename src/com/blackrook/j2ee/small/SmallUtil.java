@@ -161,6 +161,10 @@ public final class SmallUtil implements EntityTables
 
 	/**
 	 * Trims slashes from the ends.
+	 * @param str the input string.
+	 * @return the input string with slashes removed from both ends.
+	 * @see #removeBeginningSlash(String)
+	 * @see #removeEndingSlash(String)
 	 */
 	public static String trimSlashes(String str)
 	{
@@ -236,8 +240,9 @@ public final class SmallUtil implements EntityTables
 	
 	/**
 	 * Gets the current connection's session id.
-	 * Meant to be a convenience method. 
+	 * Meant to be a convenience method for <code>request.getSession().getId()</code> 
 	 * @param request servlet request object.
+	 * @return the id attached to the session.
 	 */
 	public static String getSessionId(HttpServletRequest request)
 	{
@@ -250,6 +255,7 @@ public final class SmallUtil implements EntityTables
 	 * The name used is the fully-qualified class name prefixed with "$$".
 	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
+	 * @param <T> the object type.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
@@ -268,6 +274,7 @@ public final class SmallUtil implements EntityTables
 	 * @param request the source request object.
 	 * @param name the attribute name.
 	 * @param clazz the class type of the object that should be returned.
+	 * @param <T> the object type.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -282,6 +289,7 @@ public final class SmallUtil implements EntityTables
 	 * @param name the attribute name.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param create if true, instantiate this class in the request (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param <T> the object type.
 	 * @return a typecast object on the request.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -309,6 +317,7 @@ public final class SmallUtil implements EntityTables
 	 * The name used is the fully-qualified class name prefixed with "$$".
 	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
+	 * @param <T> the object type.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
@@ -327,6 +336,7 @@ public final class SmallUtil implements EntityTables
 	 * @param request the source request object.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
+	 * @param <T> the object type.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -341,6 +351,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param <T> the object type.
 	 * @return a typecast object on the session, a new instance if it doesn't exist, or null if the session is null.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -378,6 +389,7 @@ public final class SmallUtil implements EntityTables
 	 * The name used is the fully-qualified class name prefixed with "$$".
 	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
+	 * @param <T> the object type.
 	 * @return a typecast object on the application scope.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
@@ -396,6 +408,7 @@ public final class SmallUtil implements EntityTables
 	 * @param context the servlet context to use.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
+	 * @param <T> the object type.
 	 * @return a typecast object on the application scope.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -410,6 +423,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class in the application's servlet context (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param <T> the object type.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -481,6 +495,7 @@ public final class SmallUtil implements EntityTables
 	 * The bean is created and stored if it doesn't exist.
 	 * The name used is the fully-qualified class name.
 	 * @param clazz the class type of the object that should be returned.
+	 * @param <T> the object type.
 	 * @return a typecast object on the application scope.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -495,6 +510,7 @@ public final class SmallUtil implements EntityTables
 	 * The bean is created and stored if it doesn't exist.
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
+	 * @param <T> the object type.
 	 * @return a typecast object on the application scope.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -509,6 +525,7 @@ public final class SmallUtil implements EntityTables
 	 * @param clazz the class type of the object that should be returned.
 	 * @param name the attribute name.
 	 * @param create if true, instantiate this class (via {@link Class#newInstance()}) if it doesn't exist.
+	 * @param <T> the object type.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
 	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
 	 */
@@ -540,6 +557,7 @@ public final class SmallUtil implements EntityTables
 
 	/**
 	 * Gets a group of parameters that start with a specific prefix.
+	 * @param request the servlet request.
 	 * @param prefix the prefix to search for.
 	 * @return a HashMap containing a map of parameter to String value of parameter. 
 	 * The parameters in the map are ones that match the prefix.
@@ -555,7 +573,9 @@ public final class SmallUtil implements EntityTables
 	
 	/**
 	 * Convenience method that checks if a parameter exists on a request. 
-	 * Returns true if it exists, false otherwise.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return true if it exists, false otherwise.
 	 */
 	public static boolean getParameterExist(HttpServletRequest request, String paramName)
 	{
@@ -563,8 +583,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>session.getAttribute(attribName)</code> 
-	 * and returns true if it exists, false otherwise.
+	 * Convenience method that calls <code>session.getAttribute(attribName)</code>. 
+	 * @param session the session.
+	 * @param attribName the attribute name.
+	 * @return true if it exists, false otherwise.
 	 */
 	public static boolean getAttributeExist(HttpSession session, String attribName)
 	{
@@ -572,8 +594,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>context.getAttribute(attribName)</code> 
-	 * and returns true if it exists, false otherwise.
+	 * Convenience method that calls <code>context.getAttribute(attribName)</code>.
+	 * @param context the servlet context.
+	 * @param attribName the attribute name.
+	 * @return true if it exists, false otherwise.
 	 */
 	public static boolean getAttributeExist(ServletContext context, String attribName)
 	{
@@ -583,8 +607,11 @@ public final class SmallUtil implements EntityTables
 	/**
 	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
 	 * and returns true or false.
-	 * This flavor of <code>getParameterBoolean</code> assumes that the parameter
+	 * This flavor of {@link #getParameterBoolean(HttpServletRequest, String, String)} assumes that the parameter
 	 * received is a string that is either "true" or not "true".
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return true if the parameter value is "true", false otherwise.
 	 * @see Common#parseBoolean(String)
 	 */
 	public static boolean getParameterBoolean(HttpServletRequest request, String paramName)
@@ -597,6 +624,10 @@ public final class SmallUtil implements EntityTables
 	 * and returns true or false, if the string found in the request evaluates
 	 * to <code>trueValue</code>, case-insensitively. The value of <code>trueValue</code> can be <code>null</code>,
 	 * meaning that the parameter was not received.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param trueValue the value to equate to true.
+	 * @return true if the parameter value is <code>trueValue</code>, false otherwise.
 	 */
 	public static boolean getParameterBoolean(HttpServletRequest request, String paramName, String trueValue)
 	{
@@ -605,8 +636,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and returns the empty string if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as a string or the empty string if it doesn't exist.
 	 */
 	public static String getParameterString(HttpServletRequest request, String paramName)
 	{
@@ -614,8 +647,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>. 
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as a string or <code>def</code> if it doesn't exist.
 	 */
 	public static String getParameterString(HttpServletRequest request, String paramName, String def)
 	{
@@ -624,8 +660,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a byte and returns 0 if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as a byte or 0 if it doesn't exist.
 	 */
 	public static byte getParameterByte(HttpServletRequest request, String paramName)
 	{
@@ -633,8 +671,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a byte and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as a byte or <code>def</code> if it doesn't exist.
 	 */
 	public static byte getParameterByte(HttpServletRequest request, String paramName, byte def)
 	{
@@ -642,8 +683,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a short and returns 0 if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as a short or 0 if it doesn't exist.
 	 */
 	public static short getParameterShort(HttpServletRequest request, String paramName)
 	{
@@ -651,8 +694,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a short and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as a short or <code>def</code> if it doesn't exist.
 	 */
 	public static short getParameterShort(HttpServletRequest request, String paramName, short def)
 	{
@@ -660,8 +706,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a char and returns '\0' if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as a char or <code>'\0'</code> if it doesn't exist.
 	 */
 	public static char getParameterChar(HttpServletRequest request, String paramName)
 	{
@@ -669,8 +717,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a char and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as a char or <code>def</code> if it doesn't exist.
 	 */
 	public static char getParameterChar(HttpServletRequest request, String paramName, char def)
 	{
@@ -678,8 +729,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses an integer and returns 0 if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as an integer or 0 if it doesn't exist.
 	 */
 	public static int getParameterInt(HttpServletRequest request, String paramName)
 	{
@@ -687,8 +740,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses an integer and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as an integer or <code>def</code> if it doesn't exist.
 	 */
 	public static int getParameterInt(HttpServletRequest request, String paramName, int def)
 	{
@@ -696,8 +752,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a float and returns 0.0f if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as an integer or <code>0f</code> if it doesn't exist.
 	 */
 	public static float getParameterFloat(HttpServletRequest request, String paramName)
 	{
@@ -705,8 +763,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a float and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as an integer or <code>def</code> if it doesn't exist.
 	 */
 	public static float getParameterFloat(HttpServletRequest request, String paramName, float def)
 	{
@@ -714,8 +775,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a long integer and returns 0L if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as a long or 0L if it doesn't exist.
 	 */
 	public static long getParameterLong(HttpServletRequest request, String paramName)
 	{
@@ -723,8 +786,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a long integer and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as a long or <code>def</code> if it doesn't exist.
 	 */
 	public static long getParameterLong(HttpServletRequest request, String paramName, long def)
 	{
@@ -732,8 +798,10 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a double and returns 0.0 if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @return the parameter as a double or 0.0 if it doesn't exist.
 	 */
 	public static double getParameterDouble(HttpServletRequest request, String paramName)
 	{
@@ -741,8 +809,11 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and parses a double and returns <code>def</code> if it doesn't exist.
+	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
+	 * @param request the servlet request.
+	 * @param paramName the parameter name.
+	 * @param def the default value to use if the parameter is null.
+	 * @return the parameter as a double or <code>def</code> if it doesn't exist.
 	 */
 	public static double getParameterDouble(HttpServletRequest request, String paramName, double def)
 	{
@@ -792,6 +863,7 @@ public final class SmallUtil implements EntityTables
 	 * the Application. If that fails, it is ignored.
 	 * @param request the servlet request.
 	 * @param type the type to instantiate.
+	 * @param <T> the object type.
 	 * @return the new object with fields set using the model.
 	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
 	 * (best to use public classes in these cases), or if the object cannot be instantiated.
@@ -815,6 +887,7 @@ public final class SmallUtil implements EntityTables
 	 * the Application. If that fails, it is ignored.
 	 * @param request the servlet request.
 	 * @param target the target object.
+	 * @param <T> the object type.
 	 * @return the passed in object.
 	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
 	 * (best to use public classes in these cases).
@@ -1175,6 +1248,7 @@ public final class SmallUtil implements EntityTables
 	 * Pauses the current thread for up to <code>maxMillis</code>
 	 * milliseconds, used for simulating lag.
 	 * For debugging and testing only!
+	 * @param maxMillis the maximum amount of milliseconds to wait.
 	 */
 	public static void simulateLag(long maxMillis)
 	{

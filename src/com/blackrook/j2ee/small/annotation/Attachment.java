@@ -31,6 +31,9 @@ import com.blackrook.lang.xml.XMLStruct;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Attachment
 {
-	/** Forced MIME-Type. */
+	/** 
+	 * Forced MIME-Type.
+	 * @return MIME-Type name. Default is empty string. 
+	 */
 	String value() default "";
 }

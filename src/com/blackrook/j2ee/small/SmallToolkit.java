@@ -165,7 +165,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	}
 
 	/**
-	 * Returns the temporary directory to use for multipart files.
+	 * @return the temporary directory to use for multipart files.
 	 */
 	public File getTemporaryDirectory()
 	{
@@ -173,7 +173,10 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	}
 	
 	/**
-	 * Gets a singleton component annotated with {@link Component} by class.
+	 * Returns a singleton component instantiated by Small or instantiates it and returns it.
+	 * @param clazz the class to fetch or instantiate.
+	 * @param <T> object type.
+	 * @return a singleton component annotated with {@link Component} by class.
 	 */
 	public <T> T getComponent(Class<T> clazz)
 	{
@@ -181,7 +184,8 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	}
 	
 	/**
-	 * Returns the specific constructor to use for this class.
+	 * @param <T> object type.
+	 * @return the specific constructor to use for this class.
 	 */
 	@SuppressWarnings("unchecked")
 	private <T> Constructor<T> getAnnotatedConstructor(Class<T> clazz)

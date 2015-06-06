@@ -123,7 +123,6 @@ public abstract class EntryPointDescriptor
 		HttpServletRequest request,
 		HttpServletResponse response, 
 		MethodDescriptor descriptor, 
-		Object instance, 
 		String pathRemainder, 
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
@@ -335,7 +334,7 @@ public abstract class EntryPointDescriptor
 					MethodDescriptor attribDescriptor = getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = invokeEntryMethod(requestMethod, request, response, attribDescriptor, instance, pathRemainder, cookieMap, multiformPartMap);
+						Object attrib = invokeEntryMethod(requestMethod, request, response, attribDescriptor, pathRemainder, cookieMap, multiformPartMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -371,7 +370,7 @@ public abstract class EntryPointDescriptor
 					MethodDescriptor modelDescriptor = getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = invokeEntryMethod(requestMethod, request, response, modelDescriptor, instance, pathRemainder, cookieMap, multiformPartMap);
+						Object model = invokeEntryMethod(requestMethod, request, response, modelDescriptor, pathRemainder, cookieMap, multiformPartMap);
 						SmallUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
