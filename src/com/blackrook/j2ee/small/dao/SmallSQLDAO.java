@@ -80,7 +80,7 @@ public abstract class SmallSQLDAO
 		} catch (InterruptedException e) {
 			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
+			if (conn != null) dataSource.releaseConnection(conn);
 		}
 		return result;
 	}
@@ -183,7 +183,7 @@ public abstract class SmallSQLDAO
 		} catch (InterruptedException e) {
 			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
+			if (conn != null) dataSource.releaseConnection(conn);
 		}
 		return result;
 	}
@@ -208,7 +208,7 @@ public abstract class SmallSQLDAO
 		} catch (InterruptedException e) {
 			throw new SmallFrameworkException("Connection acquisition has been interrupted unexpectedly: "+e.getLocalizedMessage());
 		} finally {
-			if (conn != null) try {conn.close();} catch (SQLException e) {};
+			if (conn != null) dataSource.releaseConnection(conn);
 		}
 		return result;
 	}
