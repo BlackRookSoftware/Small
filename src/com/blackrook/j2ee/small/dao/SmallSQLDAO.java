@@ -3,8 +3,8 @@ package com.blackrook.j2ee.small.dao;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.blackrook.j2ee.small.QueryResolver;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.resolver.QueryResolver;
 import com.blackrook.sql.SQLResult;
 import com.blackrook.sql.SQLTransaction;
 import com.blackrook.sql.SQLTransaction.Level;
