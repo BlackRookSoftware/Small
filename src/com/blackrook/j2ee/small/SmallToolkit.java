@@ -69,12 +69,15 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	private PathTrie<Class<?>> pathTrie;
 
 	/** List of components that listen for session events. */
+	private Queue<ServletContextListener> contextListeners;
+	/** List of components that listen for session events. */
 	private Queue<HttpSessionListener> sessionListeners;
 	/** List of components that listen for session attribute events. */
 	private Queue<HttpSessionAttributeListener> sessionAttributeListeners;
 
 	/** Components-in-construction set. */
 	private Hash<Class<?>> componentsConstructing;
+
 	/** The components that are instantiated. */
 	private HashMap<Class<?>, Object> componentInstances;
 	/** The controllers that were instantiated. */
@@ -89,6 +92,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	{
 		pathTrie = new PathTrie<Class<?>>();
 		
+		contextListeners = new Queue<ServletContextListener>();
 		sessionListeners = new Queue<HttpSessionListener>();
 		sessionAttributeListeners = new Queue<HttpSessionAttributeListener>();
 		
@@ -126,7 +130,19 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	@Override
 	public void contextDestroyed(ServletContextEvent sce)
 	{
-		// Do nothing.
+		for (ServletContextListener listener : contextListeners)
+			listener.contextDestroyed(sce);
+		
+		pathTrie.clear();
+		
+		contextListeners.clear();
+		sessionListeners.clear();
+		sessionAttributeListeners.clear();
+		
+		componentsConstructing.clear();
+		componentInstances.clear();
+		controllerComponents.clear();
+		filterComponents.clear();
 	}
 
 	@Override
@@ -343,7 +359,9 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		else
 		{
 			instance = createComponent(clazz, getAnnotatedConstructor(clazz));
-
+			
+			if (ServletContextListener.class.isAssignableFrom(clazz))
+				contextListeners.add((ServletContextListener)instance);
 			if (HttpSessionListener.class.isAssignableFrom(clazz))
 				sessionListeners.add((HttpSessionListener)instance);
 			if (HttpSessionAttributeListener.class.isAssignableFrom(clazz))

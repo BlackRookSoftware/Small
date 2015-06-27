@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionListener;
 
@@ -17,6 +19,9 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * This object may implement {@link HttpSessionListener} or {@link HttpSessionAttributeListener} and it
  * will receive session events.
+ * <p>
+ * This object can also implement {@link ServletContextListener}, but it will ONLY receive 
+ * {@link ServletContextListener#contextDestroyed(ServletContextEvent)} calls.
  * 
  * @author Matthew Tropiano
  * @see ComponentConstructor
