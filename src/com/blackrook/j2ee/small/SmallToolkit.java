@@ -37,8 +37,8 @@ import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.annotation.ComponentConstructor;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
-import com.blackrook.j2ee.small.descriptor.ControllerDescriptor;
-import com.blackrook.j2ee.small.descriptor.FilterDescriptor;
+import com.blackrook.j2ee.small.descriptor.ControllerProfile;
+import com.blackrook.j2ee.small.descriptor.FilterProfile;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.PathTrie;
@@ -81,9 +81,9 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	/** The components that are instantiated. */
 	private HashMap<Class<?>, Object> componentInstances;
 	/** The controllers that were instantiated. */
-	private HashMap<Class<?>, ControllerDescriptor> controllerComponents;
+	private HashMap<Class<?>, ControllerProfile> controllerComponents;
 	/** The filters that were instantiated. */
-	private HashMap<Class<?>, FilterDescriptor> filterComponents;
+	private HashMap<Class<?>, FilterProfile> filterComponents;
 
 	/**
 	 * Constructs the toolkit.
@@ -98,8 +98,8 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		
 		componentsConstructing = new Hash<Class<?>>();
 		componentInstances = new HashMap<Class<?>, Object>();
-		controllerComponents = new HashMap<Class<?>, ControllerDescriptor>(10);
-		filterComponents = new HashMap<Class<?>, FilterDescriptor>(10);
+		controllerComponents = new HashMap<Class<?>, ControllerProfile>(10);
+		filterComponents = new HashMap<Class<?>, FilterProfile>(10);
 	}
 	
 	@Override
@@ -217,7 +217,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 				else
 					out = cons;
 			}
-			else if (cons.getParameterCount() == 0 && (cons.getModifiers() & Modifier.PUBLIC) != 0)
+			else if (cons.getParameterTypes().length == 0 && (cons.getModifiers() & Modifier.PUBLIC) != 0)
 			{
 				hasDefaultConstructor = true;
 			}	
@@ -304,7 +304,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 					if (controllerComponents.containsKey(componentClass))
 						continue;
 					
-					controllerComponents.put(componentClass, new ControllerDescriptor(component));
+					controllerComponents.put(componentClass, new ControllerProfile(component));
 					String path = controllerAnnotation.value();
 					Class<?> existingClass = null;
 					if ((existingClass = pathTrie.get(path)) == null)
@@ -318,7 +318,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 					if (filterComponents.containsKey(componentClass))
 						continue;
 					
-					filterComponents.put(componentClass, new FilterDescriptor(component));
+					filterComponents.put(componentClass, new FilterProfile(component));
 				}
 			}
 			else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
@@ -398,7 +398,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 * @return a controller, or null if no controller by that class. 
 	 * This servlet sends a 404 back if this happens.
 	 */
-	ControllerDescriptor getController(Class<?> clazz)
+	ControllerProfile getController(Class<?> clazz)
 	{
 		return controllerComponents.get(clazz);
 	}
@@ -407,9 +407,9 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 * Gets the filter to call.
 	 * @param clazz the filter class.
 	 */
-	FilterDescriptor getFilter(Class<?> clazz)
+	FilterProfile getFilter(Class<?> clazz)
 	{
 		return filterComponents.get(clazz);
 	}
-
+	
 }

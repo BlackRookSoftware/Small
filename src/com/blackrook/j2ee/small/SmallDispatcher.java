@@ -10,13 +10,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.list.List;
-import com.blackrook.j2ee.small.descriptor.ControllerDescriptor;
-import com.blackrook.j2ee.small.descriptor.ControllerMethodDescriptor;
-import com.blackrook.j2ee.small.descriptor.FilterDescriptor;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartFormDataParser;
@@ -113,51 +109,19 @@ public final class SmallDispatcher extends HttpServlet
 	 */
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
-		String path = SmallUtil.removeEndingSlash(request.getRequestURI());
-		List<String> remainder = new List<String>(4);
-		Class<?> controllerClass = SmallToolkit.INSTANCE.getControllerClassByPath(path, remainder);
-		if (controllerClass == null)
-		{
-			ResponseUtil.sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
-			return;
-		}
+		String path = SmallUtil.trimSlashes(request.getRequestURI());
+		
+		// TODO: Get from URITrie
 
-		ControllerDescriptor entry = SmallToolkit.INSTANCE.getController(controllerClass);
-		if (entry == null)
-			ResponseUtil.sendError(response, 404, "The controller at path \""+path+"\" could not be resolved.");
-		else
-		{
-			String pageRemainder = "/" + Common.joinStrings("/", remainder);
-
-			// get cookies from request.
-			HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
-			Cookie[] cookies = request.getCookies();
-			if (cookies != null) for (Cookie c : cookies)
-				cookieMap.put(c.getName(), c);
-			
-			ControllerMethodDescriptor cmd = entry.getDescriptorUsingPath(requestMethod, SmallUtil.removeBeginningSlash(pageRemainder));
-			if (cmd != null)
-			{
-				for (Class<?> filterClass : entry.getFilterChain())
-				{
-					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
-					if (!fd.handleCall(requestMethod, request, response, pageRemainder, cookieMap, multiformPartMap))
-						return;
-				}
-
-				for (Class<?> filterClass : cmd.getFilterChain())
-				{
-					FilterDescriptor fd = SmallToolkit.INSTANCE.getFilter(filterClass);
-					if (!fd.handleCall(requestMethod, request, response, pageRemainder, cookieMap, multiformPartMap))
-						return;
-				}
-
-				entry.handleCall(requestMethod, request, response, cmd, pageRemainder, cookieMap, multiformPartMap);
-			}
-			else
-				SmallUtil.sendCode(response, 404, "Not found.");
-		}
+		// If successful, continue.
+		
+		// get cookies from request.
+		HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) for (Cookie c : cookies)
+			cookieMap.put(c.getName(), c);
+		
+		// Call Entry
 	}
-
 	
 }

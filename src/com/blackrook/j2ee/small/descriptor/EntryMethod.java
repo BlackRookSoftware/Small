@@ -1,35 +1,45 @@
 package com.blackrook.j2ee.small.descriptor;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.xml.sax.SAXException;
 
 import com.blackrook.commons.AbstractMap;
-import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.j2ee.small.SmallUtil;
+import com.blackrook.j2ee.small.annotation.Content;
 import com.blackrook.j2ee.small.annotation.attribs.Attribute;
 import com.blackrook.j2ee.small.annotation.attribs.Model;
-import com.blackrook.j2ee.small.descriptor.MethodDescriptor.ParameterDescriptor;
+import com.blackrook.j2ee.small.annotation.parameters.AutoTrim;
+import com.blackrook.j2ee.small.annotation.parameters.CookieParameter;
+import com.blackrook.j2ee.small.annotation.parameters.Header;
+import com.blackrook.j2ee.small.annotation.parameters.HeaderMap;
+import com.blackrook.j2ee.small.annotation.parameters.Parameter;
+import com.blackrook.j2ee.small.annotation.parameters.ParameterMap;
+import com.blackrook.j2ee.small.annotation.parameters.Path;
+import com.blackrook.j2ee.small.annotation.parameters.PathFile;
+import com.blackrook.j2ee.small.annotation.parameters.PathQuery;
+import com.blackrook.j2ee.small.annotation.parameters.PathRemainder;
+import com.blackrook.j2ee.small.annotation.parameters.PathVariable;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
@@ -40,105 +50,244 @@ import com.blackrook.j2ee.small.util.ResponseUtil;
 import com.blackrook.lang.json.JSONConversionException;
 
 /**
- * Interface for descriptors for component objects. 
- * @author Matthew Tropiano
+ * Entry method descriptor class.
+ * Parses a method's characteristics using reflection, yielding a digest of its important contents.
+ * @author Matthew Tropiano 
  */
-public abstract class EntryPointDescriptor
+public class EntryMethod<S extends ServiceProfile>
 {
 
-	/** Filter instance. */
-	private Object instance;
-	/** Model map. */
-	private HashMap<String, MethodDescriptor> modelMap;
-	/** Attribute map. */
-	private HashMap<String, MethodDescriptor> attributeMap;
-
-	public EntryPointDescriptor(Object instance)
+	/** Parameter source types. */
+	public static enum Source
 	{
-		this.instance = instance; 
-		this.modelMap = new HashMap<String, MethodDescriptor>(3);
-		this.attributeMap = new HashMap<String, MethodDescriptor>(3);
+		PATH,
+		PATH_FILE,
+		PATH_QUERY,
+		PATH_REMAINDER,
+		PATH_VARIABLE,
+		SERVLET_REQUEST,
+		SERVLET_RESPONSE,
+		SESSION,
+		SERVLET_CONTEXT,
+		HEADER,
+		HEADER_MAP,
+		METHOD_TYPE,
+		COOKIE,
+		ATTRIBUTE,
+		PARAMETER,
+		PARAMETER_MAP,
+		CONTENT,
+		MODEL;
 	}
-
+	
 	/**
-	 * Scans all methods for entry points.
-	 * @param clazz the instance class.
+	 * Parameter entry for the descriptor.
 	 */
-	protected void scanMethods(Class<?> clazz)
+	public static class ParameterDescriptor
 	{
-		for (Method m : clazz.getMethods())
+		private Class<?> type;
+		private Source sourceType;
+		private ScopeType sourceScopeType;
+		private String name;
+		private boolean trim;
+		
+		protected ParameterDescriptor(Source sourceType, ScopeType scope, Class<?> type, String name, boolean trim)
 		{
-			if (isModelConstructorMethod(m))
-			{
-				Model anno = m.getAnnotation(Model.class);
-				modelMap.put(anno.value(), new ControllerMethodDescriptor(m));
-			}
-			else if (isAttributeConstructorMethod(m))
-			{
-				Attribute anno = m.getAnnotation(Attribute.class);
-				attributeMap.put(anno.value(), new ControllerMethodDescriptor(m));
-			}
-			else
-				scanUnknownMethod(m);
+			this.type = type;
+			this.sourceType = sourceType;
+			this.sourceScopeType = scope;
+			this.name = name;
+			this.trim = trim;
+		}
+
+		public String getName()
+		{
+			return name;
+		}
+
+		public Class<?> getType()
+		{
+			return type;
+		}
+
+		public Source getSourceType()
+		{
+			return sourceType;
+		}
+
+		public ScopeType getSourceScopeType()
+		{
+			return sourceScopeType;
+		}
+
+		public boolean getTrim()
+		{
+			return trim;
 		}
 	}
+
+	/** Method. */
+	private Method method;
+	/** Return type. */
+	private Class<?> type;
+	/** Parameter entry. */
+	private ParameterDescriptor[] parameters;
+	/** Service profile. */
+	private S serviceProfile;
+
+	/**
+	 * Creates an entry method around a service profile instance.
+	 * @param serviceProfile the service instance.
+	 * @param method the method invoked.
+	 */
+	public EntryMethod(S serviceProfile, Method method)
+	{
+		this.serviceProfile = serviceProfile;
+		this.method = method;
+		this.type = method.getReturnType();
+
+		Annotation[][] pannotations = method.getParameterAnnotations();
+		Class<?>[] ptypes = method.getParameterTypes();
+		
+		this.parameters = new ParameterDescriptor[ptypes.length];
+		for (int i = 0; i < ptypes.length; i++)
+		{
+			Source source = null;
+			ScopeType scope = null;
+			String name = null;
+			Class<?> paramType = ptypes[i];
+			boolean trim = false;
+			
+			if (paramType == RequestMethod.class)
+				source = Source.METHOD_TYPE;
+			else if (paramType == ServletContext.class)
+				source = Source.SERVLET_CONTEXT;
+			else if (paramType == HttpSession.class)
+				source = Source.SESSION;
+			else if (paramType == HttpServletRequest.class)
+				source = Source.SERVLET_REQUEST;
+			else if (paramType == HttpServletResponse.class)
+				source = Source.SERVLET_RESPONSE;
+			else for (int a = 0; a < pannotations[i].length; a++)
+			{
+				Annotation annotation = pannotations[i][a];
+				
+				if (annotation.annotationType() == AutoTrim.class)
+					trim = true;
+				
+				if (annotation.annotationType() == Path.class)
+					source = Source.PATH;
+				else if (annotation.annotationType() == PathFile.class)
+					source = Source.PATH_FILE;
+				else if (annotation.annotationType() == PathQuery.class)
+					source = Source.PATH_QUERY;
+				else if (annotation.annotationType() == PathRemainder.class)
+					source = Source.PATH_REMAINDER;
+				else if (annotation.annotationType() == PathVariable.class)
+				{
+					source = Source.PATH_VARIABLE;
+					name = ((PathVariable)annotation).value();
+				}
+				else if (annotation.annotationType() == Content.class)
+					source = Source.CONTENT;
+				else if (annotation.annotationType() == ParameterMap.class)
+					source = Source.PARAMETER_MAP;
+				else if (annotation.annotationType() == HeaderMap.class)
+					source = Source.HEADER_MAP;
+				else if (annotation.annotationType() == Header.class)
+				{
+					source = Source.HEADER;
+					Header p = (Header)annotation;
+					name = p.value();
+				}
+				else if (annotation.annotationType() == Model.class)
+				{
+					source = Source.MODEL;
+					Model p = (Model)annotation;
+					name = p.value();
+				}
+				else if (annotation.annotationType() == Parameter.class)
+				{
+					source = Source.PARAMETER;
+					Parameter p = (Parameter)annotation;
+					name = p.value();
+				}
+				else if (annotation.annotationType() == Attribute.class)
+				{
+					source = Source.ATTRIBUTE;
+					Attribute p = (Attribute)annotation;
+					name = p.value();
+					scope = p.scope();
+				}
+				else if (annotation.annotationType() == CookieParameter.class)
+				{
+					source = Source.COOKIE;
+					CookieParameter p = (CookieParameter)annotation;
+					name = p.value();
+				}
+			}
+			
+			this.parameters[i] = new ParameterDescriptor(source, scope, paramType, name, trim);
+		}
+		
+	}
+
+	/**
+	 * The actual method that this describes.
+	 */
+	public Method getMethod()
+	{
+		return method;
+	}
+
+	/**
+	 * The method's return type.
+	 */
+	public Class<?> getType()
+	{
+		return type;
+	}
+
+	/**
+	 * The method's parameter info.
+	 */
+	public ParameterDescriptor[] getParameterDescriptors()
+	{
+		return parameters;
+	}
+
+	/**
+	 * Gets the service profile that this belongs to.
+	 * @return
+	 */
+	public S getServiceProfile()
+	{
+		return serviceProfile;
+	}
 	
-	/**
-	 * Called by {@link #scanMethods(Class)} to handle non-model, non-attribute creation methods.
-	 */
-	protected abstract void scanUnknownMethod(Method method);
-	
-	/**
-	 * Returns the instantiated component.
-	 */
-	public Object getInstance()
-	{
-		return instance;
-	}
-
-	/**
-	 * Gets a method on this object that constructs an attribute. 
-	 * @param attribName the attribute name.
-	 */
-	public MethodDescriptor getAttributeConstructor(String attribName)
-	{
-		return attributeMap.get(attribName);
-	}
-
-	/**
-	 * Gets a method on this object that constructs a model object. 
-	 * @param modelName the model attribute name.
-	 */
-	public MethodDescriptor getModelConstructor(String modelName)
-	{
-		return modelMap.get(modelName);
-	}
-
 	/**
 	 * Calls a method on a filter or controller.
 	 * Returns its return value.
 	 */
-	protected Object invokeEntryMethod(
+	protected Object invoke(
 		RequestMethod requestMethod, 
 		HttpServletRequest request,
 		HttpServletResponse response, 
-		MethodDescriptor descriptor, 
 		String pathRemainder, 
+		HashMap<String, String> pathVariableMap, 
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
 	)
 	{
-		
-		ParameterDescriptor[] methodParams = descriptor.getParameterDescriptors(); 
-		Object[] invokeParams = new Object[methodParams.length];
+		Object[] invokeParams = new Object[parameters.length];
 	
 		String path = null;
 		String pathFile = null;
 		Object content = null;
 		
-		for (int i = 0; i < methodParams.length; i++)
+		for (int i = 0; i < parameters.length; i++)
 		{
-			ParameterDescriptor pinfo = methodParams[i];
+			ParameterDescriptor pinfo = parameters[i];
 			switch (pinfo.getSourceType())
 			{
 				case PATH:
@@ -154,6 +303,9 @@ public abstract class EntryPointDescriptor
 					break;
 				case PATH_REMAINDER:
 					invokeParams[i] = Reflect.createForType("Parameter " + i, pathRemainder, pinfo.getType());
+					break;
+				case PATH_VARIABLE:
+					invokeParams[i] = Reflect.createForType("Parameter " + i, pathVariableMap.get(pinfo.name), pinfo.getType());
 					break;
 				case SERVLET_REQUEST:
 					invokeParams[i] = request;
@@ -253,7 +405,7 @@ public abstract class EntryPointDescriptor
 								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
 								int x = 0;
 								for (Part p : partlist)
-									vout[x++] = getPartData(p, Part.class);
+									vout[x++] = serviceProfile.getPartData(p, Part.class);
 								if (vout.length == 1)
 									map.put(pname, vout[0]);
 								else
@@ -280,7 +432,7 @@ public abstract class EntryPointDescriptor
 								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
 								int x = 0;
 								for (Part p : partlist)
-									vout[x++] = getPartData(p, Part.class);
+									vout[x++] = serviceProfile.getPartData(p, Part.class);
 								if (vout.length == 1)
 									map.put(pname, vout[0]);
 								else
@@ -313,12 +465,12 @@ public abstract class EntryPointDescriptor
 							Object[] vout = (Object[])Array.newInstance(actualType, partlist.size());
 							int x = 0;
 							for (Part p : partlist)
-								vout[x++] = getPartData(p, actualType);
+								vout[x++] = serviceProfile.getPartData(p, actualType);
 							value = vout;
 						}
 						else
 						{
-							value = getPartData(multiformPartMap.get(parameterName).head(), pinfo.getType());
+							value = serviceProfile.getPartData(multiformPartMap.get(parameterName).head(), pinfo.getType());
 						}
 					}
 					else if (Reflect.isArray(pinfo.getType()))
@@ -331,10 +483,10 @@ public abstract class EntryPointDescriptor
 				}
 				case ATTRIBUTE:
 				{
-					MethodDescriptor attribDescriptor = getAttributeConstructor(pinfo.getName());
+					EntryMethod<?> attribDescriptor = serviceProfile.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = invokeEntryMethod(requestMethod, request, response, attribDescriptor, pathRemainder, cookieMap, multiformPartMap);
+						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -367,10 +519,10 @@ public abstract class EntryPointDescriptor
 				}
 				case MODEL:
 				{
-					MethodDescriptor modelDescriptor = getModelConstructor(pinfo.getName());
+					EntryMethod<?> modelDescriptor = serviceProfile.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = invokeEntryMethod(requestMethod, request, response, modelDescriptor, pathRemainder, cookieMap, multiformPartMap);
+						Object model = modelDescriptor.invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
 						SmallUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
@@ -408,74 +560,8 @@ public abstract class EntryPointDescriptor
 			
 		}
 		
-		return Reflect.invokeBlind(descriptor.getMethod(), instance, invokeParams);
+		return Reflect.invokeBlind(method, serviceProfile, invokeParams);
 	}
-
-	/**
-	 * Converts a Multipart Part.
-	 */
-	protected <T> T getPartData(Part part, Class<T> type)
-	{
-		if (Part.class.isAssignableFrom(type))
-			return type.cast(part);
-		else if (String.class.isAssignableFrom(type))
-			return type.cast(part.isFile() ? part.getFileName() : part.getValue());
-		else if (File.class.isAssignableFrom(type))
-			return type.cast(part.isFile() ? part.getFile() : null);
-		else
-			return Reflect.createForType(part.isFile() ? null : part.getValue(), type);
-	}
-
-	/**
-	 * Writes string data to the response.
-	 * @param response the response object.
-	 * @param mimeType the response MIME-Type.
-	 * @param fileName the file name.
-	 * @param data the string data to send.
-	 */
-	protected void sendStringData(HttpServletResponse response, String mimeType, String fileName, String data)
-	{
-		byte[] bytedata = getStringData(data);
-		if (Common.isEmpty(mimeType))
-			SmallUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
-		else
-			SmallUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
-	}
-
-	/**
-	 * Converts a string to byte data.
-	 */
-	protected byte[] getStringData(String data)
-	{
-		try {
-			return data.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/** Checks if a method is a Model constructor. */
-	private boolean isModelConstructorMethod(Method method)
-	{
-		return
-			(method.getModifiers() & Modifier.PUBLIC) != 0 
-			&& method.getReturnType() != Void.TYPE 
-			&& method.getReturnType() != Void.class
-			&& method.isAnnotationPresent(Model.class)
-			;
-	}
-
-	/** Checks if a method is an Attribute constructor. */
-	private boolean isAttributeConstructorMethod(Method method)
-	{
-		return
-			(method.getModifiers() & Modifier.PUBLIC) != 0 
-			&& method.getReturnType() != Void.TYPE 
-			&& method.getReturnType() != Void.class
-			&& method.isAnnotationPresent(Attribute.class)
-			;
-	}
-	
-	
 
 }
+

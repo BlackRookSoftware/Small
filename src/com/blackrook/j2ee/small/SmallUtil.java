@@ -482,7 +482,6 @@ public final class SmallUtil implements EntityTables
 	 * @return an open input stream to the specified resource or null if it couldn't be opened.
 	 * @throws IOException if the stream cannot be opened.
 	 */
-	@SuppressWarnings("resource")
 	public static InputStream getApplicationFileAsStream(ServletContext context, String path) throws IOException
 	{
 		File inFile = getApplicationFile(context, path);
