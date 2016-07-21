@@ -54,7 +54,7 @@ import com.blackrook.lang.json.JSONConversionException;
  * Parses a method's characteristics using reflection, yielding a digest of its important contents.
  * @author Matthew Tropiano 
  */
-public class EntryMethod<S extends ServiceProfile>
+public class EntryPoint<S extends ServiceProfile>
 {
 
 	/** Parameter source types. */
@@ -140,7 +140,7 @@ public class EntryMethod<S extends ServiceProfile>
 	 * @param serviceProfile the service instance.
 	 * @param method the method invoked.
 	 */
-	public EntryMethod(S serviceProfile, Method method)
+	public EntryPoint(S serviceProfile, Method method)
 	{
 		this.serviceProfile = serviceProfile;
 		this.method = method;
@@ -483,7 +483,7 @@ public class EntryMethod<S extends ServiceProfile>
 				}
 				case ATTRIBUTE:
 				{
-					EntryMethod<?> attribDescriptor = serviceProfile.getAttributeConstructor(pinfo.getName());
+					EntryPoint<?> attribDescriptor = serviceProfile.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
 						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
@@ -519,7 +519,7 @@ public class EntryMethod<S extends ServiceProfile>
 				}
 				case MODEL:
 				{
-					EntryMethod<?> modelDescriptor = serviceProfile.getModelConstructor(pinfo.getName());
+					EntryPoint<?> modelDescriptor = serviceProfile.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
 						Object model = modelDescriptor.invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);

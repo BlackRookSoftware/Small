@@ -39,7 +39,7 @@ public class ControllerProfile extends ServiceProfile
 	/** Filter class list. */
 	private Class<?>[] filterChain;
 	/** Method map. */
-	private List<ControllerEntryMethod> entryMethods;
+	private List<ControllerEntryPoint> entryMethods;
 	
 	/**
 	 * Creates the controller profile for a {@link Controller} class.
@@ -118,7 +118,7 @@ public class ControllerProfile extends ServiceProfile
 	 * Gets the entry points on this controller.
 	 * @return
 	 */
-	public List<ControllerEntryMethod> getEntryMethods() 
+	public List<ControllerEntryPoint> getEntryMethods() 
 	{
 		return entryMethods;
 	}
@@ -129,7 +129,7 @@ public class ControllerProfile extends ServiceProfile
 		if (!isEntryMethod(method))
 			return;
 				
-		entryMethods.add(new ControllerEntryMethod(this, method));
+		entryMethods.add(new ControllerEntryPoint(this, method));
 	}
 
 	/** Checks if a method is a valid request entry. */

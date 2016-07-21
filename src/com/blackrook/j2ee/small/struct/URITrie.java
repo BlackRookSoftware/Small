@@ -3,8 +3,12 @@ package com.blackrook.j2ee.small.struct;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.blackrook.commons.Common;
+import com.blackrook.commons.hash.HashMap;
+import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.SortedList;
-import com.blackrook.j2ee.small.descriptor.ControllerEntryMethod;
+import com.blackrook.j2ee.small.SmallUtil;
+import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
 
 /**
  * A trie that organizes mapping URI patterns to ControllerHandlers.
@@ -13,6 +17,52 @@ import com.blackrook.j2ee.small.descriptor.ControllerEntryMethod;
 public class URITrie
 {
 	// TODO: Finish
+
+	Node root; 
+
+	public URITrie()
+	{
+		this.root = Node.createRoot();
+	}
+	
+	
+	/**
+	 * Attempts to resolve an endpoint for a given URI.
+	 * @param uri the input URI.
+	 * @return a result object detailing the search.
+	 */
+	public Result resolve(String uri)
+	{
+		// TODO: Finish.
+		Node next = root;
+		Node lastMatch = null;
+		
+		Result out = new Result();
+		
+		uri = SmallUtil.trimSlashes(uri);
+		Queue<String> pathTokens = new Queue<>();
+		
+		for (String p : uri.split("\\/"))
+			pathTokens.add(p);
+
+		while (next != null)
+		{
+			String pathPart = pathTokens.dequeue();
+			for (Node edge : next.edges)
+			{
+				if (edge.matches(pathPart))
+				{
+					if (edge.remainder)
+						lastMatch = edge;
+					if (edge.type == NodeType.PATHVARIABLE)
+						out.pathVariables.put(edge.token, pathPart);
+					
+				}
+			}
+		}
+		
+
+	}
 	
 	private enum NodeType
 	{
@@ -29,8 +79,9 @@ public class URITrie
 		NodeType type;
 		String token;
 		Pattern pattern;
+		
 		boolean remainder;
-		ControllerEntryMethod entryMethod;
+		ControllerEntryPoint entryMethod;
 		SortedList<Node> edges;
 		
 		private Node(NodeType type, String token, Pattern pattern, boolean remainder)
@@ -68,37 +119,55 @@ public class URITrie
 						: 0;
 		}
 		
+		/**
+		 * Tests if this node matches a path part.
+		 * @param pathPart the part of the path to test.
+		 * @return
+		 */
+		private boolean matches(String pathPart)
+		{
+			if (type == NodeType.ROOT)
+				return true;
+			else if (type == NodeType.MATCH)
+			{
+				if (!Common.isEmpty(token))
+					return token.equals(pathPart);
+				else if (!Common.isEmpty(pattern))
+					return pattern.matcher(pathPart).matches();
+				else
+					return false;
+			}
+			else if (type == NodeType.PATHVARIABLE)
+			{
+				if (!Common.isEmpty(pattern))
+					return pattern.matcher(pathPart).matches();
+				else
+					return true;
+			}
+			else
+				return false;
+		}
+		
 	}
 	
-	/*
-		URITrie
-			root : URITrie.Node
-			resolve(String uri) : URITrie.Result
-		
-		.Node -> Comparable<Node>
-			type : NodeType
-			token : String			// MATCH key or PATH_VARIABLE name
-			pattern : Pattern		// if not null, must match pattern to be viable path.
-			remainder : boolean 	// if true, tentatively "succeed" here and return remainder if no further matches
-			descriptor : ControllerMethodDescriptor
-			edges : SortedList<URITrie.Node>
-			*compareTo(Node) : boolean
-				type, token
-			
-		.Context
-			pathTokens : Queue<String>
-			currentNode : URITrie.Node
-			matchedPath : StringBuilder
-			remainingPath : StringBuilder
-			Context(String) : <constructor>
-			
-		.Result
-			pathVariables : HashMap<String, String>
-			matchedPath : String
-			remainingPath : String
-			entryPoint : ControllerMethodDescriptor
-		
+	/**
+	 * Result class after a URITrie search.
 	 */
-	
-	
+	public static class Result
+	{
+		HashMap<String, String> pathVariables;
+		String matchedPath; 
+		String remainingPath; 
+		ControllerEntryPoint entryPoint; 
+		
+		private Result()
+		{
+			this.pathVariables = new HashMap<>();
+			this.matchedPath = null;
+			this.remainingPath = null;
+			this.entryPoint = null;
+		}
+		
+	}
+
 }

@@ -15,7 +15,7 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 public class FilterProfile extends ServiceProfile
 {
 	/** Method descriptor for filter. */
-	private FilterEntryMethod entryMethod;
+	private FilterEntryPoint entryMethod;
 
 	/**
 	 * Creates the filter profile for a {@link Filter} class.
@@ -46,7 +46,7 @@ public class FilterProfile extends ServiceProfile
 			throw new SmallFrameworkSetupException("Methods annotated with @FilterEntry must return a boolean.");
 		else if (this.entryMethod != null)
 			throw new SmallFrameworkSetupException("Filter already contains an entry point.");
-		this.entryMethod = new FilterEntryMethod(this, method);
+		this.entryMethod = new FilterEntryPoint(this, method);
 	}
 
 	/** Checks if a method is a valid request entry. */
@@ -63,7 +63,7 @@ public class FilterProfile extends ServiceProfile
 	 * Returns this filter's sole entry method.
 	 * @return
 	 */
-	public FilterEntryMethod getEntryMethod() 
+	public FilterEntryPoint getEntryMethod() 
 	{
 		return entryMethod;
 	}

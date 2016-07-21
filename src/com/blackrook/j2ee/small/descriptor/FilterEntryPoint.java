@@ -16,14 +16,14 @@ import com.blackrook.j2ee.small.struct.Part;
  * Filter entry method.
  * @author Matthew Tropiano
  */
-public class FilterEntryMethod extends EntryMethod<FilterProfile>
+public class FilterEntryPoint extends EntryPoint<FilterProfile>
 {
 	/**
 	 * Creates an entry method around a service profile instance.
 	 * @param filterProfile the service instance.
 	 * @param method the method invoked.
 	 */
-	public FilterEntryMethod(FilterProfile filterProfile, Method method)
+	public FilterEntryPoint(FilterProfile filterProfile, Method method)
 	{
 		super(filterProfile, method);
 	}

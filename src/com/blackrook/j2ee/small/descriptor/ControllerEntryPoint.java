@@ -36,7 +36,7 @@ import com.blackrook.lang.xml.XMLWriter;
  * Method descriptor class, specifically for controllers.
  * @author Matthew Tropiano
  */
-public class ControllerEntryMethod extends EntryMethod<ControllerProfile>
+public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 {
 	private static final String PREFIX_REDIRECT = "redirect:";
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
@@ -60,7 +60,7 @@ public class ControllerEntryMethod extends EntryMethod<ControllerProfile>
 	 * @param controllerProfile the service instance.
 	 * @param method the method invoked.
 	 */
-	public ControllerEntryMethod(ControllerProfile controllerProfile, Method method)
+	public ControllerEntryPoint(ControllerProfile controllerProfile, Method method)
 	{
 		super(controllerProfile, method);
 		

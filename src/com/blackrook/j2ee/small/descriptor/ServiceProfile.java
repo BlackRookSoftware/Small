@@ -21,9 +21,9 @@ public abstract class ServiceProfile
 	/** Object handler instance. */
 	private Object instance;
 	/** Model map. */
-	private HashMap<String, EntryMethod<?>> modelMap;
+	private HashMap<String, EntryPoint<?>> modelMap;
 	/** Attribute map. */
-	private HashMap<String, EntryMethod<?>> attributeMap;
+	private HashMap<String, EntryPoint<?>> attributeMap;
 
 	/**
 	 * Creates an entry point descriptor around an object instance.
@@ -47,12 +47,12 @@ public abstract class ServiceProfile
 			if (isModelConstructorMethod(m))
 			{
 				Model anno = m.getAnnotation(Model.class);
-				modelMap.put(anno.value(), new EntryMethod<>(this, m));
+				modelMap.put(anno.value(), new EntryPoint<>(this, m));
 			}
 			else if (isAttributeConstructorMethod(m))
 			{
 				Attribute anno = m.getAnnotation(Attribute.class);
-				attributeMap.put(anno.value(), new EntryMethod<>(this, m));
+				attributeMap.put(anno.value(), new EntryPoint<>(this, m));
 			}
 			else
 				scanUnknownMethod(m);
@@ -76,7 +76,7 @@ public abstract class ServiceProfile
 	 * Gets a method on this object that constructs an attribute. 
 	 * @param attribName the attribute name.
 	 */
-	public EntryMethod<?> getAttributeConstructor(String attribName)
+	public EntryPoint<?> getAttributeConstructor(String attribName)
 	{
 		return attributeMap.get(attribName);
 	}
@@ -85,7 +85,7 @@ public abstract class ServiceProfile
 	 * Gets a method on this object that constructs a model object. 
 	 * @param modelName the model attribute name.
 	 */
-	public EntryMethod<?> getModelConstructor(String modelName)
+	public EntryPoint<?> getModelConstructor(String modelName)
 	{
 		return modelMap.get(modelName);
 	}
