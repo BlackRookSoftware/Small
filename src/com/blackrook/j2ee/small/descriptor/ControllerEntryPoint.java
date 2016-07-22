@@ -42,8 +42,6 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
 	private static final RequestMethod[] REQUEST_METHODS_GET = new RequestMethod[]{RequestMethod.GET};
 
-	/** Entry path. */
-	private RequestMethod[] requestMethods;
 	/** Full entry path. */
 	private String path;
 	/** Output content. */
@@ -54,6 +52,8 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 	private boolean noCache;
 	/** Filter class list. */
 	private Class<?>[] filterChain;
+	/** Entry request methods. */
+	private RequestMethod[] requestMethods;
 
 	/**
 	 * Creates an entry method around a service profile instance.
@@ -179,7 +179,6 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
-		String pathRemainder,
 		HashMap<String, String> pathVariableMap, 
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
@@ -187,7 +186,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 	{
 		Object retval = null;
 		try {
-			retval = invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
+			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Controller method.", e);
 		}
@@ -258,16 +257,19 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 					// StringBuffer data output.
 					else if (StringBuffer.class.isAssignableFrom(returnType))
 					{
+						mimeType = Common.isEmpty(mimeType) ? "text/plain" : mimeType;
 						sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
 					}
 					// StringBuilder data output.
 					else if (StringBuilder.class.isAssignableFrom(returnType))
 					{
+						mimeType = Common.isEmpty(mimeType) ? "text/plain" : mimeType;
 						sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
 					}
 					// String data output.
 					else if (String.class.isAssignableFrom(returnType))
 					{
+						mimeType = Common.isEmpty(mimeType) ? "text/plain" : mimeType;
 						sendStringData(response, mimeType, fname, (String)retval);
 					}
 					// binary output.

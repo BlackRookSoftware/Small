@@ -38,7 +38,6 @@ import com.blackrook.j2ee.small.annotation.parameters.ParameterMap;
 import com.blackrook.j2ee.small.annotation.parameters.Path;
 import com.blackrook.j2ee.small.annotation.parameters.PathFile;
 import com.blackrook.j2ee.small.annotation.parameters.PathQuery;
-import com.blackrook.j2ee.small.annotation.parameters.PathRemainder;
 import com.blackrook.j2ee.small.annotation.parameters.PathVariable;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
@@ -63,7 +62,6 @@ public class EntryPoint<S extends ServiceProfile>
 		PATH,
 		PATH_FILE,
 		PATH_QUERY,
-		PATH_REMAINDER,
 		PATH_VARIABLE,
 		SERVLET_REQUEST,
 		SERVLET_RESPONSE,
@@ -181,8 +179,6 @@ public class EntryPoint<S extends ServiceProfile>
 					source = Source.PATH_FILE;
 				else if (annotation.annotationType() == PathQuery.class)
 					source = Source.PATH_QUERY;
-				else if (annotation.annotationType() == PathRemainder.class)
-					source = Source.PATH_REMAINDER;
 				else if (annotation.annotationType() == PathVariable.class)
 				{
 					source = Source.PATH_VARIABLE;
@@ -273,7 +269,6 @@ public class EntryPoint<S extends ServiceProfile>
 		RequestMethod requestMethod, 
 		HttpServletRequest request,
 		HttpServletResponse response, 
-		String pathRemainder, 
 		HashMap<String, String> pathVariableMap, 
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
@@ -300,9 +295,6 @@ public class EntryPoint<S extends ServiceProfile>
 					break;
 				case PATH_QUERY:
 					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getQueryString(), pinfo.getType());
-					break;
-				case PATH_REMAINDER:
-					invokeParams[i] = Reflect.createForType("Parameter " + i, pathRemainder, pinfo.getType());
 					break;
 				case PATH_VARIABLE:
 					invokeParams[i] = Reflect.createForType("Parameter " + i, pathVariableMap.get(pinfo.name), pinfo.getType());
@@ -486,7 +478,7 @@ public class EntryPoint<S extends ServiceProfile>
 					EntryPoint<?> attribDescriptor = serviceProfile.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
+						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -522,7 +514,7 @@ public class EntryPoint<S extends ServiceProfile>
 					EntryPoint<?> modelDescriptor = serviceProfile.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = modelDescriptor.invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
+						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
 						SmallUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
@@ -560,7 +552,13 @@ public class EntryPoint<S extends ServiceProfile>
 			
 		}
 		
-		return Reflect.invokeBlind(method, serviceProfile, invokeParams);
+		return Reflect.invokeBlind(method, serviceProfile.getInstance(), invokeParams);
+	}
+	
+	@Override
+	public String toString() 
+	{
+		return serviceProfile.getClass().getSimpleName() + ":" + method.toGenericString();
 	}
 
 }

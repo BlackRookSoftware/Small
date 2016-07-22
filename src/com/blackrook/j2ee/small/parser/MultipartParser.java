@@ -63,7 +63,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 */
 	public static boolean isMultipart(HttpServletRequest request)
 	{
-		return request.getContentType().startsWith("multipart/");
+		return !Common.isEmpty(request.getContentType()) && request.getContentType().startsWith("multipart/");
 	}
 
 	/**

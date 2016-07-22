@@ -33,7 +33,6 @@ public class FilterEntryPoint extends EntryPoint<FilterProfile>
 	 * @param requestMethod
 	 * @param request
 	 * @param response
-	 * @param pathRemainder
 	 * @param cookieMap
 	 * @param multiformPartMap
 	 * @return
@@ -42,7 +41,6 @@ public class FilterEntryPoint extends EntryPoint<FilterProfile>
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
-		String pathRemainder,
 		HashMap<String, String> pathVariableMap, 
 		HashMap<String, Cookie> cookieMap, 
 		HashedQueueMap<String, Part> multiformPartMap
@@ -50,7 +48,7 @@ public class FilterEntryPoint extends EntryPoint<FilterProfile>
 	{
 		Object retval = null;
 		try {
-			retval = invoke(requestMethod, request, response, pathRemainder, pathVariableMap, cookieMap, multiformPartMap);
+			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Filter method.", e);
 		}

@@ -1,7 +1,7 @@
 package com.blackrook.j2ee.small.struct;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.blackrook.commons.Common;
 import com.blackrook.commons.hash.HashMap;
@@ -9,6 +9,7 @@ import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.commons.list.SortedList;
 import com.blackrook.j2ee.small.SmallUtil;
 import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
+import com.blackrook.j2ee.small.exception.SmallFrameworkParseException;
 
 /**
  * A trie that organizes mapping URI patterns to ControllerHandlers.
@@ -16,15 +17,141 @@ import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
  */
 public class URITrie
 {
-	// TODO: Finish
+	/** Token content for "default" path. */
+	public static final String DEFAULT_TOKEN = "*";
 
-	Node root; 
+	/** Root node. */
+	private Node root; 
 
+	/**
+	 * Creates a new blank URI Trie.
+	 */
 	public URITrie()
 	{
 		this.root = Node.createRoot();
 	}
 	
+	/**
+	 * Adds a path to the trie.
+	 * @param uri the request URI path.
+	 * @param entryPoint the mapped entry point.
+	 * @throws SmallFrameworkParseException if a path parsing error occurs.
+	 * @throws PatternSyntaxException if a regex expression is invalid in one of the paths.
+	 */
+	public void add(String uri, ControllerEntryPoint entryPoint)
+	{
+		final int STATE_START = 0;
+		final int STATE_PATH = 1;
+		final int STATE_VARIABLE = 2;
+		final int STATE_REGEX = 3;
+		final int STATE_VARIABLE_END = 4;
+
+		Node endNode = root;
+		String currentVariable = null;
+		
+		uri = SmallUtil.trimSlashes(uri);
+		
+		if (!Common.isEmpty(uri))
+		{
+			StringBuilder sb = new StringBuilder();
+			int state = STATE_START;
+			
+			for (int i = 0; i < uri.length(); i++)
+			{
+				char c = uri.charAt(i);
+				switch (state)
+				{
+					case STATE_START:
+						if (c == '/')
+						{
+							// Do nothing
+						}
+						else if (c == '{')
+							state = STATE_VARIABLE;
+						else
+						{
+							sb.append(c);
+							state = STATE_PATH;
+						}
+						break;
+					
+					case STATE_PATH:
+						if (c == '/')
+						{
+							String token = sb.toString().trim();
+							if (token.equals(DEFAULT_TOKEN))
+								throw new SmallFrameworkParseException("Wildcard token must be the last segment.");
+							
+							endNode.edges.add(endNode = Node.createMatchNode(token));
+							sb.delete(0, sb.length());
+						}
+						else
+						{
+							sb.append(c);
+						}
+						break;
+					
+					case STATE_VARIABLE:
+						if (c == ':')
+						{
+							currentVariable = sb.toString();
+							sb.delete(0, sb.length());
+							state = STATE_REGEX;
+						}
+						else if (c == '}')
+						{
+							endNode.edges.add(endNode = Node.createVariableNode(sb.toString().trim(), null));
+							sb.delete(0, sb.length());
+							state = STATE_VARIABLE_END;
+						}
+						else
+						{
+							sb.append(c);
+						}
+						break;
+					
+					case STATE_REGEX:
+						if (c == '}')
+						{
+							endNode.edges.add(endNode = Node.createVariableNode(currentVariable, Pattern.compile(sb.toString().trim())));
+							sb.delete(0, sb.length());
+							state = STATE_VARIABLE_END;
+						}
+						else
+						{
+							sb.append(c);
+						}
+						break;
+					
+					case STATE_VARIABLE_END:
+						if (c == '/')
+							state = STATE_START;
+						else
+							throw new SmallFrameworkParseException("Expected '/' to terminate path segment.");
+						break;
+						
+				}// switch
+			}// for
+			
+			if (state == STATE_VARIABLE)
+				throw new SmallFrameworkParseException("Expected '}' to terminate variable segment.");
+			if (state == STATE_REGEX)
+				throw new SmallFrameworkParseException("Expected '}' to terminate variable regex segment.");
+			
+			if (sb.length() > 0)
+			{
+				String token = sb.toString().trim();
+				if (token.equals(DEFAULT_TOKEN))
+					endNode.edges.add(endNode = Node.createDefaultNode());
+				else
+					endNode.edges.add(endNode = Node.createMatchNode(token));
+			}
+				
+			
+		}
+		
+		endNode.entryPoint = entryPoint;
+	}
 	
 	/**
 	 * Attempts to resolve an endpoint for a given URI.
@@ -33,10 +160,7 @@ public class URITrie
 	 */
 	public Result resolve(String uri)
 	{
-		// TODO: Finish.
 		Node next = root;
-		Node lastMatch = null;
-		
 		Result out = new Result();
 		
 		uri = SmallUtil.trimSlashes(uri);
@@ -45,30 +169,35 @@ public class URITrie
 		for (String p : uri.split("\\/"))
 			pathTokens.add(p);
 
-		while (next != null)
+		while (next != null && next.type != NodeType.DEFAULT && !pathTokens.isEmpty())
 		{
 			String pathPart = pathTokens.dequeue();
-			for (Node edge : next.edges)
+			SortedList<Node> edgeList = next.edges;
+			next = null;
+			for (Node edge : edgeList)
 			{
 				if (edge.matches(pathPart))
 				{
-					if (edge.remainder)
-						lastMatch = edge;
 					if (edge.type == NodeType.PATHVARIABLE)
-						out.pathVariables.put(edge.token, pathPart);
-					
+						out.addVariable(edge.token, pathPart);
+					next = edge;
+					break;
 				}
 			}
 		}
 		
-
+		if (next != null)
+			out.entryPoint = next.entryPoint;
+		
+		return out;
 	}
 	
 	private enum NodeType
 	{
 		ROOT,
 		MATCH,
-		PATHVARIABLE;
+		PATHVARIABLE,
+		DEFAULT;
 	}
 
 	/**
@@ -79,34 +208,36 @@ public class URITrie
 		NodeType type;
 		String token;
 		Pattern pattern;
-		
-		boolean remainder;
-		ControllerEntryPoint entryMethod;
+		ControllerEntryPoint entryPoint;
 		SortedList<Node> edges;
 		
-		private Node(NodeType type, String token, Pattern pattern, boolean remainder)
+		private Node(NodeType type, String token, Pattern pattern)
 		{
 			this.type = type;
 			this.token = token;
 			this.pattern = pattern;
-			this.remainder = remainder;
-			this.entryMethod = null;
+			this.entryPoint = null;
 			this.edges = new SortedList<>();
 		}
 		
 		static Node createRoot()
 		{
-			return new Node(NodeType.ROOT, null, null, false);
+			return new Node(NodeType.ROOT, null, null);
 		}
 		
-		static Node createMatchNode(String token, boolean remainder)
+		static Node createMatchNode(String token)
 		{
-			return new Node(NodeType.MATCH, token, null, remainder);
+			return new Node(NodeType.MATCH, token, null);
 		}
 		
-		static Node createVariableNode(String token, Pattern pattern, boolean remainder)
+		static Node createVariableNode(String token, Pattern pattern)
 		{
-			return new Node(NodeType.PATHVARIABLE, token, pattern, remainder);
+			return new Node(NodeType.PATHVARIABLE, token, pattern);
+		}
+
+		static Node createDefaultNode()
+		{
+			return new Node(NodeType.DEFAULT, null, null);
 		}
 
 		@Override
@@ -116,7 +247,10 @@ public class URITrie
 					? type.ordinal() - n.type.ordinal() 
 					: !token.equals(n.token) 
 						? token.compareTo(n.token) 
-						: 0;
+						: pattern != null 
+							? -1 
+							: 0
+			;
 		}
 		
 		/**
@@ -126,7 +260,7 @@ public class URITrie
 		 */
 		private boolean matches(String pathPart)
 		{
-			if (type == NodeType.ROOT)
+			if (type == NodeType.ROOT || type == NodeType.DEFAULT)
 				return true;
 			else if (type == NodeType.MATCH)
 			{
@@ -148,6 +282,12 @@ public class URITrie
 				return false;
 		}
 		
+		@Override
+		public String toString() 
+		{
+			return type.name() + " " + token + (pattern != null ? ":" + pattern.pattern() : "") + " " + entryPoint;
+		}
+		
 	}
 	
 	/**
@@ -156,16 +296,46 @@ public class URITrie
 	public static class Result
 	{
 		HashMap<String, String> pathVariables;
-		String matchedPath; 
-		String remainingPath; 
 		ControllerEntryPoint entryPoint; 
 		
 		private Result()
 		{
-			this.pathVariables = new HashMap<>();
-			this.matchedPath = null;
-			this.remainingPath = null;
+			this.pathVariables = null;
 			this.entryPoint = null;
+		}
+		
+		private void addVariable(String var, String value)
+		{
+			if (pathVariables == null)
+				pathVariables = new HashMap<>();
+			pathVariables.put(var, value);
+		}
+		
+		/**
+		 * Checks if this result has a found entry point in it.
+		 * @return true if so, false if not.
+		 */
+		public boolean hasEndpoint()
+		{
+			return entryPoint != null;
+		}
+		
+		/**
+		 * Gets the found entry point, if any.
+		 * @return an entry point to call, or null if no entry point.
+		 */
+		public ControllerEntryPoint getEntryPoint() 
+		{
+			return entryPoint;
+		}
+		
+		/**
+		 * Gets the map of found path variables, if any.
+		 * @return the map of variables, or null if no variables.
+		 */
+		public HashMap<String, String> getPathVariables() 
+		{
+			return pathVariables;
 		}
 		
 	}

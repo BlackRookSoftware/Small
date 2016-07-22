@@ -13,6 +13,7 @@ package com.blackrook.j2ee.small;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.util.regex.PatternSyntaxException;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -32,16 +33,17 @@ import com.blackrook.commons.Reflect;
 import com.blackrook.commons.hash.Hash;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.linkedlist.Queue;
-import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.annotation.ComponentConstructor;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
+import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
 import com.blackrook.j2ee.small.descriptor.ControllerProfile;
 import com.blackrook.j2ee.small.descriptor.FilterProfile;
+import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
-import com.blackrook.j2ee.small.struct.PathTrie;
+import com.blackrook.j2ee.small.struct.URITrie;
 
 /**
  * The main manager class through which all components are pooled and instantiated. 
@@ -65,9 +67,6 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	/** Tempdir root. */
 	private File tempDir;
 
-	/** The path to controller trie. */
-	private PathTrie<Class<?>> pathTrie;
-
 	/** List of components that listen for session events. */
 	private Queue<ServletContextListener> contextListeners;
 	/** List of components that listen for session events. */
@@ -78,6 +77,8 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	/** Components-in-construction set. */
 	private Hash<Class<?>> componentsConstructing;
 
+	/** The path to controller trie. */
+	private HashMap<RequestMethod, URITrie> controllerEntries;
 	/** The components that are instantiated. */
 	private HashMap<Class<?>, Object> componentInstances;
 	/** The controllers that were instantiated. */
@@ -90,16 +91,15 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 */
 	public SmallToolkit()
 	{
-		pathTrie = new PathTrie<Class<?>>();
-		
 		contextListeners = new Queue<ServletContextListener>();
 		sessionListeners = new Queue<HttpSessionListener>();
 		sessionAttributeListeners = new Queue<HttpSessionAttributeListener>();
 		
-		componentsConstructing = new Hash<Class<?>>();
-		componentInstances = new HashMap<Class<?>, Object>();
-		controllerComponents = new HashMap<Class<?>, ControllerProfile>(10);
-		filterComponents = new HashMap<Class<?>, FilterProfile>(10);
+		componentsConstructing = new Hash<>();
+		controllerEntries = new HashMap<>();
+		componentInstances = new HashMap<>();
+		controllerComponents = new HashMap<>(10);
+		filterComponents = new HashMap<>(10);
 	}
 	
 	@Override
@@ -133,13 +133,12 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		for (ServletContextListener listener : contextListeners)
 			listener.contextDestroyed(sce);
 		
-		pathTrie.clear();
-		
 		contextListeners.clear();
 		sessionListeners.clear();
 		sessionAttributeListeners.clear();
 		
 		componentsConstructing.clear();
+		controllerEntries.clear();
 		componentInstances.clear();
 		controllerComponents.clear();
 		filterComponents.clear();
@@ -289,7 +288,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 				throw new SmallFrameworkSetupException("Could not load class "+className+" from classpath.");
 			}
 			
-			if (componentClass.isAnnotationPresent(Component.class))
+			if (componentClass.isAnnotationPresent(Component.class) || componentClass.isAnnotationPresent(Controller.class))
 			{
 				Object component = createOrGetComponent(componentClass);
 
@@ -304,13 +303,26 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 					if (controllerComponents.containsKey(componentClass))
 						continue;
 					
-					controllerComponents.put(componentClass, new ControllerProfile(component));
-					String path = controllerAnnotation.value();
-					Class<?> existingClass = null;
-					if ((existingClass = pathTrie.get(path)) == null)
-						pathTrie.put(path, componentClass);
-					else
-						throw new SmallFrameworkSetupException("Path \""+ path +"\" already assigned to "+existingClass.getName());
+					ControllerProfile profile;
+					controllerComponents.put(componentClass, profile = new ControllerProfile(component));
+					String path = SmallUtil.trimSlashes(controllerAnnotation.value());
+					for (ControllerEntryPoint entryPoint : profile.getEntryMethods())
+					{
+						String uri = path + '/' + SmallUtil.trimSlashes(entryPoint.getPath());
+						for (RequestMethod rm : entryPoint.getRequestMethods())
+						{
+							URITrie trie;
+							if ((trie = controllerEntries.get(rm)) == null)
+								controllerEntries.put(rm, trie = new URITrie());
+							
+							try {
+								trie.add(uri, entryPoint);
+							} catch (PatternSyntaxException e) {
+								throw new SmallFrameworkSetupException("Could not set up controller "+componentClass+", method "+entryPoint.getMethod(), e);
+							}
+						}
+					}
+					
 				}
 				else if (componentClass.isAnnotationPresent(Filter.class))
 				{
@@ -381,35 +393,29 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	}
 
 	/**
-	 * Gets the controller class to use using a URL path.
-	 * This searches the path tree until it hits a dead end.
-	 * @param path the path to use.
-	 * @return a controller, or null if no controller by that class. 
-	 * This servlet sends a 404 back if this happens.
+	 * Retrieves a filter singleton by class.
+	 * @param filterClass
+	 * @return
 	 */
-	Class<?> getControllerClassByPath(String path, List<String> remainder)
+	FilterProfile getFilter(Class<?> filterClass)
 	{
-		return pathTrie.getWithRemainderByKey(path, remainder, 0);
-	}
-
-	/**
-	 * Gets the controller to call.
-	 * @param clazz the controller class.
-	 * @return a controller, or null if no controller by that class. 
-	 * This servlet sends a 404 back if this happens.
-	 */
-	ControllerProfile getController(Class<?> clazz)
-	{
-		return controllerComponents.get(clazz);
-	}
-
-	/**
-	 * Gets the filter to call.
-	 * @param clazz the filter class.
-	 */
-	FilterProfile getFilter(Class<?> clazz)
-	{
-		return filterComponents.get(clazz);
+		return filterComponents.get(filterClass);
 	}
 	
+	/**
+	 * Gets the controller entry point to use using a URL path.
+	 * This searches the path tree until it hits a dead end.
+	 * @param requestMethod the request method to use.
+	 * @param path the path to use.
+	 * @return a URI resolution result or null if the method is never used.
+	 */
+	URITrie.Result getControllerEntryPointByURI(RequestMethod requestMethod, String path)
+	{
+		URITrie trie = controllerEntries.get(requestMethod);
+		if (trie == null)
+			return null;
+		
+		return trie.resolve(path);
+	}
+
 }

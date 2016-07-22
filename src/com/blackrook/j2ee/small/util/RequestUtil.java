@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.xml.sax.SAXException;
 
+import com.blackrook.commons.Common;
 import com.blackrook.commons.Reflect;
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.parser.RFCParser;
@@ -148,7 +149,7 @@ public final class RequestUtil
 	 */
 	public static boolean isFormEncoded(HttpServletRequest request)
 	{
-		return request.getContentType().equals("application/x-www-form-urlencoded");
+		return "application/x-www-form-urlencoded".equals(request.getContentType());
 	}
 
 	/**
@@ -158,7 +159,8 @@ public final class RequestUtil
 	public static MultipartParser getMultipartParser(HttpServletRequest request)
 	{
 		String contentType = request.getContentType();
-		
+		if (Common.isEmpty(contentType))
+			return null;
 		if (contentType.startsWith("multipart/form-data"))
 			return new MultipartFormDataParser();
 		else
@@ -166,7 +168,26 @@ public final class RequestUtil
 	}
 
 	/**
+	 * Get the path parsed out of the request URI.
+	 * @param request the request.
+	 */
+	public static String getPath(HttpServletRequest request)
+	{
+		String requestURI = request.getRequestURI();
+		int extIndex = requestURI.lastIndexOf('.');
+		int endIndex = requestURI.indexOf('?');
+		
+		if (extIndex >= 0)
+			return requestURI.substring(0, extIndex);
+		if (endIndex >= 0)
+			return requestURI.substring(0, endIndex);
+		
+		return requestURI;
+	}
+
+	/**
 	 * Get the base page parsed out of the request URI.
+	 * @param request the request.
 	 */
 	public static String getPage(HttpServletRequest request)
 	{

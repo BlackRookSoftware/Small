@@ -13,11 +13,14 @@ import javax.servlet.http.HttpServletResponse;
 import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.commons.list.List;
+import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
+import com.blackrook.j2ee.small.descriptor.FilterProfile;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartFormDataParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.struct.Part;
+import com.blackrook.j2ee.small.struct.URITrie.Result;
 import com.blackrook.j2ee.small.util.RequestUtil;
 import com.blackrook.j2ee.small.util.ResponseUtil;
 
@@ -109,11 +112,14 @@ public final class SmallDispatcher extends HttpServlet
 	 */
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashedQueueMap<String, Part> multiformPartMap)
 	{
-		String path = SmallUtil.trimSlashes(request.getRequestURI());
+		String path = SmallUtil.trimSlashes(RequestUtil.getPath(request));
+		Result result = SmallToolkit.INSTANCE.getControllerEntryPointByURI(requestMethod, path);
 		
-		// TODO: Get from URITrie
-
-		// If successful, continue.
+		if (result == null || !result.hasEndpoint())
+		{
+			ResponseUtil.sendError(response, 404, "Not found. No handler for "+requestMethod.name()+ " '"+path+"'");
+			return;
+		}
 		
 		// get cookies from request.
 		HashMap<String, Cookie> cookieMap = new HashMap<String, Cookie>();
@@ -121,7 +127,27 @@ public final class SmallDispatcher extends HttpServlet
 		if (cookies != null) for (Cookie c : cookies)
 			cookieMap.put(c.getName(), c);
 		
+		// Get path variables.
+		HashMap<String, String> pathVariables = result.getPathVariables() != null ? result.getPathVariables() : (new HashMap<String, String>());
+		
+		ControllerEntryPoint entryPoint = result.getEntryPoint();
+		
+		for (Class<?> filterClass : entryPoint.getFilterChain())
+		{
+			FilterProfile filterProfile = SmallToolkit.INSTANCE.getFilter(filterClass);
+			if (!filterProfile.getEntryMethod().handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap))
+				return;
+		}
+
 		// Call Entry
+		entryPoint.handleCall(
+			requestMethod, 
+			request, 
+			response, 
+			pathVariables, 
+			cookieMap, 
+			multiformPartMap
+		);
 	}
 	
 }
