@@ -98,7 +98,7 @@ public abstract class SmallTag extends BodyTagSupport
 		if (obj == null)
 		{
 			try {
-				obj = create ? clazz.newInstance() : null;
+				obj = create ? clazz.getDeclaredConstructor().newInstance() : null;
 				pageContext.setAttribute(name, obj);
 			} catch (Exception e) {
 				throw new SmallFrameworkException(e);

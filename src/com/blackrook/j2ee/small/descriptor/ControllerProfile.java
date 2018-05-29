@@ -66,7 +66,7 @@ public class ControllerProfile extends ServiceProfile
 		String packageName = clazz.getPackage().getName();
 		do {
 			try{ Class.forName(packageName); } catch (Throwable t) {}
-			Package p = Package.getPackage(packageName);
+			Package p = (ClassLoader.getSystemClassLoader()).getDefinedPackage(packageName);
 			if (p != null)
 			{
 				if (p.isAnnotationPresent(FilterChain.class))

@@ -5,6 +5,8 @@ import com.blackrook.commons.AbstractVector;
 
 /**
  * Special Component singleton that manages retrieval and creation of individual data records.
+ * @param <T> the object type returned from each retrieval.
+ * @param <K> the primary key type.
  * @author Matthew Tropiano
  */
 public interface RESTDataHandler<T extends Object, K extends Object>
@@ -42,7 +44,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
      * 		for each key.
      * @see #get(Object)
      */
-	public T[] getMultiple(K ... primaryKeys);
+	public T[] getMultiple(@SuppressWarnings("unchecked") K ... primaryKeys);
 
 	/**
 	 * Returns a series of records that match a set of provided
@@ -90,7 +92,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
 	 * @return true if the record exists in storage, false if not.
 	 * @see #getMultiple(Object...)
 	 */
-	public boolean containsAll(K ... keys);
+	public boolean containsAll(@SuppressWarnings("unchecked") K ... keys);
 
 	/**
 	 * Checks if at least one record that corresponds to the provided 
@@ -102,7 +104,7 @@ public interface RESTDataHandler<T extends Object, K extends Object>
 	 * @return true if the record exists in storage, false if not.
 	 * @see #getMultiple(Object...)
 	 */
-	public boolean containsOne(K ... keys);
+	public boolean containsOne(@SuppressWarnings("unchecked") K ... keys);
 
 	/**
 	 * Updates an existing record in storage.
@@ -140,6 +142,6 @@ public interface RESTDataHandler<T extends Object, K extends Object>
 	 * and a call to {@link #getMultiple(Object...)} must return all nulls, if conditions do not change.
 	 * @return the records corresponding to the keys that were removed.
 	 */ 
-	public T[] removeAll(K ... key);
+	public T[] removeAll(@SuppressWarnings("unchecked") K ... key);
 
 }

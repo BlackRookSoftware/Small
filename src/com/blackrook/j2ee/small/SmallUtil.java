@@ -299,7 +299,7 @@ public final class SmallUtil implements EntityTables
 		if (obj == null && create)
 		{
 			try {
-				obj = clazz.newInstance();
+				obj = clazz.getDeclaredConstructor().newInstance();
 				request.setAttribute(name, obj);
 		} catch (Exception e) {
 				throw new SmallFrameworkException(e);
@@ -369,7 +369,7 @@ public final class SmallUtil implements EntityTables
 				{
 					if ((obj = session.getAttribute(name)) == null)
 					{
-						obj = clazz.newInstance();
+						obj = clazz.getDeclaredConstructor().newInstance();
 						session.setAttribute(name, obj);
 					}
 				}
@@ -437,7 +437,7 @@ public final class SmallUtil implements EntityTables
 				{
 					if ((obj = context.getAttribute(name)) == null)
 					{
-						obj = clazz.newInstance();
+						obj = clazz.getDeclaredConstructor().newInstance();
 						context.setAttribute(name, obj);
 					}
 				}
@@ -539,7 +539,7 @@ public final class SmallUtil implements EntityTables
 				if (obj == null)
 				{
 					try {
-						obj = clazz.newInstance();
+						obj = clazz.getDeclaredConstructor().newInstance();
 						SINGLETON_MAP.put(name, obj);
 				} catch (Exception e) {
 						throw new SmallFrameworkException(e);
