@@ -1,15 +1,15 @@
 package com.blackrook.j2ee.small.descriptor;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.hash.HashedQueueMap;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
 
 /**
@@ -33,6 +33,7 @@ public class FilterEntryPoint extends EntryPoint<FilterProfile>
 	 * @param requestMethod
 	 * @param request
 	 * @param response
+	 * @param pathVariableMap 
 	 * @param cookieMap
 	 * @param multiformPartMap
 	 * @return
@@ -41,9 +42,9 @@ public class FilterEntryPoint extends EntryPoint<FilterProfile>
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
-		HashMap<String, String> pathVariableMap, 
-		HashMap<String, Cookie> cookieMap, 
-		HashedQueueMap<String, Part> multiformPartMap
+		Map<String, String> pathVariableMap, 
+		Map<String, Cookie> cookieMap, 
+		HashDequeMap<String, Part> multiformPartMap
 	)
 	{
 		Object retval = null;

@@ -13,6 +13,12 @@ package com.blackrook.j2ee.small;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
 import javax.servlet.ServletContext;
@@ -28,11 +34,6 @@ import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.Reflect;
-import com.blackrook.commons.hash.Hash;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.linkedlist.Queue;
 import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.annotation.ComponentConstructor;
 import com.blackrook.j2ee.small.annotation.Controller;
@@ -44,6 +45,7 @@ import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.URITrie;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * The main manager class through which all components are pooled and instantiated. 
@@ -75,27 +77,27 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	private Queue<HttpSessionAttributeListener> sessionAttributeListeners;
 
 	/** Components-in-construction set. */
-	private Hash<Class<?>> componentsConstructing;
+	private Set<Class<?>> componentsConstructing;
 
 	/** The path to controller trie. */
-	private HashMap<RequestMethod, URITrie> controllerEntries;
+	private Map<RequestMethod, URITrie> controllerEntries;
 	/** The components that are instantiated. */
-	private HashMap<Class<?>, Object> componentInstances;
+	private Map<Class<?>, Object> componentInstances;
 	/** The controllers that were instantiated. */
-	private HashMap<Class<?>, ControllerProfile> controllerComponents;
+	private Map<Class<?>, ControllerProfile> controllerComponents;
 	/** The filters that were instantiated. */
-	private HashMap<Class<?>, FilterProfile> filterComponents;
+	private Map<Class<?>, FilterProfile> filterComponents;
 
 	/**
 	 * Constructs the toolkit.
 	 */
 	public SmallToolkit()
 	{
-		contextListeners = new Queue<ServletContextListener>();
-		sessionListeners = new Queue<HttpSessionListener>();
-		sessionAttributeListeners = new Queue<HttpSessionAttributeListener>();
+		contextListeners = new LinkedList<>();
+		sessionListeners = new LinkedList<>();
+		sessionAttributeListeners = new LinkedList<>();
 		
-		componentsConstructing = new Hash<>();
+		componentsConstructing = new HashSet<>();
 		controllerEntries = new HashMap<>();
 		componentInstances = new HashMap<>();
 		controllerComponents = new HashMap<>(10);
@@ -113,10 +115,10 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		if (tempDir == null)
 			tempDir = new File(System.getProperty("java.io.tmpdir"));
 		
-		if (!tempDir.exists() && !Common.createPath(tempDir.getPath()))
+		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
 			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
 		
-		if (Common.isEmpty(controllerRootPackage))
+		if (Utils.isEmpty(controllerRootPackage))
 			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
 		
 		componentInstances.put(ServletContext.class, servletContext);
@@ -242,12 +244,12 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 		
 		if (constructor == null)
 		{
-			object = Reflect.create(clazz);
+			object = Utils.create(clazz);
 			return object;
 		}
 		else
 		{
-			componentsConstructing.put(clazz);
+			componentsConstructing.add(clazz);
 
 			Class<?>[] types = constructor.getParameterTypes();
 			Object[] params = new Object[types.length]; 
@@ -266,7 +268,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 				}
 			}
 			
-			object = Reflect.construct(constructor, params);
+			object = Utils.construct(constructor, params);
 			componentsConstructing.remove(clazz);
 			return object;
 		}
@@ -278,7 +280,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 */
 	private void initComponents(ServletContext servletContext, ClassLoader loader)
 	{
-		for (String className : Reflect.getClasses(controllerRootPackage, loader))
+		for (String className : Utils.getClasses(controllerRootPackage, loader))
 		{
 			Class<?> componentClass = null;
 			

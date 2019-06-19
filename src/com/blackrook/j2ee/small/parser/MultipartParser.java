@@ -6,16 +6,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.struct.Part;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * Abstract Multipart parser.
@@ -53,7 +54,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	public MultipartParser()
 	{
 		this.random = new Random();
-		this.partList = new List<Part>();
+		this.partList = new ArrayList<Part>();
 		this.charset = "ISO-8859-1";
 	}
 
@@ -63,7 +64,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 */
 	public static boolean isMultipart(HttpServletRequest request)
 	{
-		return !Common.isEmpty(request.getContentType()) && request.getContentType().startsWith("multipart/");
+		return !Utils.isEmpty(request.getContentType()) && request.getContentType().startsWith("multipart/");
 	}
 
 	/**
@@ -119,7 +120,7 @@ public abstract class MultipartParser implements Iterable<Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.setName(Common.urlUnescape(value.substring(1, value.length() - 1)));
+						part.setName(Utils.urlUnescape(value.substring(1, value.length() - 1)));
 				}
 				else
 					part.setName(value);
@@ -132,7 +133,7 @@ public abstract class MultipartParser implements Iterable<Part>
 					if (!value.endsWith("\""))
 						throw new MultipartParserException("Missing closing quote in header disposition.");
 					else
-						part.setFileName(Common.urlUnescape(value.substring(1, value.length() - 1)));
+						part.setFileName(Utils.urlUnescape(value.substring(1, value.length() - 1)));
 				}
 				else
 					part.setFileName(value);
@@ -240,7 +241,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	{
 		final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		final String PREFIX = "/MULTIFORM";
-		final String SUFFIX = "." + Common.getFileExtension(filename);
+		final String SUFFIX = "." + Utils.getFileExtension(filename);
 		char[] out = new char[32];
 		for (int i = 0; i < out.length; i++)
 			out[i] = ALPHABET.charAt(random.nextInt(ALPHABET.length()));

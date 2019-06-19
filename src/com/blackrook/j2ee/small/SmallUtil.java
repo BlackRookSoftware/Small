@@ -4,12 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
+import java.util.HashMap;
 import java.util.Random;
 
 import javax.servlet.ServletContext;
@@ -17,37 +12,742 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.ObjectPair;
-import com.blackrook.commons.Reflect;
-import com.blackrook.commons.TypeProfile;
-import com.blackrook.commons.TypeProfile.MethodSignature;
-import com.blackrook.commons.hash.Hash;
-import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
-import com.blackrook.j2ee.small.util.MIMEUtil;
-import com.blackrook.lang.json.JSONObject;
-import com.blackrook.lang.json.JSONWriter;
-import com.blackrook.lang.util.EntityTables;
-import com.blackrook.lang.xml.XMLStruct;
-import com.blackrook.lang.xml.XMLWriter;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * Utility library for common or useful functions.
  * @author Matthew Tropiano
  */
-public final class SmallUtil implements EntityTables
+public final class SmallUtil
 {
-	/** MIME Type Map. */
-	private static MIMEUtil MIME_TYPE_MAP = new MIMEUtil();
-	/** Singleton context for beans not attached to the application context. */
-	private static final HashMap<String, Object> SINGLETON_MAP = new HashMap<String, Object>();
-	/** Date format parser map. */
-	private static final HashMap<String, SimpleDateFormat> DATE_PATTERN_MAP = new HashMap<String, SimpleDateFormat>();
 	/** MIME type for JSON */
 	public static final String CONTENT_MIME_TYPE_JSON = "application/json";
 	/** MIME type for XML */
 	public static final String CONTENT_MIME_TYPE_XML = "application/xml";
+
+	public static final HashMap<String, String> MIME_TYPES = new HashMap<String, String>()
+	{
+		private static final long serialVersionUID = 1161387692189426049L;
+		{
+			put("323", "text/h323");
+			put("7z", "application/x-7z-compressed");
+			put("acx", "application/internet-property-stream");
+			put("ai", "application/postscript");
+			put("aif", "audio/x-aiff");
+			put("aifc", "audio/x-aiff");
+			put("aiff", "audio/x-aiff");
+			put("asf", "video/x-ms-asf");
+			put("asr", "video/x-ms-asf");
+			put("asx", "video/x-ms-asf");
+			put("au", "audio/basic");
+			put("avi", "video/x-msvideo");
+			put("axs", "application/olescript");
+			put("bas", "text/plain");
+			put("bcpio", "application/x-bcpio");
+			put("bin", "application/octet-stream");
+			put("bmp", "image/bmp");
+			put("c", "text/plain");
+			put("cat", "application/vnd.ms-pkiseccat");
+			put("cdf", "application/x-cdf");
+			put("cdf", "application/x-netcdf");
+			put("cer", "application/x-x509-ca-cert");
+			put("class", "application/octet-stream");
+			put("clp", "application/x-msclip");
+			put("cmx", "image/x-cmx");
+			put("cod", "image/cis-cod");
+			put("cpio", "application/x-cpio");
+			put("crd", "application/x-mscardfile");
+			put("crl", "application/pkix-crl");
+			put("crt", "application/x-x509-ca-cert");
+			put("csh", "application/x-csh");
+			put("css", "text/css");
+			put("dcr", "application/x-director");
+			put("der", "application/x-x509-ca-cert");
+			put("dir", "application/x-director");
+			put("dll", "application/x-msdownload");
+			put("dms", "application/octet-stream");
+			put("doc", "application/msword");
+			put("dot", "application/msword");
+			put("dvi", "application/x-dvi");
+			put("dxr", "application/x-director");
+			put("eps", "application/postscript");
+			put("etx", "text/x-setext");
+			put("evy", "application/envoy");
+			put("exe", "application/octet-stream");
+			put("fif", "application/fractals");
+			put("flr", "x-world/x-vrml");
+			put("gif", "image/gif");
+			put("gtar", "application/x-gtar");
+			put("gz", "application/x-gzip");
+			put("h", "text/plain");
+			put("hdf", "application/x-hdf");
+			put("hlp", "application/winhlp");
+			put("hqx", "application/mac-binhex40");
+			put("hta", "application/hta");
+			put("htc", "text/x-component");
+			put("htm", "text/html");
+			put("html", "text/html");
+			put("htt", "text/webviewhtml");
+			put("ico", "image/x-icon");
+			put("ief", "image/ief");
+			put("iii", "application/x-iphone");
+			put("ins", "application/x-internet-signup");
+			put("isp", "application/x-internet-signup");
+			put("jfif", "image/pipeg");
+			put("jpe", "image/jpeg");
+			put("jpeg", "image/jpeg");
+			put("jpg", "image/jpeg");
+			put("js", "application/x-javascript");
+			put("latex", "application/x-latex");
+			put("lha", "application/octet-stream");
+			put("lsf", "video/x-la-asf");
+			put("lsx", "video/x-la-asf");
+			put("lzh", "application/octet-stream");
+			put("m13", "application/x-msmediaview");
+			put("m14", "application/x-msmediaview");
+			put("m3u", "audio/x-mpegurl");
+			put("man", "application/x-troff-man");
+			put("mdb", "application/x-msaccess");
+			put("me", "application/x-troff-me");
+			put("mht", "message/rfc822");
+			put("mhtml", "message/rfc822");
+			put("mid", "audio/mid");
+			put("mny", "application/x-msmoney");
+			put("mov", "video/quicktime");
+			put("movie", "video/x-sgi-movie");
+			put("mp2", "video/mpeg");
+			put("mp3", "audio/mpeg");
+			put("mpa", "video/mpeg");
+			put("mpe", "video/mpeg");
+			put("mpeg", "video/mpeg");
+			put("mpg", "video/mpeg");
+			put("mpp", "application/vnd.ms-project");
+			put("mpv2", "video/mpeg");
+			put("ms", "application/x-troff-ms");
+			put("msg", "application/vnd.ms-outlook");
+			put("mvb", "application/x-msmediaview");
+			put("nc", "application/x-netcdf");
+			put("nws", "message/rfc822");
+			put("oda", "application/oda");
+			put("p10", "application/pkcs10");
+			put("p12", "application/x-pkcs12");
+			put("p7b", "application/x-pkcs7-certificates");
+			put("p7c", "application/x-pkcs7-mime");
+			put("p7m", "application/x-pkcs7-mime");
+			put("p7r", "application/x-pkcs7-certreqresp");
+			put("p7s", "application/x-pkcs7-signature");
+			put("pbm", "image/x-portable-bitmap");
+			put("pdf", "application/pdf");
+			put("pfx", "application/x-pkcs12");
+			put("pgm", "image/x-portable-graymap");
+			put("pk3", "application/zip");
+			put("pk7", "application/x-7z-compressed");
+			put("pko", "application/ynd.ms-pkipko");
+			put("pma", "application/x-perfmon");
+			put("pmc", "application/x-perfmon");
+			put("pml", "application/x-perfmon");
+			put("pmr", "application/x-perfmon");
+			put("pmw", "application/x-perfmon");
+			put("png", "image/png");
+			put("pnm", "image/x-portable-anymap");
+			put("pot", "application/vnd.ms-powerpoint");
+			put("ppm", "image/x-portable-pixmap");
+			put("pps", "application/vnd.ms-powerpoint");
+			put("ppt", "application/vnd.ms-powerpoint");
+			put("prf", "application/pics-rules");
+			put("ps", "application/postscript");
+			put("pub", "application/x-mspublisher");
+			put("qt", "video/quicktime");
+			put("ra", "audio/x-pn-realaudio");
+			put("ram", "audio/x-pn-realaudio");
+			put("ras", "image/x-cmu-raster");
+			put("rgb", "image/x-rgb");
+			put("rmi", "audio/mid");
+			put("roff", "application/x-troff");
+			put("rtf", "application/rtf");
+			put("rtx", "text/richtext");
+			put("scd", "application/x-msschedule");
+			put("sct", "text/scriptlet");
+			put("setpay", "application/set-payment-initiation");
+			put("setreg", "application/set-registration-initiation");
+			put("sh", "application/x-sh");
+			put("shar", "application/x-shar");
+			put("sit", "application/x-stuffit");
+			put("snd", "audio/basic");
+			put("spc", "application/x-pkcs7-certificates");
+			put("spl", "application/futuresplash");
+			put("src", "application/x-wais-source");
+			put("sst", "application/vnd.ms-pkicertstore");
+			put("stl", "application/vnd.ms-pkistl");
+			put("stm", "text/html");
+			put("sv4cpio", "application/x-sv4cpio");
+			put("sv4crc", "application/x-sv4crc");
+			put("svg", "image/svg+xml");
+			put("swf", "application/x-shockwave-flash");
+			put("t", "application/x-troff");
+			put("tar", "application/x-tar");
+			put("tcl", "application/x-tcl");
+			put("tex", "application/x-tex");
+			put("texi", "application/x-texinfo");
+			put("texinfo", "application/x-texinfo");
+			put("tgz", "application/x-compressed");
+			put("tif", "image/tiff");
+			put("tiff", "image/tiff");
+			put("tr", "application/x-troff");
+			put("trm", "application/x-msterminal");
+			put("tsv", "text/tab-separated-values");
+			put("txt", "text/plain");
+			put("uls", "text/iuls");
+			put("ustar", "application/x-ustar");
+			put("vcf", "text/x-vcard");
+			put("vrml", "x-world/x-vrml");
+			put("wad", "application/x-doom");
+			put("wav", "audio/x-wav");
+			put("wcm", "application/vnd.ms-works");
+			put("wdb", "application/vnd.ms-works");
+			put("wks", "application/vnd.ms-works");
+			put("wmf", "application/x-msmetafile");
+			put("wps", "application/vnd.ms-works");
+			put("wri", "application/x-mswrite");
+			put("wrl", "x-world/x-vrml");
+			put("wrz", "x-world/x-vrml");
+			put("xaf", "x-world/x-vrml");
+			put("xbm", "image/x-xbitmap");
+			put("xla", "application/vnd.ms-excel");
+			put("xlc", "application/vnd.ms-excel");
+			put("xlm", "application/vnd.ms-excel");
+			put("xls", "application/vnd.ms-excel");
+			put("xlt", "application/vnd.ms-excel");
+			put("xlw", "application/vnd.ms-excel");
+			put("xof", "x-world/x-vrml");
+			put("xpm", "image/x-xpixmap");
+			put("xwd", "image/x-xwindowdump");
+			put("z", "application/x-compress");
+			put("zip", "application/zip");
+		}
+	};
+	
+	/** Map of entity names to characters. */
+	public static final HashMap<String, Character> ENTITY_NAME_MAP = new HashMap<String, Character>()
+	{
+		private static final long serialVersionUID = 6040588289725369336L;
+		{
+			put("nbsp", '\u00A0');
+			put("iexcl", '\u00A1');
+			put("cent", '\u00A2');
+			put("pound", '\u00A3');
+			put("curren", '\u00A4');
+			put("yen", '\u00A5');
+			put("brvbar", '\u00A6');
+			put("sect", '\u00A7');
+			put("uml", '\u00A8');
+			put("copy", '\u00A9');
+			put("ordf", '\u00AA');
+			put("laquo", '\u00AB');
+			put("not", '\u00AC');
+			put("shy", '\u00AD');
+			put("reg", '\u00AE');
+			put("macr", '\u00AF');
+			put("deg", '\u00B0');
+			put("plusmn", '\u00B1');
+			put("sup2", '\u00B2');
+			put("sup3", '\u00B3');
+			put("acute", '\u00B4');
+			put("micro", '\u00B5');
+			put("para", '\u00B6');
+			put("middot", '\u00B7');
+			put("cedil", '\u00B8');
+			put("sup1", '\u00B9');
+			put("ordm", '\u00BA');
+			put("raquo", '\u00BB');
+			put("frac14", '\u00BC');
+			put("frac12", '\u00BD');
+			put("frac34", '\u00BE');
+			put("iquest", '\u00BF');
+			put("Agrave", '\u00C0');
+			put("Aacute", '\u00C1');
+			put("Acirc", '\u00C2');
+			put("Atilde", '\u00C3');
+			put("Auml", '\u00C4');
+			put("Aring", '\u00C5');
+			put("AElig", '\u00C6');
+			put("Ccedil", '\u00C7');
+			put("Egrave", '\u00C8');
+			put("Eacute", '\u00C9');
+			put("Ecirc", '\u00CA');
+			put("Euml", '\u00CB');
+			put("Igrave", '\u00CC');
+			put("Iacute", '\u00CD');
+			put("Icirc", '\u00CE');
+			put("Iuml", '\u00CF');
+			put("ETH", '\u00D0');
+			put("Ntilde", '\u00D1');
+			put("Ograve", '\u00D2');
+			put("Oacute", '\u00D3');
+			put("Ocirc", '\u00D4');
+			put("Otilde", '\u00D5');
+			put("Ouml", '\u00D6');
+			put("times", '\u00D7');
+			put("Oslash", '\u00D8');
+			put("Ugrave", '\u00D9');
+			put("Uacute", '\u00DA');
+			put("Ucirc", '\u00DB');
+			put("Uuml", '\u00DC');
+			put("Yacute", '\u00DD');
+			put("THORN", '\u00DE');
+			put("szlig", '\u00DF');
+			put("agrave", '\u00E0');
+			put("aacute", '\u00E1');
+			put("acirc", '\u00E2');
+			put("atilde", '\u00E3');
+			put("auml", '\u00E4');
+			put("aring", '\u00E5');
+			put("aelig", '\u00E6');
+			put("ccedil", '\u00E7');
+			put("egrave", '\u00E8');
+			put("eacute", '\u00E9');
+			put("ecirc", '\u00EA');
+			put("euml", '\u00EB');
+			put("igrave", '\u00EC');
+			put("iacute", '\u00ED');
+			put("icirc", '\u00EE');
+			put("iuml", '\u00EF');
+			put("eth", '\u00F0');
+			put("ntilde", '\u00F1');
+			put("ograve", '\u00F2');
+			put("oacute", '\u00F3');
+			put("ocirc", '\u00F4');
+			put("otilde", '\u00F5');
+			put("ouml", '\u00F6');
+			put("divide", '\u00F7');
+			put("oslash", '\u00F8');
+			put("ugrave", '\u00F9');
+			put("uacute", '\u00FA');
+			put("ucirc", '\u00FB');
+			put("uuml", '\u00FC');
+			put("yacute", '\u00FD');
+			put("thorn", '\u00FE');
+			put("yuml", '\u00FF');
+			put("fnof", '\u0192');
+			put("Alpha", '\u0391');
+			put("Beta", '\u0392');
+			put("Gamma", '\u0393');
+			put("Delta", '\u0394');
+			put("Epsilon", '\u0395');
+			put("Zeta", '\u0396');
+			put("Eta", '\u0397');
+			put("Theta", '\u0398');
+			put("Iota", '\u0399');
+			put("Kappa", '\u039A');
+			put("Lambda", '\u039B');
+			put("Mu", '\u039C');
+			put("Nu", '\u039D');
+			put("Xi", '\u039E');
+			put("Omicron", '\u039F');
+			put("Pi", '\u03A0');
+			put("Rho", '\u03A1');
+			put("Sigma", '\u03A3');
+			put("Tau", '\u03A4');
+			put("Upsilon", '\u03A5');
+			put("Phi", '\u03A6');
+			put("Chi", '\u03A7');
+			put("Psi", '\u03A8');
+			put("Omega", '\u03A9');
+			put("alpha", '\u03B1');
+			put("beta", '\u03B2');
+			put("gamma", '\u03B3');
+			put("delta", '\u03B4');
+			put("epsilon", '\u03B5');
+			put("zeta", '\u03B6');
+			put("eta", '\u03B7');
+			put("theta", '\u03B8');
+			put("iota", '\u03B9');
+			put("kappa", '\u03BA');
+			put("lambda", '\u03BB');
+			put("mu", '\u03BC');
+			put("nu", '\u03BD');
+			put("xi", '\u03BE');
+			put("omicron", '\u03BF');
+			put("pi", '\u03C0');
+			put("rho", '\u03C1');
+			put("sigmaf", '\u03C2');
+			put("sigma", '\u03C3');
+			put("tau", '\u03C4');
+			put("upsilon", '\u03C5');
+			put("phi", '\u03C6');
+			put("chi", '\u03C7');
+			put("psi", '\u03C8');
+			put("omega", '\u03C9');
+			put("thetasym", '\u03D1');
+			put("upsih", '\u03D2');
+			put("piv", '\u03D6');
+			put("bull", '\u2022');
+			put("hellip", '\u2026');
+			put("prime", '\u2032');
+			put("Prime", '\u2033');
+			put("oline", '\u203E');
+			put("frasl", '\u2044');
+			put("weierp", '\u2118');
+			put("image", '\u2111');
+			put("real", '\u211C');
+			put("trade", '\u2122');
+			put("alefsym", '\u2135');
+			put("larr", '\u2190');
+			put("uarr", '\u2191');
+			put("rarr", '\u2192');
+			put("darr", '\u2193');
+			put("harr", '\u2194');
+			put("crarr", '\u21B5');
+			put("lArr", '\u21D0');
+			put("uArr", '\u21D1');
+			put("rArr", '\u21D2');
+			put("dArr", '\u21D3');
+			put("hArr", '\u21D4');
+			put("forall", '\u2200');
+			put("part", '\u2202');
+			put("exist", '\u2203');
+			put("empty", '\u2205');
+			put("nabla", '\u2207');
+			put("isin", '\u2208');
+			put("notin", '\u2209');
+			put("ni", '\u220B');
+			put("prod", '\u220F');
+			put("sum", '\u2211');
+			put("minus", '\u2212');
+			put("lowast", '\u2217');
+			put("radic", '\u221A');
+			put("prop", '\u221D');
+			put("infin", '\u221E');
+			put("ang", '\u2220');
+			put("and", '\u2227');
+			put("or", '\u2228');
+			put("cap", '\u2229');
+			put("cup", '\u222A');
+			put("int", '\u222B');
+			put("there4", '\u2234');
+			put("sim", '\u223C');
+			put("cong", '\u2245');
+			put("asymp", '\u2248');
+			put("ne", '\u2260');
+			put("equiv", '\u2261');
+			put("le", '\u2264');
+			put("ge", '\u2265');
+			put("sub", '\u2282');
+			put("sup", '\u2283');
+			put("nsub", '\u2284');
+			put("sube", '\u2286');
+			put("supe", '\u2287');
+			put("oplus", '\u2295');
+			put("otimes", '\u2297');
+			put("perp", '\u22A5');
+			put("sdot", '\u22C5');
+			put("lceil", '\u2308');
+			put("rceil", '\u2309');
+			put("lfloor", '\u230A');
+			put("rfloor", '\u230B');
+			put("lang", '\u2329');
+			put("rang", '\u232A');
+			put("loz", '\u25CA');
+			put("spades", '\u2660');
+			put("clubs", '\u2663');
+			put("hearts", '\u2665');
+			put("diams", '\u2666');
+			put("quot", '\u0022');
+			put("amp", '\u0026');
+			put("lt", '\u003C');
+			put("gt", '\u003E');
+			put("OElig", '\u0152');
+			put("oelig", '\u0153');
+			put("Scaron", '\u0160');
+			put("scaron", '\u0161');
+			put("Yuml", '\u0178');
+			put("circ", '\u02C6');
+			put("tilde", '\u02DC');
+			put("ensp", '\u2002');
+			put("emsp", '\u2003');
+			put("thinsp", '\u2009');
+			put("zwnj", '\u200C');
+			put("zwj", '\u200D');
+			put("lrm", '\u200E');
+			put("rlm", '\u200F');
+			put("ndash", '\u2013');
+			put("mdash", '\u2014');
+			put("lsquo", '\u2018');
+			put("rsquo", '\u2019');
+			put("sbquo", '\u201A');
+			put("ldquo", '\u201C');
+			put("rdquo", '\u201D');
+			put("bdquo", '\u201E');
+			put("dagger", '\u2020');
+			put("Dagger", '\u2021');
+			put("permil", '\u2030');
+			put("lsaquo", '\u2039');
+			put("rsaquo", '\u203A');
+			put("euro", '\u20AC');
+		}
+	};
+	
+	/** Map of characters to entity names. */
+	public static final HashMap<Character, String> UNICODE_ENTITY_MAP = new HashMap<Character, String>()
+	{
+		private static final long serialVersionUID = -8209253780919474200L;
+		{
+			put('\u00f6',"ouml");
+			put('\u03a3',"Sigma");
+			put('\u00b0',"deg");
+			put('\u00f4',"ocirc");
+			put('\u0392',"Beta");
+			put('\u00e5',"aring");
+			put('\u2660',"spades");
+			put('\u03b9',"iota");
+			put('\u039b',"Lambda");
+			put('\u03a0',"Pi");
+			put('\u201a',"sbquo");
+			put('\u00d6',"Ouml");
+			put('\u03c3',"sigma");
+			put('\u2286',"sube");
+			put('\u232a',"rang");
+			put('\u2044',"frasl");
+			put('\u0399',"Iota");
+			put('\u00d1',"Ntilde");
+			put('\u2261',"equiv");
+			put('\u03bb',"lambda");
+			put('\u00bb',"raquo");
+			put('\u222a',"cup");
+			put('\u00fc',"uuml");
+			put('\u2282',"sub");
+			put('\u00a7',"sect");
+			put('\u00b4',"acute");
+			put('\u00a1',"iexcl");
+			put('\u2211',"sum");
+			put('\u2283',"sup");
+			put('\u00eb',"euml");
+			put('\u201c',"ldquo");
+			put('\u21d0',"lArr");
+			put('\u00f1',"ntilde");
+			put('\u03d2',"upsih");
+			put('\u00dc',"Uuml");
+			put('\u2033',"Prime");
+			put('\u00c0',"Agrave");
+			put('\u00cd',"Iacute");
+			put('\u00e3',"atilde");
+			put('\u2248',"asymp");
+			put('\u00cb',"Euml");
+			put('\u2212',"minus");
+			put('\u00dd',"Yacute");
+			put('\u2190',"larr");
+			put('\u2020',"dagger");
+			put('\u2309',"rceil");
+			put('\u2663',"clubs");
+			put('\u0398',"Theta");
+			put('\u2032',"prime");
+			put('\u00c7',"Ccedil");
+			put('\u03a7',"Chi");
+			put('\u00ed',"iacute");
+			put('\u03c5',"upsilon");
+			put('\u2295',"oplus");
+			put('\u00a3',"pound");
+			put('\u21d2',"rArr");
+			put('\u00ae',"reg");
+			put('\u00fd',"yacute");
+			put('\u03b5',"epsilon");
+			put('\u03b8',"theta");
+			put('\u0192',"fnof");
+			put('\u00c1',"Aacute");
+			put('\u00cc',"Igrave");
+			put('\u03c7',"chi");
+			put('\u03a8',"Psi");
+			put('\u03bf',"omicron");
+			put('\u00d3',"Oacute");
+			put('\u2192',"rarr");
+			put('\u00df',"szlig");
+			put('\u00ad',"shy");
+			put('\u00b5',"micro");
+			put('\u00ec',"igrave");
+			put('\u2207',"nabla");
+			put('\u2135',"alefsym");
+			put('\u03c8',"psi");
+			put('\u221e',"infin");
+			put('\u2002',"ensp");
+			put('\u00f3',"oacute");
+			put('\u200d',"zwj");
+			put('\u00ac',"not");
+			put('\u00e4',"auml");
+			put('\u00a8',"uml");
+			put('\u223c',"sim");
+			put('\u00c2',"Acirc");
+			put('\u03b6',"zeta");
+			put('\u03a1',"Rho");
+			put('\u21d4',"hArr");
+			put('\u00ca',"Ecirc");
+			put('\u2026',"hellip");
+			put('\u2265',"ge");
+			put('\u00c8',"Egrave");
+			put('\u00ce',"Icirc");
+			put('\u230a',"lfloor");
+			put('\u00a5',"yen");
+			put('\u203e',"oline");
+			put('\u00b8',"cedil");
+			put('\u00d2',"Ograve");
+			put('\u2019',"rsquo");
+			put('\u00db',"Ucirc");
+			put('\u003e',"gt");
+			put('\u20ac',"euro");
+			put('\u00da',"Uacute");
+			put('\u03be',"xi");
+			put('\u00c4',"Auml");
+			put('\u22a5',"perp");
+			put('\u0152',"OElig");
+			put('\u0153',"oelig");
+			put('\u2203',"exist");
+			put('\u00e2',"acirc");
+			put('\u0396',"Zeta");
+			put('\u03c1',"rho");
+			put('\u2194',"harr");
+			put('\u00ea',"ecirc");
+			put('\u00ee',"icirc");
+			put('\u2013',"ndash");
+			put('\u00e9',"eacute");
+			put('\u00af',"macr");
+			put('\u2003',"emsp");
+			put('\u0022',"quot");
+			put('\u00f2',"ograve");
+			put('\u00fb',"ucirc");
+			put('\u00a0',"nbsp");
+			put('\u00fa',"uacute");
+			put('\u039e',"Xi");
+			put('\u2284',"nsub");
+			put('\u2022',"bull");
+			put('\u2665',"hearts");
+			put('\u02c6',"circ");
+			put('\u00c9',"Eacute");
+			put('\u03c2',"sigmaf");
+			put('\u2666',"diams");
+			put('\u2245',"cong");
+			put('\u230b',"rfloor");
+			put('\u039a',"Kappa");
+			put('\u2039',"lsaquo");
+			put('\u00d9',"Ugrave");
+			put('\u00be',"frac34");
+			put('\u00ab',"laquo");
+			put('\u2209',"notin");
+			put('\u039f',"Omicron");
+			put('\u0391',"Alpha");
+			put('\u00e8',"egrave");
+			put('\u03a9',"Omega");
+			put('\u00b1',"plusmn");
+			put('\u00d7',"times");
+			put('\u201e',"bdquo");
+			put('\u0395',"Epsilon");
+			put('\u2009',"thinsp");
+			put('\u03ba',"kappa");
+			put('\u2205',"empty");
+			put('\u00f9',"ugrave");
+			put('\u03a6',"Phi");
+			put('\u2217',"lowast");
+			put('\u220f',"prod");
+			put('\u25ca',"loz");
+			put('\u02dc',"tilde");
+			put('\u201d',"rdquo");
+			put('\u03a5',"Upsilon");
+			put('\u2111',"image");
+			put('\u21d3',"dArr");
+			put('\u03b1',"alpha");
+			put('\u03c9',"omega");
+			put('\u221d',"prop");
+			put('\u2122',"trade");
+			put('\u03d1',"thetasym");
+			put('\u00bc',"frac14");
+			put('\u00bd',"frac12");
+			put('\u03c6',"phi");
+			put('\u2308',"lceil");
+			put('\u00d8',"Oslash");
+			put('\u0397',"Eta");
+			put('\u200f',"rlm");
+			put('\u00a9',"copy");
+			put('\u203a',"rsaquo");
+			put('\u00d0',"ETH");
+			put('\u2264',"le");
+			put('\u00e1',"aacute");
+			put('\u2193',"darr");
+			put('\u2014',"mdash");
+			put('\u00f7',"divide");
+			put('\u0393',"Gamma");
+			put('\u03a4',"Tau");
+			put('\u003c',"lt");
+			put('\u00f8',"oslash");
+			put('\u03b7',"eta");
+			put('\u21b5',"crarr");
+			put('\u00d5',"Otilde");
+			put('\u0394',"Delta");
+			put('\u00f0',"eth");
+			put('\u03d6',"piv");
+			put('\u00e7',"ccedil");
+			put('\u211c',"real");
+			put('\u00b9',"sup1");
+			put('\u00b2',"sup2");
+			put('\u00a4',"curren");
+			put('\u00aa',"ordf");
+			put('\u00b3',"sup3");
+			put('\u03b3',"gamma");
+			put('\u200e',"lrm");
+			put('\u00a2',"cent");
+			put('\u03bc',"mu");
+			put('\u03c4',"tau");
+			put('\u2021',"Dagger");
+			put('\u00ba',"ordm");
+			put('\u21d1',"uArr");
+			put('\u2234',"there4");
+			put('\u00c3',"Atilde");
+			put('\u00f5',"otilde");
+			put('\u2260',"ne");
+			put('\u03b4',"delta");
+			put('\u200c',"zwnj");
+			put('\u00ff',"yuml");
+			put('\u220b',"ni");
+			put('\u00e0',"agrave");
+			put('\u0160',"Scaron");
+			put('\u0026',"amp");
+			put('\u03bd',"nu");
+			put('\u039c',"Mu");
+			put('\u2200',"forall");
+			put('\u2297',"otimes");
+			put('\u00ef',"iuml");
+			put('\u2191',"uarr");
+			put('\u2208',"isin");
+			put('\u2229',"cap");
+			put('\u00a6',"brvbar");
+			put('\u00de',"THORN");
+			put('\u2227',"and");
+			put('\u2287',"supe");
+			put('\u2118',"weierp");
+			put('\u2220',"ang");
+			put('\u0178',"Yuml");
+			put('\u00b6',"para");
+			put('\u0161',"scaron");
+			put('\u2228',"or");
+			put('\u2018',"lsquo");
+			put('\u00c6',"AElig");
+			put('\u00d4',"Ocirc");
+			put('\u00e6',"aelig");
+			put('\u00bf',"iquest");
+			put('\u039d',"Nu");
+			put('\u00cf',"Iuml");
+			put('\u2030',"permil");
+			put('\u2329',"lang");
+			put('\u221a',"radic");
+			put('\u222b',"int");
+			put('\u03b2',"beta");
+			put('\u00c5',"Aring");
+			put('\u2202',"part");
+			put('\u22c5',"sdot");
+			put('\u00fe',"thorn");
+			put('\u03c0',"pi");
+			put('\u00b7',"middot");
+		}
+	};
+	
 	/** Lag simulator seed. */
 	private static Random randomLagSimulator = new Random();
 
@@ -60,7 +760,7 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static String getMIMEType(String filename)
 	{
-		return MIME_TYPE_MAP.getTypeByExtension(Common.getFileExtension(filename));
+		return MIME_TYPES.get(Utils.getFileExtension(filename).toLowerCase());
 	}
 	
 	/**
@@ -178,7 +878,7 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static String addBeginningSlash(String str)
 	{
-		if (Common.isEmpty(str))
+		if (Utils.isEmpty(str))
 			return "/";
 		
 		return str.charAt(0) == '/' ? str : '/' + str;
@@ -191,7 +891,7 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static String removeBeginningSlash(String str)
 	{
-		if (Common.isEmpty(str))
+		if (Utils.isEmpty(str))
 			return str;
 		
 		int i = 0;
@@ -207,7 +907,7 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static String removeEndingSlash(String str)
 	{
-		if (Common.isEmpty(str))
+		if (Utils.isEmpty(str))
 			return str;
 		
 		int i = str.length();
@@ -223,7 +923,7 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static String removeExtension(String path)
 	{
-		if (Common.isEmpty(path))
+		if (Utils.isEmpty(path))
 			return path;
 		
 		int i = path.length();
@@ -239,148 +939,14 @@ public final class SmallUtil implements EntityTables
 	}
 	
 	/**
-	 * Gets the current connection's session id.
-	 * Meant to be a convenience method for <code>request.getSession().getId()</code> 
-	 * @param request servlet request object.
-	 * @return the id attached to the session.
+	 * Convenience method that calls <code>session.getAttribute(attribName)</code>. 
+	 * @param session the session.
+	 * @param attribName the attribute name.
+	 * @return true if it exists, false otherwise.
 	 */
-	public static String getSessionId(HttpServletRequest request)
+	public static boolean getAttributeExist(HttpSession session, String attribName)
 	{
-		return request.getSession().getId();
-	}
-
-	/**
-	 * Gets and auto-casts an object bean stored at the request level.
-	 * The bean is created and stored if it doesn't exist.
-	 * The name used is the fully-qualified class name prefixed with "$$".
-	 * @param request the source request object.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param <T> the object type.
-	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
-	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz)
-	{
-		String className = clazz.getCanonicalName(); 
-		if ((className = clazz.getCanonicalName()) == null)
-			throw new IllegalArgumentException("Class provided has no type!");
-		return getRequestBean(request, clazz, "$$"+className, true);
-	}
-
-	/**
-	 * Gets and auto-casts an object bean stored at the request level.
-	 * The bean is created and stored if it doesn't exist.
-	 * @param request the source request object.
-	 * @param name the attribute name.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param <T> the object type.
-	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name)
-	{
-		return getRequestBean(request, clazz, name, true);
-	}
-
-	/**
-	 * Gets and auto-casts an object bean stored at the request level.
-	 * @param request the source request object.
-	 * @param name the attribute name.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param create if true, instantiate this class in the request (via {@link Class#newInstance()}) if it doesn't exist.
-	 * @param <T> the object type.
-	 * @return a typecast object on the request.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
-	{
-		Object obj = request.getAttribute(name);
-		if (obj == null && create)
-		{
-			try {
-				obj = clazz.getDeclaredConstructor().newInstance();
-				request.setAttribute(name, obj);
-		} catch (Exception e) {
-				throw new SmallFrameworkException(e);
-			}
-		}
-	
-		if (obj == null)
-			return null;
-		return clazz.cast(obj);
-	}
-
-	/**
-	 * Gets and auto-casts an object bean stored at the session level.
-	 * The bean is created and stored if it doesn't exist.
-	 * The name used is the fully-qualified class name prefixed with "$$".
-	 * @param request the source request object.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param <T> the object type.
-	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
-	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz)
-	{
-		String className = clazz.getCanonicalName(); 
-		if ((className = clazz.getCanonicalName()) == null)
-			throw new IllegalArgumentException("Class provided has no type!");
-		return getSessionBean(request, clazz, "$$"+className, true);
-	}
-
-	/**
-	 * Gets and auto-casts an object bean stored at the session level.
-	 * The bean is created and stored if it doesn't exist.
-	 * @param request the source request object.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param name the attribute name.
-	 * @param <T> the object type.
-	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name)
-	{
-		return getSessionBean(request, clazz, name, true);
-	}
-
-	/**
-	 * Gets and auto-casts an object bean stored at the session level.
-	 * @param request the source request object.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param name the attribute name.
-	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
-	 * @param <T> the object type.
-	 * @return a typecast object on the session, a new instance if it doesn't exist, or null if the session is null.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
-	{
-		HttpSession session = request.getSession();
-		if (session == null)
-			return null;
-		
-		Object obj = session.getAttribute(name);
-		if (obj == null && create)
-		{
-			try {
-				synchronized (session)
-				{
-					if ((obj = session.getAttribute(name)) == null)
-					{
-						obj = clazz.getDeclaredConstructor().newInstance();
-						session.setAttribute(name, obj);
-					}
-				}
-			} catch (Exception e) {
-				throw new SmallFrameworkException(e);
-			}
-		}
-	
-		if (obj == null)
-			return null;
-		return clazz.cast(obj);
+		return session.getAttribute(attribName) != null;
 	}
 
 	/**
@@ -489,110 +1055,6 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Gets and auto-casts a singleton object bean stored at the program level,
-	 * accessible always, and not attached to a servlet context.
-	 * The bean is created and stored if it doesn't exist.
-	 * The name used is the fully-qualified class name.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param <T> the object type.
-	 * @return a typecast object on the application scope.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getBean(Class<T> clazz)
-	{
-		return getBean(clazz, "$$"+clazz.getName(), true);
-	}
-
-	/**
-	 * Gets and auto-casts a singleton object bean stored at the program level,
-	 * accessible always, and not attached to a servlet context.
-	 * The bean is created and stored if it doesn't exist.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param name the attribute name.
-	 * @param <T> the object type.
-	 * @return a typecast object on the application scope.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getBean(Class<T> clazz, String name)
-	{
-		return getBean(clazz, name, true);
-	}
-
-	/**
-	 * Gets and auto-casts a singleton object bean stored at the program level,
-	 * accessible always, and not attached to a servlet context.
-	 * @param clazz the class type of the object that should be returned.
-	 * @param name the attribute name.
-	 * @param create if true, instantiate this class (via {@link Class#newInstance()}) if it doesn't exist.
-	 * @param <T> the object type.
-	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
-	 */
-	public static <T> T getBean(Class<T> clazz, String name, boolean create)
-	{
-		Object obj = SINGLETON_MAP.get(name);
-		if (obj == null && create)
-		{
-			synchronized (SINGLETON_MAP) 
-			{
-				obj = SINGLETON_MAP.get(name);
-				if (obj == null)
-				{
-					try {
-						obj = clazz.getDeclaredConstructor().newInstance();
-						SINGLETON_MAP.put(name, obj);
-				} catch (Exception e) {
-						throw new SmallFrameworkException(e);
-					}
-				}
-			}
-		}
-	
-		if (obj == null)
-			return null;
-		else
-			return clazz.cast(obj);
-	}
-
-	/**
-	 * Gets a group of parameters that start with a specific prefix.
-	 * @param request the servlet request.
-	 * @param prefix the prefix to search for.
-	 * @return a HashMap containing a map of parameter to String value of parameter. 
-	 * The parameters in the map are ones that match the prefix.
-	 */
-	public static HashMap<String, String[]> getParameters(HttpServletRequest request, String prefix)
-	{
-		HashMap<String, String[]> out = new HashMap<String, String[]>();
-		for (Map.Entry<String, String[]> entry : ((Map<String, String[]>)request.getParameterMap()).entrySet())
-			if (entry.getKey().startsWith(prefix))
-				out.put(entry.getKey(), entry.getValue());
-		return out;
-	}
-	
-	/**
-	 * Convenience method that checks if a parameter exists on a request. 
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return true if it exists, false otherwise.
-	 */
-	public static boolean getParameterExist(HttpServletRequest request, String paramName)
-	{
-		return request.getParameterValues(paramName) != null && request.getParameterValues(paramName).length > 0;
-	}
-
-	/**
-	 * Convenience method that calls <code>session.getAttribute(attribName)</code>. 
-	 * @param session the session.
-	 * @param attribName the attribute name.
-	 * @return true if it exists, false otherwise.
-	 */
-	public static boolean getAttributeExist(HttpSession session, String attribName)
-	{
-		return session.getAttribute(attribName) != null;
-	}
-
-	/**
 	 * Convenience method that calls <code>context.getAttribute(attribName)</code>.
 	 * @param context the servlet context.
 	 * @param attribName the attribute name.
@@ -603,407 +1065,6 @@ public final class SmallUtil implements EntityTables
 		return context.getAttribute(attribName) != null;
 	}
 
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and returns true or false.
-	 * This flavor of {@link #getParameterBoolean(HttpServletRequest, String, String)} assumes that the parameter
-	 * received is a string that is either "true" or not "true".
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return true if the parameter value is "true", false otherwise.
-	 * @see Common#parseBoolean(String)
-	 */
-	public static boolean getParameterBoolean(HttpServletRequest request, String paramName)
-	{
-		return getParameterBoolean(request, paramName, "true");
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code> 
-	 * and returns true or false, if the string found in the request evaluates
-	 * to <code>trueValue</code>, case-insensitively. The value of <code>trueValue</code> can be <code>null</code>,
-	 * meaning that the parameter was not received.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param trueValue the value to equate to true.
-	 * @return true if the parameter value is <code>trueValue</code>, false otherwise.
-	 */
-	public static boolean getParameterBoolean(HttpServletRequest request, String paramName, String trueValue)
-	{
-		String out = request.getParameter(paramName);
-		return (out == null && trueValue == null) || (out != null && out.equalsIgnoreCase(trueValue));
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as a string or the empty string if it doesn't exist.
-	 */
-	public static String getParameterString(HttpServletRequest request, String paramName)
-	{
-		return getParameterString(request, paramName, "");
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>. 
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as a string or <code>def</code> if it doesn't exist.
-	 */
-	public static String getParameterString(HttpServletRequest request, String paramName, String def)
-	{
-		String out = request.getParameter(paramName);
-		return out != null ? out : def;
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as a byte or 0 if it doesn't exist.
-	 */
-	public static byte getParameterByte(HttpServletRequest request, String paramName)
-	{
-		return getParameterByte(request, paramName, (byte)0);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as a byte or <code>def</code> if it doesn't exist.
-	 */
-	public static byte getParameterByte(HttpServletRequest request, String paramName, byte def)
-	{
-		return Common.parseByte(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as a short or 0 if it doesn't exist.
-	 */
-	public static short getParameterShort(HttpServletRequest request, String paramName)
-	{
-		return getParameterShort(request, paramName, (short)0);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as a short or <code>def</code> if it doesn't exist.
-	 */
-	public static short getParameterShort(HttpServletRequest request, String paramName, short def)
-	{
-		return Common.parseShort(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as a char or <code>'\0'</code> if it doesn't exist.
-	 */
-	public static char getParameterChar(HttpServletRequest request, String paramName)
-	{
-		return getParameterChar(request, paramName, '\0');
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as a char or <code>def</code> if it doesn't exist.
-	 */
-	public static char getParameterChar(HttpServletRequest request, String paramName, char def)
-	{
-		return Common.parseChar(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as an integer or 0 if it doesn't exist.
-	 */
-	public static int getParameterInt(HttpServletRequest request, String paramName)
-	{
-		return getParameterInt(request, paramName, 0);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as an integer or <code>def</code> if it doesn't exist.
-	 */
-	public static int getParameterInt(HttpServletRequest request, String paramName, int def)
-	{
-		return Common.parseInt(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as an integer or <code>0f</code> if it doesn't exist.
-	 */
-	public static float getParameterFloat(HttpServletRequest request, String paramName)
-	{
-		return getParameterFloat(request, paramName, 0f);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as an integer or <code>def</code> if it doesn't exist.
-	 */
-	public static float getParameterFloat(HttpServletRequest request, String paramName, float def)
-	{
-		return Common.parseFloat(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as a long or 0L if it doesn't exist.
-	 */
-	public static long getParameterLong(HttpServletRequest request, String paramName)
-	{
-		return getParameterLong(request, paramName, 0L);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as a long or <code>def</code> if it doesn't exist.
-	 */
-	public static long getParameterLong(HttpServletRequest request, String paramName, long def)
-	{
-		return Common.parseLong(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @return the parameter as a double or 0.0 if it doesn't exist.
-	 */
-	public static double getParameterDouble(HttpServletRequest request, String paramName)
-	{
-		return getParameterDouble(request, paramName, 0.0);
-	}
-
-	/**
-	 * Convenience method that calls <code>request.getParameter(paramName)</code>.
-	 * @param request the servlet request.
-	 * @param paramName the parameter name.
-	 * @param def the default value to use if the parameter is null.
-	 * @return the parameter as a double or <code>def</code> if it doesn't exist.
-	 */
-	public static double getParameterDouble(HttpServletRequest request, String paramName, double def)
-	{
-		return Common.parseDouble(request.getParameter(paramName), def);
-	}
-
-	/**
-	 * Method that parses a parameter as a date. 
-	 * @param request the HTTP request object.
-	 * @param paramName the parameter name.
-	 * @param formatString the {@link SimpleDateFormat} format string.
-	 * @return a Date object representing the parsed date or null if not parsed.
-	 */
-	public static Date getParameterDate(HttpServletRequest request, String paramName, String formatString)
-	{
-		SimpleDateFormat formatter = DATE_PATTERN_MAP.get(formatString);
-		if (formatter == null)
-		{
-			synchronized (DATE_PATTERN_MAP)
-			{
-				formatter = new SimpleDateFormat(formatString);
-				DATE_PATTERN_MAP.put(formatString, formatter);
-			}
-		}
-		
-		Date out = null;
-		try {
-			out = formatter.parse(getParameterString(request, paramName));
-		} catch (ParseException e) {
-			return null;
-		}
-		
-		return out;
-	}
-	
-	/**
-	 * Sets the fields on a new instance of an object, using its public fields and setters, using the
-	 * servlet request as a source. If this method finds fields on the request whose runtime types do not match,
-	 * namely Strings to primitives or boxed primitives, an attempt is made to convert them.
-	 * <p>
-	 * For instance, if there is an attribute in the request called "color", its value
-	 * will be applied via the public field "color" or the setter "setColor()". Public
-	 * fields take precedence over setters.
-	 * <p>
-	 * This method does not just merely look in the request scope.
-	 * If a parameter cannot be found in the Request, the Session attributes are searched next, followed by
-	 * the Application. If that fails, it is ignored.
-	 * @param request the servlet request.
-	 * @param type the type to instantiate.
-	 * @param <T> the object type.
-	 * @return the new object with fields set using the model.
-	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
-	 * (best to use public classes in these cases), or if the object cannot be instantiated.
-	 */
-	public static <T extends Object> T setModelFields(HttpServletRequest request, Class<T> type)
-	{
-		return setModelFields(request, Reflect.create(type));
-	}
-	
-	/**
-	 * Sets the fields on an object, using its public fields and setters, using the
-	 * servlet request as a source. If this method finds fields on the request whose runtime types do not match,
-	 * namely Strings to primitives or boxed primitives, an attempt is made to convert them.
-	 * <p>
-	 * For instance, if there is an attribute in the request called "color", its value
-	 * will be applied via the public field "color" or the setter "setColor()". Public
-	 * fields take precedence over setters.
-	 * <p>
-	 * This method does not just merely look in the request scope.
-	 * If a parameter cannot be found in the Request, the Session attributes are searched next, followed by
-	 * the Application. If that fails, it is ignored.
-	 * @param request the servlet request.
-	 * @param target the target object.
-	 * @param <T> the object type.
-	 * @return the passed in object.
-	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
-	 * (best to use public classes in these cases).
-	 */
-	public static <T extends Object> T setModelFields(HttpServletRequest request, T target)
-	{
-		HttpSession session = request.getSession();
-		ServletContext context = session != null ? session.getServletContext() : null;
-		
-		TypeProfile<?> profile = TypeProfile.getTypeProfile((Class<?>)target.getClass());
-		Hash<String> foundFields = new Hash<String>();
-		
-		for (ObjectPair<String, Field> pair : profile.getPublicFields())
-		{
-			String fieldName = pair.getKey();
-			Field field = pair.getValue();
-			if (getParameterExist(request, fieldName))
-			{
-				Class<?> setterType = field.getType();
-				if (Reflect.isArray(setterType))
-				{
-					String[] values = request.getParameterValues(fieldName);
-					Class<?> arrayType = Reflect.getArrayType(setterType);
-					Object newArray = Array.newInstance(arrayType, values.length);
-					
-					for (int i = 0; i < values.length; i++)
-					{
-						if (arrayType != String.class)
-							Array.set(newArray, i, Reflect.createForType(fieldName, getParameterString(request, fieldName), arrayType));
-						else
-							Array.set(newArray, i, getParameterString(request, fieldName));
-					}
-					Reflect.setField(target, fieldName, newArray);
-				}
-				else
-				{
-					if (setterType != String.class)
-						Reflect.setField(target, fieldName, Reflect.createForType(fieldName, getParameterString(request, fieldName), setterType));
-					else
-						Reflect.setField(target, fieldName, getParameterString(request, fieldName));
-				}
-				foundFields.put(fieldName);
-			}
-			else if (session != null && getAttributeExist(session, fieldName))
-			{
-				Object objval = session.getAttribute(fieldName);
-				if (field.getType() == objval.getClass())
-					Reflect.setField(target, fieldName, objval);
-				else
-					throw new SmallFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
-				foundFields.put(fieldName);
-			}
-			else if (context != null && getAttributeExist(context, fieldName))
-			{
-				Object objval = context.getAttribute(fieldName);
-				if (field.getType() == objval.getClass())
-					Reflect.setField(target, fieldName, objval);
-				else
-					throw new SmallFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
-				foundFields.put(fieldName);
-			}
-		}
-		
-		for (ObjectPair<String, MethodSignature> pair : profile.getSetterMethods())
-		{
-			String fieldName = pair.getKey();
-			if (foundFields.contains(fieldName))
-				continue;
-			
-			MethodSignature signature = pair.getValue();
-			if (getParameterExist(request, fieldName))
-			{
-				Class<?> setterType = signature.getType();
-				if (Reflect.isArray(setterType))
-				{
-					String[] values = request.getParameterValues(fieldName);
-					Class<?> arrayType = Reflect.getArrayType(setterType);
-					Object newArray = Array.newInstance(arrayType, values.length);
-					
-					for (int i = 0; i < values.length; i++)
-					{
-						if (arrayType != String.class)
-							Array.set(newArray, i, Reflect.createForType(fieldName, values[i], arrayType));
-						else
-							Array.set(newArray, i, getParameterString(request, fieldName));
-					}
-					Reflect.invokeBlind(signature.getMethod(), target, newArray);
-				}
-				else
-				{
-					if (setterType != String.class)
-						Reflect.invokeBlind(signature.getMethod(), target, Reflect.createForType(fieldName, getParameterString(request, fieldName), setterType));
-					else
-						Reflect.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName));
-				}
-			}
-			else if (session != null && getAttributeExist(session, fieldName))
-			{
-				Object objval = session.getAttribute(fieldName);
-				if (signature.getType() == objval.getClass())
-					Reflect.invokeBlind(signature.getMethod(), target, objval);
-				else
-					throw new SmallFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
-			}
-			else if (context != null && getAttributeExist(context, fieldName))
-			{
-				Object objval = context.getAttribute(fieldName);
-				if (signature.getType() == objval.getClass())
-					Reflect.invokeBlind(signature.getMethod(), target, objval);
-				else
-					throw new SmallFrameworkException("Model and context attribute types for field \""+fieldName+"\" do not match.");
-			}
-		}
-		
-		return target;
-	}
-	
 	/**
 	 * Includes the output of a view in the response.
 	 * @param request servlet request object.
@@ -1035,215 +1096,6 @@ public final class SmallUtil implements EntityTables
 	}
 
 	/**
-	 * Sends back JSON to the client.
-	 * The "Content-Type" portion of the header is changed to "application/json".
-	 * @param response the servlet response to write to.
-	 * @param jsonObject the JSON Object to write to the request.
-	 */
-	public static void sendJSON(HttpServletResponse response, JSONObject jsonObject)
-	{
-		response.setHeader("Content-Type", CONTENT_MIME_TYPE_JSON);
-		try {
-			JSONWriter.writeJSON(jsonObject, response.getWriter());
-		} catch (IOException e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
-	 * Sends back a JSON-ified object to the client.
-	 * Works best with POJOs and Small beans.
-	 * The "Content-Type" portion of the header is changed to "application/json".
-	 * @param response the servlet response to write to.
-	 * @param object the Object to write to the request, which then is .
-	 */
-	public static void sendJSON(HttpServletResponse response, Object object)
-	{
-		response.setHeader("Content-Type", CONTENT_MIME_TYPE_JSON);
-		try {
-			JSONWriter.writeJSON(JSONObject.create(object), response.getWriter());
-		} catch (IOException e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
-	 * Sends back XML to the client.
-	 * The "Content-Type" portion of the header is changed to "application/json".
-	 * @param response the servlet response to write to.
-	 * @param xml the XML structure to write to the request.
-	 */
-	public static void sendXML(HttpServletResponse response, XMLStruct xml)
-	{
-		response.setHeader("Content-Type", CONTENT_MIME_TYPE_XML);
-		try {
-			(new XMLWriter()).writeXML(xml, response.getWriter());
-		} catch (IOException e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
-	 * Sends a file to the client.
-	 * Via this method, most browsers will be forced to download the file in
-	 * question, as this adds "Content-Disposition" headers to the response.
-	 * The file's MIME type is guessed by its extension.
-	 * The file's name becomes the filename in the content's "disposition".
-	 * @param response servlet response object.
-	 * @param file the file content to send.
-	 */
-	public static void sendFile(HttpServletResponse response, File file)
-	{
-		sendFileContents(response, SmallUtil.getMIMEType(file.getName()), file, file.getName());
-	}
-
-	/**
-	 * Sends a file to the client.
-	 * The file's name becomes the filename in the content's "disposition".
-	 * Via this method, most browsers will be forced to download the file in
-	 * question separately, as this adds "Content-Disposition" headers to the response.
-	 * @param response servlet response object.
-	 * @param mimeType the MIME Type of the content to send.
-	 * @param file the file content to send.
-	 */
-	public static void sendFile(HttpServletResponse response, String mimeType, File file)
-	{
-		sendFileContents(response, mimeType, file, file.getName());
-	}
-
-	/**
-	 * Sends the contents of a file to the client.
-	 * Via this method, most browsers will attempt to open the file in-browser,
-	 * as this has no "Content-Disposition" attached to it.
-	 * The file's MIME type is guessed by its extension.
-	 * @param response servlet response object.
-	 * @param file the file content to send.
-	 */
-	public static void sendFileContents(HttpServletResponse response, File file)
-	{
-		sendFileContents(response, SmallUtil.getMIMEType(file.getName()), file, null);
-	}
-
-	/**
-	 * Sends contents of a file to the client.
-	 * Via this method, most browsers will attempt to open the file in-browser,
-	 * as this has no "Content-Disposition" attached to it.
-	 * @param response servlet response object.
-	 * @param mimeType the MIME Type of the content to send.
-	 * @param file the file content to send.
-	 */
-	public static void sendFileContents(HttpServletResponse response, String mimeType, File file)
-	{
-		sendFileContents(response, mimeType, file, null);
-	}
-
-	/**
-	 * Sends the contents of a file to the client.
-	 * @param response servlet response object.
-	 * @param mimeType the MIME Type of the content to send.
-	 * @param file the file content to send.
-	 * @param fileName the new file name of what to send. Can be null - leaving it out
-	 * does not send "Content-Disposition" headers. You may want to do this if you don't 
-	 * care whether the file is downloaded or opened by the browser. 
-	 */
-	public static void sendFileContents(HttpServletResponse response, String mimeType, File file, String fileName)
-	{
-		FileInputStream fis = null;
-		try {
-			fis = new FileInputStream(file);
-			sendData(response, mimeType, fileName, fis, file.length());
-		} catch (IOException e) {
-			throw new SmallFrameworkException(e);
-		} finally {
-			Common.close(fis);
-		}
-	}
-
-	/**
-	 * Sends the contents of a stream out through the response.
-	 * The input stream is not closed after the data is sent.
-	 * The "Content-Type" portion of the header is changed to <code>mimeType</code>.
-	 * The "Content-Length" portion of the header is changed to <code>length</code>, if positive.
-	 * @param response servlet response object.
-	 * @param mimeType the MIME-Type of the stream.
-	 * @param contentName the name of the data to send (file name). Can be null - leaving it out
-	 * 	does not send "Content-Disposition" headers.
-	 * @param inStream the input stream to read.
-	 * @param length the length of data in bytes to send.
-	 */
-	public static void sendData(HttpServletResponse response, String mimeType, String contentName, InputStream inStream, long length)
-	{
-		sendData(response, mimeType, contentName, null, inStream, length);
-	}
-
-	/**
-	 * Sends the contents of a stream out through the response.
-	 * The input stream is not closed after the data is sent.
-	 * The "Content-Type" portion of the header is changed to <code>mimeType</code>.
-	 * The "Content-Length" portion of the header is changed to <code>length</code>, if positive.
-	 * @param response servlet response object.
-	 * @param mimeType the MIME-Type of the stream.
-	 * @param contentName the name of the data to send (file name). Can be null - leaving it out
-	 * 	does not send "Content-Disposition" headers.
-	 * @param encoding if not null, adds a "Content-Encoding" header.
-	 * @param inStream the input stream to read.
-	 * @param length the length of data in bytes to send.
-	 */
-	public static void sendData(HttpServletResponse response, String mimeType, String contentName, String encoding, InputStream inStream, long length)
-	{
-		response.setHeader("Content-Type", mimeType);
-		if (!Common.isEmpty(encoding))
-			response.setHeader("Content-Encoding", encoding);
-		if (!Common.isEmpty(contentName))
-			response.setHeader("Content-Disposition", "attachment; filename=\"" + contentName + "\"");
-		if (length >= 0)
-			response.setHeader("Content-Length", String.valueOf(length));
-		
-		try {
-			while (length > 0)
-			{
-				length -= Common.relay(
-					inStream, 
-					response.getOutputStream(), 
-					32768, 
-					length > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)length
-				);
-			}
-		} catch (IOException e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
-	 * Sends request to the error page with a status code.
-	 * @param response servlet response object.
-	 * @param statusCode the status code to use.
-	 * @param message the status message.
-	 */
-	public static void sendCode(HttpServletResponse response, int statusCode, String message)
-	{
-		try{
-			response.sendError(statusCode, message);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
-	 * Forwards the client abruptly to another document or servlet (new client request). 
-	 * @param response	servlet response object.
-	 * @param url		target URL.
-	 */
-	public static void sendRedirect(HttpServletResponse response, String url)
-	{
-		try{
-			response.sendRedirect(url);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
 	 * Pauses the current thread for up to <code>maxMillis</code>
 	 * milliseconds, used for simulating lag.
 	 * For debugging and testing only!
@@ -1251,7 +1103,8 @@ public final class SmallUtil implements EntityTables
 	 */
 	public static void simulateLag(long maxMillis)
 	{
-		Common.sleep(randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 :maxMillis));
+		long millis = randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 :maxMillis);
+		try {Thread.sleep(millis);} catch (InterruptedException e) {}
 	}
-	
+
 }

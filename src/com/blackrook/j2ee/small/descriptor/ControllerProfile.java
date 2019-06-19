@@ -2,12 +2,12 @@ package com.blackrook.j2ee.small.descriptor;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.Reflect;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.list.List;
 import com.blackrook.j2ee.small.SmallUtil;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.ControllerEntry;
@@ -15,6 +15,7 @@ import com.blackrook.j2ee.small.annotation.FilterChain;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.resolver.ViewResolver;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * Creates a controller profile to assist in re-calling controllers by path and methods.
@@ -22,7 +23,7 @@ import com.blackrook.j2ee.small.resolver.ViewResolver;
  */
 public class ControllerProfile extends ServiceProfile
 {
-	private static final HashMap<Class<? extends ViewResolver>, ViewResolver> VIEW_RESOLVER_MAP = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
+	private static final Map<Class<? extends ViewResolver>, ViewResolver> VIEW_RESOLVER_MAP = new HashMap<Class<? extends ViewResolver>, ViewResolver>();
 	
 	/** Controller output handling types. */
 	public static enum Output
@@ -57,7 +58,7 @@ public class ControllerProfile extends ServiceProfile
 		
 		this.path = SmallUtil.trimSlashes(controllerAnnotation.value());
 		this.viewResolver = createViewResolver(controllerAnnotation.viewResolver());
-		this.entryMethods = new List<>();
+		this.entryMethods = new ArrayList<>();
 		
 		// accumulate filter chains.
 		Class<?>[] packageFilters = NO_FILTERS; 
@@ -72,7 +73,7 @@ public class ControllerProfile extends ServiceProfile
 				if (p.isAnnotationPresent(FilterChain.class))
 				{
 					FilterChain fc = p.getAnnotation(FilterChain.class);
-					packageFilters = Common.joinArrays(fc.value(), packageFilters);
+					packageFilters = Utils.joinArrays(fc.value(), packageFilters);
 				}
 			}
 		} while (packageName.lastIndexOf('.') > 0 && (packageName = packageName.substring(0, packageName.lastIndexOf('.'))).length() > 0);
@@ -83,7 +84,7 @@ public class ControllerProfile extends ServiceProfile
 			controllerFilters = Arrays.copyOf(fc.value(), fc.value().length);
 		}
 		
-		this.filterChain = Common.joinArrays(packageFilters, controllerFilters);
+		this.filterChain = Utils.joinArrays(packageFilters, controllerFilters);
 
 		scanMethods(clazz);
 	}
@@ -154,7 +155,7 @@ public class ControllerProfile extends ServiceProfile
 					return VIEW_RESOLVER_MAP.get(vclass);
 				else
 				{
-					ViewResolver resolver = Reflect.create(vclass);
+					ViewResolver resolver = Utils.create(vclass);
 					VIEW_RESOLVER_MAP.put(vclass, resolver);
 					return resolver;
 				}

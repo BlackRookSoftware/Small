@@ -1,15 +1,17 @@
 package com.blackrook.j2ee.small.struct;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.linkedlist.Queue;
-import com.blackrook.commons.list.SortedList;
 import com.blackrook.j2ee.small.SmallUtil;
 import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
 import com.blackrook.j2ee.small.exception.SmallFrameworkParseException;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * A trie that organizes mapping URI patterns to ControllerHandlers.
@@ -51,7 +53,7 @@ public class URITrie
 		
 		uri = SmallUtil.trimSlashes(uri);
 		
-		if (!Common.isEmpty(uri))
+		if (!Utils.isEmpty(uri))
 		{
 			StringBuilder sb = new StringBuilder();
 			int state = STATE_START;
@@ -164,15 +166,15 @@ public class URITrie
 		Result out = new Result();
 		
 		uri = SmallUtil.trimSlashes(uri);
-		Queue<String> pathTokens = new Queue<>();
+		Queue<String> pathTokens = new LinkedList<>();
 		
 		for (String p : uri.split("\\/"))
 			pathTokens.add(p);
 
 		while (next != null && next.type != NodeType.DEFAULT && !pathTokens.isEmpty())
 		{
-			String pathPart = pathTokens.dequeue();
-			SortedList<Node> edgeList = next.edges;
+			String pathPart = pathTokens.poll();
+			TreeSet<Node> edgeList = next.edges;
 			next = null;
 			for (Node edge : edgeList)
 			{
@@ -209,7 +211,7 @@ public class URITrie
 		String token;
 		Pattern pattern;
 		ControllerEntryPoint entryPoint;
-		SortedList<Node> edges;
+		TreeSet<Node> edges;
 		
 		private Node(NodeType type, String token, Pattern pattern)
 		{
@@ -217,7 +219,7 @@ public class URITrie
 			this.token = token;
 			this.pattern = pattern;
 			this.entryPoint = null;
-			this.edges = new SortedList<>();
+			this.edges = new TreeSet<>();
 		}
 		
 		static Node createRoot()
@@ -264,16 +266,16 @@ public class URITrie
 				return true;
 			else if (type == NodeType.MATCH)
 			{
-				if (!Common.isEmpty(token))
+				if (!Utils.isEmpty(token))
 					return token.equals(pathPart);
-				else if (!Common.isEmpty(pattern))
+				else if (!Utils.isEmpty(pattern))
 					return pattern.matcher(pathPart).matches();
 				else
 					return false;
 			}
 			else if (type == NodeType.PATHVARIABLE)
 			{
-				if (!Common.isEmpty(pattern))
+				if (!Utils.isEmpty(pattern))
 					return pattern.matcher(pathPart).matches();
 				else
 					return true;
@@ -295,7 +297,7 @@ public class URITrie
 	 */
 	public static class Result
 	{
-		HashMap<String, String> pathVariables;
+		Map<String, String> pathVariables;
 		ControllerEntryPoint entryPoint; 
 		
 		private Result()
@@ -333,7 +335,7 @@ public class URITrie
 		 * Gets the map of found path variables, if any.
 		 * @return the map of variables, or null if no variables.
 		 */
-		public HashMap<String, String> getPathVariables() 
+		public Map<String, String> getPathVariables() 
 		{
 			return pathVariables;
 		}

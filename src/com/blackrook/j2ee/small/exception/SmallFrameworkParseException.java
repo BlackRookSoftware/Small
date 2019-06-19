@@ -28,6 +28,7 @@ public class SmallFrameworkParseException extends SmallFrameworkException
 	
 	/**
 	 * Creates a new exception.
+	 * @param message the exception message.
 	 */
 	public SmallFrameworkParseException(String message)
 	{
@@ -36,6 +37,7 @@ public class SmallFrameworkParseException extends SmallFrameworkException
 
 	/**
 	 * Creates a new exception.
+	 * @param exception the exception cause.
 	 */
 	public SmallFrameworkParseException(Throwable exception)
 	{
@@ -44,6 +46,8 @@ public class SmallFrameworkParseException extends SmallFrameworkException
 	
 	/**
 	 * Creates a new exception with a message.
+	 * @param message the exception message.
+	 * @param exception the exception cause.
 	 */
 	public SmallFrameworkParseException(String message, Throwable exception)
 	{

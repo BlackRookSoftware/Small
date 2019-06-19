@@ -22,7 +22,7 @@ public class RFCParser implements StringParser
 	}
 	
 	/**
-	 * Returns true if this has tokens left.
+	 * @return true if this has tokens left.
 	 */
 	public boolean hasTokens()
 	{
@@ -30,7 +30,7 @@ public class RFCParser implements StringParser
 	}
 	
 	/**
-	 * Returns the next token.
+	 * @return the next token.
 	 */
 	public String nextToken()
 	{

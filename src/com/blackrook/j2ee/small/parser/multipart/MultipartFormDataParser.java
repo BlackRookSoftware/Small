@@ -11,9 +11,9 @@ import java.io.UnsupportedEncodingException;
 
 import javax.servlet.ServletInputStream;
 
-import com.blackrook.commons.Common;
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.struct.Part;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * Parser for multipart form requests.
@@ -137,8 +137,8 @@ public class MultipartFormDataParser extends MultipartParser
 		} catch (IOException e) {
 			throw new MultipartParserException("Could not read request body.", e);
 		} finally {
-			Common.close(fin);
-			Common.close(out);
+			Utils.close(fin);
+			Utils.close(out);
 		}
 		
 	}

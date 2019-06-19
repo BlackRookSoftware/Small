@@ -18,6 +18,7 @@ public class MultipartParserException extends Exception
 	
 	/**
 	 * Creates a new exception.
+	 * @param message the exception message.
 	 */
 	public MultipartParserException(String message)
 	{
@@ -26,6 +27,7 @@ public class MultipartParserException extends Exception
 
 	/**
 	 * Creates a new exception.
+	 * @param exception the exception cause.
 	 */
 	public MultipartParserException(Throwable exception)
 	{
@@ -34,6 +36,8 @@ public class MultipartParserException extends Exception
 	
 	/**
 	 * Creates a new exception with a message.
+	 * @param message the exception message.
+	 * @param exception the exception cause.
 	 */
 	public MultipartParserException(String message, Throwable exception)
 	{

@@ -3,17 +3,16 @@ package com.blackrook.j2ee.small.descriptor;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.hash.HashedQueueMap;
+import com.blackrook.j2ee.small.SmallRequestUtil;
+import com.blackrook.j2ee.small.SmallResponseUtil;
 import com.blackrook.j2ee.small.SmallUtil;
 import com.blackrook.j2ee.small.annotation.Attachment;
 import com.blackrook.j2ee.small.annotation.Content;
@@ -25,12 +24,10 @@ import com.blackrook.j2ee.small.descriptor.ControllerProfile.Output;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
+import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
-import com.blackrook.j2ee.small.util.RequestUtil;
-import com.blackrook.lang.json.JSONObject;
-import com.blackrook.lang.json.JSONWriter;
-import com.blackrook.lang.xml.XMLStruct;
-import com.blackrook.lang.xml.XMLWriter;
+import com.blackrook.j2ee.small.util.Utils;
+import com.blackrook.json.JSONWriter;
 
 /**
  * Method descriptor class, specifically for controllers.
@@ -70,7 +67,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 
 		ControllerEntry controllerEntry = method.getAnnotation(ControllerEntry.class);
 		
-		if (Common.isEmpty(controllerEntry.method()))
+		if (Utils.isEmpty(controllerEntry.method()))
 			this.requestMethods = REQUEST_METHODS_GET;
 		else
 			this.requestMethods = controllerEntry.method();
@@ -80,8 +77,8 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 		if (method.isAnnotationPresent(FilterChain.class))
 		{
 			FilterChain fc = method.getAnnotation(FilterChain.class);
-			if (Common.isEmpty(fc.value()))
-				this.filterChain = Common.joinArrays(controllerProfile.getFilterChain(), fc.value());
+			if (Utils.isEmpty(fc.value()))
+				this.filterChain = Utils.joinArrays(controllerProfile.getFilterChain(), fc.value());
 			else
 				this.filterChain = controllerProfile.getFilterChain();
 		}
@@ -100,7 +97,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 				if (type == Void.class || type == Void.TYPE)
 					throw new SmallFrameworkSetupException("Entry methods that are annotated @Content cannot return void.");
 				this.outputType = Output.CONTENT;
-				this.mimeType = Common.isEmpty(c.value()) ? null : c.value();
+				this.mimeType = Utils.isEmpty(c.value()) ? null : c.value();
 			}
 			else if (method.isAnnotationPresent(Attachment.class))
 			{
@@ -108,7 +105,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 				if (type == Void.class || type == Void.TYPE)
 					throw new SmallFrameworkSetupException("Entry methods that are annotated @Attachment cannot return void.");
 				this.outputType = Output.ATTACHMENT;
-				this.mimeType = Common.isEmpty(a.value()) ? null : a.value();
+				this.mimeType = Utils.isEmpty(a.value()) ? null : a.value();
 			}
 			else if (method.isAnnotationPresent(View.class))
 			{
@@ -179,9 +176,9 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
-		HashMap<String, String> pathVariableMap, 
-		HashMap<String, Cookie> cookieMap, 
-		HashedQueueMap<String, Part> multiformPartMap
+		Map<String, String> pathVariableMap, 
+		Map<String, Cookie> cookieMap, 
+		HashDequeMap<String, Part> multiformPartMap
 	)
 	{
 		Object retval = null;
@@ -207,13 +204,13 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 				{
 					String viewKey = String.valueOf(retval);
 					if (viewKey.startsWith(PREFIX_REDIRECT))
-						SmallUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
+						SmallResponseUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
 					else
 						SmallUtil.sendToView(request, response, getServiceProfile().getViewResolver().resolveView(viewKey));
 					break;
 				}
 				case ATTACHMENT:
-					fname = RequestUtil.getPage(request);
+					fname = SmallRequestUtil.getPage(request);
 					// fall through.
 				case CONTENT:
 				{
@@ -224,62 +221,38 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 					{
 						File outfile = (File)retval;
 						if (outfile == null || !outfile.exists())
-							SmallUtil.sendCode(response, 404, "File not found.");
-						else if (Common.isEmpty(mimeType))
-							SmallUtil.sendFileContents(response, mimeType, outfile);
+							SmallResponseUtil.sendCode(response, 404, "File not found.");
+						else if (Utils.isEmpty(mimeType))
+							SmallResponseUtil.sendFileContents(response, mimeType, outfile);
 						else
-							SmallUtil.sendFileContents(response, outfile);
-					}
-					// XML output.
-					else if (XMLStruct.class.isAssignableFrom(returnType))
-					{
-						byte[] data;
-						try {
-							StringWriter sw = new StringWriter();
-							(new XMLWriter()).writeXML((XMLStruct)retval, sw);
-							data = getStringData(sw.toString());
-						} catch (IOException e) {
-							throw new SmallFrameworkException(e);
-						}
-						SmallUtil.sendData(response, "application/xml", fname, new ByteArrayInputStream(data), data.length);
-					}
-					// JSON output.
-					else if (JSONObject.class.isAssignableFrom(returnType))
-					{
-						byte[] data;
-						try {
-							data = getStringData(JSONWriter.writeJSONString((JSONObject)retval));
-						} catch (IOException e) {
-							throw new SmallFrameworkException(e);
-						}
-						SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+							SmallResponseUtil.sendFileContents(response, outfile);
 					}
 					// StringBuffer data output.
 					else if (StringBuffer.class.isAssignableFrom(returnType))
 					{
-						mimeType = Common.isEmpty(mimeType) ? "text/plain" : mimeType;
+						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
 						sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
 					}
 					// StringBuilder data output.
 					else if (StringBuilder.class.isAssignableFrom(returnType))
 					{
-						mimeType = Common.isEmpty(mimeType) ? "text/plain" : mimeType;
+						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
 						sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
 					}
 					// String data output.
 					else if (String.class.isAssignableFrom(returnType))
 					{
-						mimeType = Common.isEmpty(mimeType) ? "text/plain" : mimeType;
+						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
 						sendStringData(response, mimeType, fname, (String)retval);
 					}
 					// binary output.
 					else if (byte[].class.isAssignableFrom(returnType))
 					{
 						byte[] data = (byte[])retval;
-						if (Common.isEmpty(mimeType))
-							SmallUtil.sendData(response, getMimeType(), null, new ByteArrayInputStream(data), data.length);
+						if (Utils.isEmpty(mimeType))
+							SmallResponseUtil.sendData(response, getMimeType(), null, new ByteArrayInputStream(data), data.length);
 						else
-							SmallUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
+							SmallResponseUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
 					}
 					// Object JSON output.
 					else
@@ -290,7 +263,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 						} catch (IOException e) {
 							throw new SmallFrameworkException(e);
 						}
-						SmallUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+						SmallResponseUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
 					}
 					break;
 				}
@@ -311,10 +284,10 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 	private void sendStringData(HttpServletResponse response, String mimeType, String fileName, String data)
 	{
 		byte[] bytedata = getStringData(data);
-		if (Common.isEmpty(mimeType))
-			SmallUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
+		if (Utils.isEmpty(mimeType))
+			SmallResponseUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 		else
-			SmallUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
+			SmallResponseUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 	}
 
 	/**

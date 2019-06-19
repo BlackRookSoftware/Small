@@ -4,11 +4,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
-import com.blackrook.j2ee.small.resolver.QueryResolver;
+import com.blackrook.sql.SQL;
 import com.blackrook.sql.SQLResult;
 import com.blackrook.sql.SQLTransaction;
 import com.blackrook.sql.SQLTransaction.Level;
-import com.blackrook.sql.SQLUtil;
 
 /**
  * Base Data Access Object for submitting SQL-driven database queries.
@@ -35,6 +34,7 @@ public abstract class SmallSQLDAO
 	/**
 	 * Gets a query by keyword, using the current {@link QueryResolver} assigned
 	 * to this class.
+	 * @param keyword the query search keyword.
 	 * @return the associated query or null if not found. 
 	 */
 	protected String getQueryByName(String keyword)
@@ -74,7 +74,7 @@ public abstract class SmallSQLDAO
 		SQLResult result = null;		
 		try {
 			conn = dataSource.getAvailableConnection();
-			result = SQLUtil.doQuery(conn, query, parameters);
+			result = SQL.doQuery(conn, query, parameters);
 		} catch (SQLException e) {
 			throw new SmallFrameworkException(e);
 		} catch (InterruptedException e) {
@@ -177,7 +177,7 @@ public abstract class SmallSQLDAO
 		T[] result = null;		
 		try {
 			conn = dataSource.getAvailableConnection();
-			result = SQLUtil.doQuery(type, conn, query, parameters);
+			result = SQL.doQuery(type, conn, query, parameters);
 		} catch (SQLException e) {
 			throw new SmallFrameworkException(e);
 		} catch (InterruptedException e) {
@@ -202,7 +202,7 @@ public abstract class SmallSQLDAO
 		SQLResult result = null;
 		try {
 			conn = dataSource.getAvailableConnection();
-			result = SQLUtil.doQueryUpdate(conn, query, parameters);
+			result = SQL.doQueryUpdate(conn, query, parameters);
 		} catch (SQLException e) {
 			throw new SmallFrameworkException(e);
 		} catch (InterruptedException e) {

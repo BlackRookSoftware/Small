@@ -3,12 +3,13 @@ package com.blackrook.j2ee.small.descriptor;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.blackrook.commons.Reflect;
-import com.blackrook.commons.hash.HashMap;
 import com.blackrook.j2ee.small.annotation.attribs.Attribute;
 import com.blackrook.j2ee.small.annotation.attribs.Model;
 import com.blackrook.j2ee.small.struct.Part;
+import com.blackrook.j2ee.small.util.Utils;
 
 /**
  * Interface for descriptors for component objects. 
@@ -21,9 +22,9 @@ public abstract class ServiceProfile
 	/** Object handler instance. */
 	private Object instance;
 	/** Model map. */
-	private HashMap<String, EntryPoint<?>> modelMap;
+	private Map<String, EntryPoint<?>> modelMap;
 	/** Attribute map. */
-	private HashMap<String, EntryPoint<?>> attributeMap;
+	private Map<String, EntryPoint<?>> attributeMap;
 
 	/**
 	 * Creates an entry point descriptor around an object instance.
@@ -102,7 +103,7 @@ public abstract class ServiceProfile
 		else if (File.class.isAssignableFrom(type))
 			return type.cast(part.isFile() ? part.getFile() : null);
 		else
-			return Reflect.createForType(part.isFile() ? null : part.getValue(), type);
+			return Utils.createForType(part.isFile() ? null : part.getValue(), type);
 	}
 
 	/** Checks if a method is a Model constructor. */

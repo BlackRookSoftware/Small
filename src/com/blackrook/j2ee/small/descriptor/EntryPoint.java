@@ -8,9 +8,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.Enumeration;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
@@ -20,11 +22,8 @@ import javax.servlet.http.HttpSession;
 
 import org.xml.sax.SAXException;
 
-import com.blackrook.commons.AbstractMap;
-import com.blackrook.commons.Reflect;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.hash.HashedQueueMap;
-import com.blackrook.commons.linkedlist.Queue;
+import com.blackrook.j2ee.small.SmallRequestUtil;
+import com.blackrook.j2ee.small.SmallResponseUtil;
 import com.blackrook.j2ee.small.SmallUtil;
 import com.blackrook.j2ee.small.annotation.Content;
 import com.blackrook.j2ee.small.annotation.attribs.Attribute;
@@ -43,10 +42,10 @@ import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.enums.ScopeType;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.parser.StringParser;
+import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
-import com.blackrook.j2ee.small.util.RequestUtil;
-import com.blackrook.j2ee.small.util.ResponseUtil;
-import com.blackrook.lang.json.JSONConversionException;
+import com.blackrook.j2ee.small.util.Utils;
+import com.blackrook.json.JSONConversionException;
 
 /**
  * Entry method descriptor class.
@@ -55,7 +54,6 @@ import com.blackrook.lang.json.JSONConversionException;
  */
 public class EntryPoint<S extends ServiceProfile>
 {
-
 	/** Parameter source types. */
 	public static enum Source
 	{
@@ -81,7 +79,7 @@ public class EntryPoint<S extends ServiceProfile>
 	/**
 	 * Parameter entry for the descriptor.
 	 */
-	public static class ParameterDescriptor
+	private static class ParameterDescriptor
 	{
 		private Class<?> type;
 		private Source sourceType;
@@ -229,7 +227,7 @@ public class EntryPoint<S extends ServiceProfile>
 	}
 
 	/**
-	 * The actual method that this describes.
+	 * @return actual method that this describes.
 	 */
 	public Method getMethod()
 	{
@@ -237,7 +235,7 @@ public class EntryPoint<S extends ServiceProfile>
 	}
 
 	/**
-	 * The method's return type.
+	 * @return method's return type.
 	 */
 	public Class<?> getType()
 	{
@@ -245,7 +243,7 @@ public class EntryPoint<S extends ServiceProfile>
 	}
 
 	/**
-	 * The method's parameter info.
+	 * @return method's parameter info.
 	 */
 	public ParameterDescriptor[] getParameterDescriptors()
 	{
@@ -269,9 +267,9 @@ public class EntryPoint<S extends ServiceProfile>
 		RequestMethod requestMethod, 
 		HttpServletRequest request,
 		HttpServletResponse response, 
-		HashMap<String, String> pathVariableMap, 
-		HashMap<String, Cookie> cookieMap, 
-		HashedQueueMap<String, Part> multiformPartMap
+		Map<String, String> pathVariableMap, 
+		Map<String, Cookie> cookieMap, 
+		HashDequeMap<String, Part> multiformPartMap
 	)
 	{
 		Object[] invokeParams = new Object[parameters.length];
@@ -287,17 +285,17 @@ public class EntryPoint<S extends ServiceProfile>
 			{
 				case PATH:
 					path = path != null ? path : request.getRequestURI().substring(1);
-					invokeParams[i] = Reflect.createForType("Parameter " + i, path, pinfo.getType());
+					invokeParams[i] = Utils.createForType("Parameter " + i, path, pinfo.getType());
 					break;
 				case PATH_FILE:
-					pathFile = pathFile != null ? pathFile : RequestUtil.getPage(request);
-					invokeParams[i] = Reflect.createForType("Parameter " + i, pathFile, pinfo.getType());
+					pathFile = pathFile != null ? pathFile : SmallRequestUtil.getPage(request);
+					invokeParams[i] = Utils.createForType("Parameter " + i, pathFile, pinfo.getType());
 					break;
 				case PATH_QUERY:
-					invokeParams[i] = Reflect.createForType("Parameter " + i, request.getQueryString(), pinfo.getType());
+					invokeParams[i] = Utils.createForType("Parameter " + i, request.getQueryString(), pinfo.getType());
 					break;
 				case PATH_VARIABLE:
-					invokeParams[i] = Reflect.createForType("Parameter " + i, pathVariableMap.get(pinfo.name), pinfo.getType());
+					invokeParams[i] = Utils.createForType("Parameter " + i, pathVariableMap.get(pinfo.name), pinfo.getType());
 					break;
 				case SERVLET_REQUEST:
 					invokeParams[i] = request;
@@ -337,7 +335,7 @@ public class EntryPoint<S extends ServiceProfile>
 						}
 					}
 					else
-						invokeParams[i] = Reflect.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
+						invokeParams[i] = Utils.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
 					break;
 				}
 				case HEADER_MAP:
@@ -346,19 +344,6 @@ public class EntryPoint<S extends ServiceProfile>
 					{
 						Map<String, String> map = new java.util.HashMap<String, String>();
 						
-						Enumeration<String> strenum = request.getHeaderNames();
-						while (strenum.hasMoreElements())
-						{
-							String header = strenum.nextElement();
-							map.put(header, request.getHeader(header));
-						}
-						
-						invokeParams[i] = map;
-					}
-					else if (AbstractMap.class.isAssignableFrom(pinfo.getType()))
-					{
-						AbstractMap<String, String> map = new HashMap<String, String>();
-	
 						Enumeration<String> strenum = request.getHeaderNames();
 						while (strenum.hasMoreElements())
 						{
@@ -386,14 +371,13 @@ public class EntryPoint<S extends ServiceProfile>
 				{
 					if (Map.class.isAssignableFrom(pinfo.getType()))
 					{
-						Map<String, Object> map = new java.util.HashMap<String, Object>();
+						Map<String, Object> map = new HashMap<String, Object>();
 						if (multiformPartMap != null)
 						{
-							Iterator<String> it = multiformPartMap.keyIterator();
-							while (it.hasNext())
+							for (Map.Entry<String, Deque<Part>> entry : multiformPartMap.entrySet())
 							{
-								String pname = it.next();
-								Queue<Part> partlist = multiformPartMap.get(pname);
+								String pname = entry.getKey();
+								Deque<Part> partlist = entry.getValue();
 								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
 								int x = 0;
 								for (Part p : partlist)
@@ -405,33 +389,6 @@ public class EntryPoint<S extends ServiceProfile>
 							}
 						}
 						else for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
-						{
-							String[] vals = paramEntry.getValue();
-							map.put(paramEntry.getKey(), vals.length == 1 ? vals[0] : Arrays.copyOf(vals, vals.length));
-						}
-						invokeParams[i] = map;
-					}
-					else if (AbstractMap.class.isAssignableFrom(pinfo.getType()))
-					{
-						AbstractMap<String, Object> map = new HashMap<String, Object>();
-						if (multiformPartMap != null)
-						{
-							Iterator<String> it = multiformPartMap.keyIterator();
-							while (it.hasNext())
-							{
-								String pname = it.next();
-								Queue<Part> partlist = multiformPartMap.get(pname);
-								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
-								int x = 0;
-								for (Part p : partlist)
-									vout[x++] = serviceProfile.getPartData(p, Part.class);
-								if (vout.length == 1)
-									map.put(pname, vout[0]);
-								else
-									map.put(pname, vout);
-							}
-						}
-						for (Map.Entry<String, String[]> paramEntry : request.getParameterMap().entrySet())
 						{
 							String[] vals = paramEntry.getValue();
 							map.put(paramEntry.getKey(), vals.length == 1 ? vals[0] : Arrays.copyOf(vals, vals.length));
@@ -450,9 +407,9 @@ public class EntryPoint<S extends ServiceProfile>
 					Object value = null;
 					if (multiformPartMap != null && multiformPartMap.containsKey(parameterName))
 					{
-						if (Reflect.isArray(pinfo.getType()))
+						if (Utils.isArray(pinfo.getType()))
 						{
-							Class<?> actualType = Reflect.getArrayType(pinfo.getType());
+							Class<?> actualType = Utils.getArrayType(pinfo.getType());
 							Queue<Part> partlist = multiformPartMap.get(parameterName);
 							Object[] vout = (Object[])Array.newInstance(actualType, partlist.size());
 							int x = 0;
@@ -462,15 +419,15 @@ public class EntryPoint<S extends ServiceProfile>
 						}
 						else
 						{
-							value = serviceProfile.getPartData(multiformPartMap.get(parameterName).head(), pinfo.getType());
+							value = serviceProfile.getPartData(multiformPartMap.get(parameterName).getFirst(), pinfo.getType());
 						}
 					}
-					else if (Reflect.isArray(pinfo.getType()))
+					else if (Utils.isArray(pinfo.getType()))
 						value = request.getParameterValues(parameterName);
 					else
 						value = request.getParameter(parameterName);
 						
-					invokeParams[i] = Reflect.createForType("Parameter " + i, value, pinfo.getType());
+					invokeParams[i] = Utils.createForType("Parameter " + i, value, pinfo.getType());
 					break;
 				}
 				case ATTRIBUTE:
@@ -498,10 +455,10 @@ public class EntryPoint<S extends ServiceProfile>
 					switch (scope)
 					{
 						case REQUEST:
-							invokeParams[i] = SmallUtil.getRequestBean(request, pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallRequestUtil.getRequestBean(request, pinfo.getType(), pinfo.getName());
 							break;
 						case SESSION:
-							invokeParams[i] = SmallUtil.getSessionBean(request, pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallRequestUtil.getSessionBean(request, pinfo.getType(), pinfo.getName());
 							break;
 						case APPLICATION:
 							invokeParams[i] = SmallUtil.getApplicationBean(request.getServletContext(), pinfo.getType(), pinfo.getName());
@@ -515,11 +472,11 @@ public class EntryPoint<S extends ServiceProfile>
 					if (modelDescriptor != null)
 					{
 						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
-						SmallUtil.setModelFields(request, model);
+						SmallRequestUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
 					else
-						request.setAttribute(pinfo.getName(), invokeParams[i] = SmallUtil.setModelFields(request, pinfo.getType()));
+						request.setAttribute(pinfo.getName(), invokeParams[i] = SmallRequestUtil.setModelFields(request, pinfo.getType()));
 					break;
 				}
 				case CONTENT:
@@ -527,16 +484,16 @@ public class EntryPoint<S extends ServiceProfile>
 					if (requestMethod == RequestMethod.POST)
 					{
 						try {
-							content = content != null ? content : RequestUtil.getContentData(request, pinfo.getType());
+							content = content != null ? content : SmallRequestUtil.getContentData(request, pinfo.getType());
 							invokeParams[i] = content;
 						} catch (UnsupportedEncodingException e) {
-							ResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
+							SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
 						} catch (JSONConversionException e) {
-							ResponseUtil.sendError(response, 400, "The JSON content was malformed.");
+							SmallResponseUtil.sendError(response, 400, "The JSON content was malformed.");
 						} catch (SAXException e) {
-							ResponseUtil.sendError(response, 400, "The XML content was malformed.");
+							SmallResponseUtil.sendError(response, 400, "The XML content was malformed.");
 						} catch (IOException e) {
-							ResponseUtil.sendError(response, 500, "Server could not read request.");
+							SmallResponseUtil.sendError(response, 500, "Server could not read request.");
 							throw new SmallFrameworkException(e);
 						}
 					}
@@ -552,7 +509,7 @@ public class EntryPoint<S extends ServiceProfile>
 			
 		}
 		
-		return Reflect.invokeBlind(method, serviceProfile.getInstance(), invokeParams);
+		return Utils.invokeBlind(method, serviceProfile.getInstance(), invokeParams);
 	}
 	
 	@Override

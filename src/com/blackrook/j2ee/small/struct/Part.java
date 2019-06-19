@@ -2,7 +2,7 @@ package com.blackrook.j2ee.small.struct;
 
 import java.io.File;
 
-import com.blackrook.lang.json.annotation.JSONIgnore;
+import com.blackrook.json.annotation.JSONIgnore;
 
 /**
  * Multipart part that is part of a multiform request.
@@ -24,7 +24,7 @@ public class Part
 	public Part() {}
 	
 	/**
-	 * Gets the name of this part (parameter name).
+	 * @return the name of this part (parameter name).
 	 */
 	public String getName()
 	{
@@ -41,7 +41,7 @@ public class Part
 	}
 
 	/**
-	 * Returns the original file name of the file, or null if not a file.
+	 * @return the original file name of the file, or null if not a file.
 	 * @see #isFile()
 	 */
 	public String getFileName()
@@ -56,6 +56,7 @@ public class Part
 	 * handled request, as it may be deleted after the controller processes the POST!</b>
 	 * <p>
 	 * If you need to keep this file around, it should be copied to another file!
+	 * @return the file on this part, or null if not a file.
 	 * @see #isFile()
 	 */
 	@JSONIgnore

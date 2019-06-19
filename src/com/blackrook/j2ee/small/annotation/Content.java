@@ -7,8 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.blackrook.j2ee.small.enums.RequestMethod;
-import com.blackrook.lang.json.JSONObject;
-import com.blackrook.lang.xml.XMLStruct;
+import com.blackrook.json.JSONObject;
 
 /**
  * Annotates a parameter or method. Should be used on Controllers.
@@ -34,7 +33,6 @@ import com.blackrook.lang.xml.XMLStruct;
  * 			<li>...and is null, this sends a 404.</li>
  * 		</ul>
  * </li>
- * <li>If return type is an {@link XMLStruct}, XML is sent back. Content type is <code>application/xml</code>.</li>
  * <li>If return type is a {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code>.</li>
  * <li>If return type is byte[], binary data is sent back. Content type is <code>application/octet-stream</code>.</li>
  * <li>If return type is {@link JSONObject}, {@link Object}, or anything else, it is converted to JSON and sent back. Content type is <code>application/json</code>.</li>

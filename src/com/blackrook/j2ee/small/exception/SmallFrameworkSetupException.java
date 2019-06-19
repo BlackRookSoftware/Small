@@ -28,6 +28,7 @@ public class SmallFrameworkSetupException extends SmallFrameworkException
 	
 	/**
 	 * Creates a new exception.
+	 * @param message the exception message.
 	 */
 	public SmallFrameworkSetupException(String message)
 	{
@@ -36,6 +37,7 @@ public class SmallFrameworkSetupException extends SmallFrameworkException
 
 	/**
 	 * Creates a new exception.
+	 * @param exception the exception cause.
 	 */
 	public SmallFrameworkSetupException(Throwable exception)
 	{
@@ -44,6 +46,8 @@ public class SmallFrameworkSetupException extends SmallFrameworkException
 	
 	/**
 	 * Creates a new exception with a message.
+	 * @param message the exception message.
+	 * @param exception the exception cause.
 	 */
 	public SmallFrameworkSetupException(String message, Throwable exception)
 	{
