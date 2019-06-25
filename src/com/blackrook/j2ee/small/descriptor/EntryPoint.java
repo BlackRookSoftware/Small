@@ -45,7 +45,6 @@ import com.blackrook.j2ee.small.parser.StringParser;
 import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
 import com.blackrook.j2ee.small.util.Utils;
-import com.blackrook.json.JSONConversionException;
 
 /**
  * Entry method descriptor class.
@@ -488,8 +487,6 @@ public class EntryPoint<S extends ServiceProfile>
 							invokeParams[i] = content;
 						} catch (UnsupportedEncodingException e) {
 							SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
-						} catch (JSONConversionException e) {
-							SmallResponseUtil.sendError(response, 400, "The JSON content was malformed.");
 						} catch (SAXException e) {
 							SmallResponseUtil.sendError(response, 400, "The XML content was malformed.");
 						} catch (IOException e) {

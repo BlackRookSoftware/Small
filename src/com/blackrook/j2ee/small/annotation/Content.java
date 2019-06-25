@@ -7,7 +7,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.blackrook.j2ee.small.enums.RequestMethod;
-import com.blackrook.json.JSONObject;
 
 /**
  * Annotates a parameter or method. Should be used on Controllers.
@@ -35,7 +34,7 @@ import com.blackrook.json.JSONObject;
  * </li>
  * <li>If return type is a {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code>.</li>
  * <li>If return type is byte[], binary data is sent back. Content type is <code>application/octet-stream</code>.</li>
- * <li>If return type is {@link JSONObject}, {@link Object}, or anything else, it is converted to JSON and sent back. Content type is <code>application/json</code>.</li>
+ * <li>If return type is {@link Object}, an Object Converter is used for converting.</li>
  * </ul>
  * If a String value is given on this annotation, it is interpreted as the forced MIME-Type to use, but only for File, String and binary output.
  * 

@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import com.blackrook.j2ee.small.SmallUtil;
-import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
+import com.blackrook.j2ee.small.descriptor.controller.ControllerEntryPoint;
 import com.blackrook.j2ee.small.exception.SmallFrameworkParseException;
 import com.blackrook.j2ee.small.util.Utils;
 

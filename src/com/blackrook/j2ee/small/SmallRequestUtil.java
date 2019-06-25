@@ -27,9 +27,6 @@ import com.blackrook.j2ee.small.util.TypeProfileFactory.Profile;
 import com.blackrook.j2ee.small.util.TypeProfileFactory.Profile.FieldInfo;
 import com.blackrook.j2ee.small.util.TypeProfileFactory.Profile.MethodInfo;
 import com.blackrook.j2ee.small.util.Utils;
-import com.blackrook.json.JSONConversionException;
-import com.blackrook.json.JSONObject;
-import com.blackrook.json.JSONReader;
 
 /**
  * Utility class for {@link HttpServletRequest} manipulation.
@@ -41,43 +38,6 @@ public final class SmallRequestUtil
 	private static final Map<String, SimpleDateFormat> DATE_PATTERN_MAP = new HashMap<String, SimpleDateFormat>();
 
 	private SmallRequestUtil() {}
-
-	/**
-	 * Reads JSON data from the request and returns a JSONObject.
-	 * @param request the servlet request.
-	 * @return 
-	 * @throws UnsupportedEncodingException 
-	 * @throws JSONConversionException 
-	 * @throws IOException 
-	 */
-	public static JSONObject readJSON(HttpServletRequest request) throws UnsupportedEncodingException, JSONConversionException, IOException
-	{
-		String contentType = request.getContentType();
-		RFCParser parser = new RFCParser(contentType);
-		String charset = "UTF-8";
-		while (parser.hasTokens())
-		{
-			String nextToken = parser.nextToken();
-			if (nextToken.startsWith("charset="))
-				charset = nextToken.substring("charset=".length()).trim();
-		}
-	
-		JSONObject jsonObject = null;
-		ServletInputStream sis = request.getInputStream();
-		try {
-			jsonObject = JSONReader.readJSON(new InputStreamReader(sis, charset));
-		} catch (UnsupportedEncodingException e) {
-			throw e;
-		} catch (JSONConversionException e) {
-			throw e;
-		} catch (IOException e) {
-			throw e;
-		} finally {
-			sis.close();
-		}
-		
-		return jsonObject;
-	}
 
 	/**
 	 * Checks if the request is JSON-formatted.
@@ -190,22 +150,10 @@ public final class SmallRequestUtil
 	/**
 	 * Get content data.
 	 */
-	public static <T> T getContentData(HttpServletRequest request, Class<T> type) 
-		throws UnsupportedEncodingException, JSONConversionException, SAXException, IOException
+	public static <T> T getContentData(HttpServletRequest request, Class<T> type) throws UnsupportedEncodingException, SAXException, IOException
 	{
-		if (SmallRequestUtil.isJSON(request))
-		{
-			JSONObject json = SmallRequestUtil.readJSON(request);
-			if (type == JSONObject.class)
-				return type.cast(json);
-			else
-				return json.newObject(type);
-		}
-		else
-		{
-			String content = SmallRequestUtil.readPlainText(request);
-			return Utils.createForType(content, type);
-		}
+		String content = SmallRequestUtil.readPlainText(request);
+		return Utils.createForType(content, type);
 	}
 
 	/**

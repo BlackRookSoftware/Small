@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.descriptor;
+package com.blackrook.j2ee.small.descriptor.filter;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -7,6 +7,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.j2ee.small.descriptor.EntryPoint;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.struct.HashDequeMap;

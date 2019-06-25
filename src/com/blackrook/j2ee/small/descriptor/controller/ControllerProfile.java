@@ -1,4 +1,4 @@
-package com.blackrook.j2ee.small.descriptor;
+package com.blackrook.j2ee.small.descriptor.controller;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -12,6 +12,7 @@ import com.blackrook.j2ee.small.SmallUtil;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.ControllerEntry;
 import com.blackrook.j2ee.small.annotation.FilterChain;
+import com.blackrook.j2ee.small.descriptor.ServiceProfile;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.resolver.ViewResolver;

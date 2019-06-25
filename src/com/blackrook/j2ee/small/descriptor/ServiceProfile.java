@@ -25,6 +25,7 @@ public abstract class ServiceProfile
 	private Map<String, EntryPoint<?>> modelMap;
 	/** Attribute map. */
 	private Map<String, EntryPoint<?>> attributeMap;
+	// TODO: Add Content Converter.
 
 	/**
 	 * Creates an entry point descriptor around an object instance.

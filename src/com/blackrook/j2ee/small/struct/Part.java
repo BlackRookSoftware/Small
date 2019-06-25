@@ -2,8 +2,6 @@ package com.blackrook.j2ee.small.struct;
 
 import java.io.File;
 
-import com.blackrook.json.annotation.JSONIgnore;
-
 /**
  * Multipart part that is part of a multiform request.
  * @author Matthew Tropiano
@@ -59,7 +57,6 @@ public class Part
 	 * @return the file on this part, or null if not a file.
 	 * @see #isFile()
 	 */
-	@JSONIgnore
 	public File getFile()
 	{
 		return file;

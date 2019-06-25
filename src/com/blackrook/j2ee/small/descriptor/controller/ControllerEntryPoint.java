@@ -1,8 +1,7 @@
-package com.blackrook.j2ee.small.descriptor;
+package com.blackrook.j2ee.small.descriptor.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -20,14 +19,14 @@ import com.blackrook.j2ee.small.annotation.ControllerEntry;
 import com.blackrook.j2ee.small.annotation.FilterChain;
 import com.blackrook.j2ee.small.annotation.NoCache;
 import com.blackrook.j2ee.small.annotation.View;
-import com.blackrook.j2ee.small.descriptor.ControllerProfile.Output;
+import com.blackrook.j2ee.small.descriptor.EntryPoint;
+import com.blackrook.j2ee.small.descriptor.controller.ControllerProfile.Output;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
 import com.blackrook.j2ee.small.util.Utils;
-import com.blackrook.json.JSONWriter;
 
 /**
  * Method descriptor class, specifically for controllers.
@@ -179,8 +178,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> multiformPartMap
-	)
-	{
+	){
 		Object retval = null;
 		try {
 			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
@@ -257,13 +255,7 @@ public class ControllerEntryPoint extends EntryPoint<ControllerProfile>
 					// Object JSON output.
 					else
 					{
-						byte[] data;
-						try {
-							data = getStringData(JSONWriter.writeJSONString(retval));
-						} catch (IOException e) {
-							throw new SmallFrameworkException(e);
-						}
-						SmallResponseUtil.sendData(response, "application/json", fname, new ByteArrayInputStream(data), data.length);
+						// TODO: Finish converter support.
 					}
 					break;
 				}

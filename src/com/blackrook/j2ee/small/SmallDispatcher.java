@@ -13,8 +13,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.j2ee.small.descriptor.ControllerEntryPoint;
-import com.blackrook.j2ee.small.descriptor.FilterProfile;
+import com.blackrook.j2ee.small.descriptor.controller.ControllerEntryPoint;
+import com.blackrook.j2ee.small.descriptor.filter.FilterProfile;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartFormDataParser;

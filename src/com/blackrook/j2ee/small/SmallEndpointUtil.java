@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
@@ -12,8 +11,6 @@ import javax.websocket.Endpoint;
 import javax.websocket.Session;
 
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
-import com.blackrook.json.JSONObject;
-import com.blackrook.json.JSONWriter;
 
 /**
  * An {@link Endpoint} utility class that exposes some useful functions for Endpoints.
@@ -128,44 +125,6 @@ public final class SmallEndpointUtil
 	}
 	
 	/**
-	 * Sends a JSON object to the client, synchronously, as a JSON-ified string
-	 * representing the object.
-	 * Execution halts until the client socket acknowledges receipt. 
-	 * @param session the connection session.
-	 * @param object the JSON object to send.
-	 * @throws SmallFrameworkException on a send error.
-	 */
-	public static void sendJSON(final Session session, JSONObject object)
-	{
-		StringWriter sw = new StringWriter();
-		try {
-			JSONWriter.writeJSON(object, sw);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-		sendText(session, sw.toString());
-	}
-	
-	/**
-	 * Sends an object to the client, synchronously, as a JSON-ified string
-	 * representing the object.
-	 * Execution halts until the client socket acknowledges receipt. 
-	 * @param session the connection session.
-	 * @param object the JSON object to send.
-	 * @throws SmallFrameworkException on a send error or if an error occurs during conversion.
-	 */
-	public static void sendJSON(final Session session, Object object)
-	{
-		try {
-			StringWriter sw = new StringWriter();
-			JSONWriter.writeJSON(JSONObject.create(object), sw);
-			sendText(session, sw.toString());
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-	
-	/**
 	 * Sends a stream of data, synchronously, until the end of the stream.
 	 * The stream is not closed after this completes.
 	 * Execution halts until the client socket acknowledges receipt. 
@@ -244,44 +203,6 @@ public final class SmallEndpointUtil
 	public static Future<Void> sendAsyncBinary(final Session session, byte[] buffer)
 	{
 		return sendAsyncBinary(session, ByteBuffer.wrap(buffer));
-	}
-
-	/**
-	 * Sends a JSON object to the client, asynchronously, as a JSON-ified string
-	 * representing the object.
-	 * @param session the connection session.
-	 * @param object the JSON object to send.
-	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SmallFrameworkException on a send error.
-	 */
-	public static Future<Void> sendAsyncJSON(final Session session, JSONObject object)
-	{
-		StringWriter sw = new StringWriter();
-		try {
-			JSONWriter.writeJSON(object, sw);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-		return sendAsyncText(session, sw.toString());
-	}
-
-	/**
-	 * Sends an object to the client, asynchronously, as a JSON-ified string
-	 * representing the object.
-	 * @param session the connection session.
-	 * @param object the JSON object to send.
-	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SmallFrameworkException on a send error or if an error occurs during conversion.
-	 */
-	public static Future<Void> sendAsyncJSON(final Session session, Object object)
-	{
-		StringWriter sw = new StringWriter();
-		try {
-			JSONWriter.writeJSON(JSONObject.create(object), sw);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-		return sendAsyncText(session, sw.toString());
 	}
 	
 }
