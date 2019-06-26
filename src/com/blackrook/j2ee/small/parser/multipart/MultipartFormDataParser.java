@@ -13,7 +13,7 @@ import javax.servlet.ServletInputStream;
 
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.struct.Part;
-import com.blackrook.j2ee.small.util.Utils;
+import com.blackrook.j2ee.small.struct.Utils;
 
 /**
  * Parser for multipart form requests.

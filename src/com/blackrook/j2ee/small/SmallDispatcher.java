@@ -13,15 +13,18 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.j2ee.small.descriptor.controller.ControllerEntryPoint;
-import com.blackrook.j2ee.small.descriptor.filter.FilterProfile;
+import com.blackrook.j2ee.small.controller.ControllerEntryPoint;
 import com.blackrook.j2ee.small.enums.RequestMethod;
+import com.blackrook.j2ee.small.filter.FilterProfile;
 import com.blackrook.j2ee.small.parser.MultipartParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartFormDataParser;
 import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
 import com.blackrook.j2ee.small.struct.URITrie.Result;
+import com.blackrook.j2ee.small.util.SmallRequestUtil;
+import com.blackrook.j2ee.small.util.SmallResponseUtil;
+import com.blackrook.j2ee.small.util.SmallUtil;
 
 /**
  * The main dispatcher servlet for the controller portion of the framework.
@@ -64,9 +67,7 @@ public final class SmallDispatcher extends HttpServlet
 	@Override
 	public final void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
-		if (SmallRequestUtil.isFormEncoded(request))
-			callControllerEntry(request, response, RequestMethod.POST, null);
-		else if (MultipartFormDataParser.isMultipart(request))
+		if (MultipartFormDataParser.isMultipart(request))
 		{
 			MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
 			if (parser == null)

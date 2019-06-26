@@ -7,8 +7,8 @@ import java.lang.annotation.Target;
 
 import javax.servlet.http.Cookie;
 
-import com.blackrook.j2ee.small.annotation.ControllerEntry;
-import com.blackrook.j2ee.small.annotation.FilterEntry;
+import com.blackrook.j2ee.small.annotation.controller.ControllerEntry;
+import com.blackrook.j2ee.small.annotation.filter.FilterEntry;
 
 /**
  * Annotates a method parameter for Cookie binding. Should be used in Controllers and Filters.

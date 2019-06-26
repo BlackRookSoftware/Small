@@ -14,6 +14,8 @@ public enum RequestMethod
 	HEAD,
 	/** Standard PUT request. */
 	PUT,
+	/** Standard PATCH request. */
+	PATCH,
 	/** Standard DELETE request. */
 	DELETE,
 	/** Standard OPTIONS request. */

@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.j2ee.small.annotation.filter.FilterEntry;
+
 /**
  * Annotation that is used to signify that this object is a Filter with entry points.
  * Must be on a class also annotated with {@link Component}.

@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.j2ee.small.parser.multipart.MultipartParserException;
 import com.blackrook.j2ee.small.struct.Part;
-import com.blackrook.j2ee.small.util.Utils;
+import com.blackrook.j2ee.small.struct.Utils;
 
 /**
  * Abstract Multipart parser.

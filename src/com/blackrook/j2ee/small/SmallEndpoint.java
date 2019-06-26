@@ -51,4 +51,5 @@ public class SmallEndpoint
 	{
 		return SmallToolkit.INSTANCE.getComponent(componentClass);
 	}
+	
 }

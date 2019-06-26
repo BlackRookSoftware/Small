@@ -8,10 +8,9 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.blackrook.j2ee.small.SmallUtil;
-import com.blackrook.j2ee.small.descriptor.controller.ControllerEntryPoint;
+import com.blackrook.j2ee.small.controller.ControllerEntryPoint;
 import com.blackrook.j2ee.small.exception.SmallFrameworkParseException;
-import com.blackrook.j2ee.small.util.Utils;
+import com.blackrook.j2ee.small.util.SmallUtil;
 
 /**
  * A trie that organizes mapping URI patterns to ControllerHandlers.

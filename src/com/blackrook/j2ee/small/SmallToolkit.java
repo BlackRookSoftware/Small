@@ -38,14 +38,16 @@ import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.annotation.ComponentConstructor;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.Filter;
-import com.blackrook.j2ee.small.descriptor.controller.ControllerEntryPoint;
-import com.blackrook.j2ee.small.descriptor.controller.ControllerProfile;
-import com.blackrook.j2ee.small.descriptor.filter.FilterProfile;
+import com.blackrook.j2ee.small.controller.ControllerEntryPoint;
+import com.blackrook.j2ee.small.controller.ControllerProfile;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
+import com.blackrook.j2ee.small.filter.FilterProfile;
+import com.blackrook.j2ee.small.parser.JSONDriver;
 import com.blackrook.j2ee.small.struct.URITrie;
-import com.blackrook.j2ee.small.util.Utils;
+import com.blackrook.j2ee.small.struct.Utils;
+import com.blackrook.j2ee.small.util.SmallUtil;
 
 /**
  * The main manager class through which all components are pooled and instantiated. 
@@ -53,7 +55,8 @@ import com.blackrook.j2ee.small.util.Utils;
  */
 public final class SmallToolkit implements ServletContextListener, HttpSessionListener, HttpSessionAttributeListener
 {
-	private static final String INIT_PARAM_CONTROLLER_ROOT = "small.application.package.root";
+	private static final String INIT_PARAM_APPLICATION_PACKAGE_ROOTS = "small.application.package.root";
+	private static final String INIT_PARAM_APPLICATION_JSON_DRIVER = "small.application.driver.json.class";
 	
 	/** Singleton toolkit instance. */
 	static SmallToolkit INSTANCE = null;
@@ -65,9 +68,11 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	private ServerContainer serverContainer;
 
 	/** Controller root. */
-	private String controllerRootPackage;
+	private String[] controllerRootPackages;
 	/** Tempdir root. */
 	private File tempDir;
+	/** JSON driver. */
+	private JSONDriver jsonDriver;
 
 	/** List of components that listen for session events. */
 	private Queue<ServletContextListener> contextListeners;
@@ -78,7 +83,6 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
-
 	/** The path to controller trie. */
 	private Map<RequestMethod, URITrie> controllerEntries;
 	/** The components that are instantiated. */
@@ -93,6 +97,12 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 */
 	public SmallToolkit()
 	{
+		this.servletContext = null;
+		this.serverContainer = null;
+		this.controllerRootPackages = null;
+		this.tempDir = null;
+		this.jsonDriver = null;
+
 		contextListeners = new LinkedList<>();
 		sessionListeners = new LinkedList<>();
 		sessionAttributeListeners = new LinkedList<>();
@@ -109,17 +119,29 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	{
 		servletContext = sce.getServletContext();
 		serverContainer = (ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer");
-		controllerRootPackage = servletContext.getInitParameter(INIT_PARAM_CONTROLLER_ROOT);
+		
+		String packages = servletContext.getInitParameter(INIT_PARAM_APPLICATION_PACKAGE_ROOTS);
+		if (Utils.isEmpty(packages))
+			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
+			
+		controllerRootPackages = packages.split("\\,\\s*");
 		
 		tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir");
 		if (tempDir == null)
 			tempDir = new File(System.getProperty("java.io.tmpdir"));
-		
+
 		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
 			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
-		
-		if (Utils.isEmpty(controllerRootPackage))
-			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
+
+		String jsonDriverClassName = servletContext.getInitParameter(INIT_PARAM_APPLICATION_JSON_DRIVER);
+		if (!Utils.isEmpty(jsonDriverClassName)) try {
+			Class<?> jsonDriverClass = Class.forName(jsonDriverClassName, true, ClassLoader.getSystemClassLoader());
+			jsonDriver = (JSONDriver)Utils.create(jsonDriverClass);  
+		} catch (ClassCastException e) {
+			throw new SmallFrameworkSetupException("The provided class, "+jsonDriverClassName+" is not an implementation of JSONDriver.");
+		} catch (ClassNotFoundException e) {
+			throw new SmallFrameworkSetupException("The provided class, "+jsonDriverClassName+" cannot be found.");
+		}
 		
 		componentInstances.put(ServletContext.class, servletContext);
 		componentInstances.put(servletContext.getClass(), servletContext);
@@ -187,6 +209,15 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	public File getTemporaryDirectory()
 	{
 		return tempDir;
+	}
+	
+	/**
+	 * Gets this application's JSON converter driver.
+	 * @return the instantiated driver.
+	 */
+	public JSONDriver getJSONDriver()
+	{
+		return jsonDriver;
 	}
 	
 	/**
@@ -280,7 +311,7 @@ public final class SmallToolkit implements ServletContextListener, HttpSessionLi
 	 */
 	private void initComponents(ServletContext servletContext, ClassLoader loader)
 	{
-		for (String className : Utils.getClasses(controllerRootPackage, loader))
+		for (String packageName : controllerRootPackages) for (String className : Utils.getClasses(packageName, loader))
 		{
 			Class<?> componentClass = null;
 			

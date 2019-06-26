@@ -2,14 +2,18 @@
 
 <xml>
 
-<listener>
-	<listener-class>com.blackrook.j2ee.small.SmallToolkit</listener-class>
-</listener>
-
 <context-param>
     <param-name>small.application.package.root</param-name>
     <param-value>com.add.app.package.root.here</param-value>
 </context-param>
+<context-param>
+    <param-name>small.application.driver.json.class</param-name>
+    <param-value>com.add.JSONDriver.implementation.here</param-value>
+</context-param>
+
+<listener>
+	<listener-class>com.blackrook.j2ee.small.SmallToolkit</listener-class>
+</listener>
 
 <servlet>
 	<servlet-name>SmallDispatcher</servlet-name>

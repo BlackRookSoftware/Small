@@ -7,6 +7,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import javax.servlet.jsp.tagext.IterationTag;
 
+import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 
 /**
@@ -136,5 +137,15 @@ public abstract class SmallTag extends BodyTagSupport
 		return EndResponse.EVALUATE_PAGE;
 	}
 
+	/**
+	 * Returns a singleton component instantiated by Small.
+	 * @param componentClass the component class.
+	 * @param <T> the object type.
+	 * @return a singleton component annotated with {@link Component} by class.
+	 */
+	protected <T> T getComponent(Class<T> componentClass)
+	{
+		return SmallToolkit.INSTANCE.getComponent(componentClass);
+	}
 
 }
