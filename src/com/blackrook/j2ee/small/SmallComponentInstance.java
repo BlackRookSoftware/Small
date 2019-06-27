@@ -12,10 +12,10 @@ import com.blackrook.j2ee.small.struct.Part;
 import com.blackrook.j2ee.small.struct.Utils;
 
 /**
- * Interface for descriptors for component objects. 
+ * A single instance of an instantiated component.
  * @author Matthew Tropiano
  */
-public abstract class SmallServiceProfile
+public abstract class SmallComponentInstance
 {
 	protected static final Class<?>[] NO_FILTERS = new Class<?>[0];
 
@@ -30,7 +30,7 @@ public abstract class SmallServiceProfile
 	 * Creates an entry point descriptor around an object instance.
 	 * @param instance the instance to use.
 	 */
-	public SmallServiceProfile(Object instance)
+	public SmallComponentInstance(Object instance)
 	{
 		this.instance = instance; 
 		this.modelMap = new HashMap<>(3);

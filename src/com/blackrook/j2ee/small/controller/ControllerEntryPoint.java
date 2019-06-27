@@ -2,6 +2,8 @@ package com.blackrook.j2ee.small.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -21,6 +23,7 @@ import com.blackrook.j2ee.small.controller.ControllerProfile.Output;
 import com.blackrook.j2ee.small.enums.RequestMethod;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
+import com.blackrook.j2ee.small.parser.JSONDriver;
 import com.blackrook.j2ee.small.struct.HashDequeMap;
 import com.blackrook.j2ee.small.struct.Part;
 import com.blackrook.j2ee.small.struct.Utils;
@@ -71,7 +74,7 @@ public class ControllerEntryPoint extends SmallEntryPoint<ControllerProfile>
 		else
 			this.requestMethods = controllerEntry.method();
 		
-		this.path = controllerProfile.getPath() + '/' + SmallUtil.trimSlashes(controllerEntry.value());
+		this.path = SmallUtil.pathify(controllerEntry.value());
 
 		if (method.isAnnotationPresent(FilterChain.class))
 		{
@@ -252,10 +255,22 @@ public class ControllerEntryPoint extends SmallEntryPoint<ControllerProfile>
 						else
 							SmallResponseUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
 					}
-					// Object JSON output.
+					// Object output.
 					else
 					{
-						// TODO: Finish converter support.
+						JSONDriver driver;
+						if ((driver = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver()) != null)
+						{
+							StringWriter sw = new StringWriter(1024);
+							try {
+								driver.toJSON(sw, retval);
+							} catch (IOException e) {
+								SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
+							}
+							sendStringData(response, "application/json; charset=utf-8", fname, sw.toString());
+						}
+						else
+							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for ");
 					}
 					break;
 				}
@@ -275,7 +290,7 @@ public class ControllerEntryPoint extends SmallEntryPoint<ControllerProfile>
 	 */
 	private void sendStringData(HttpServletResponse response, String mimeType, String fileName, String data)
 	{
-		byte[] bytedata = getStringData(data);
+		byte[] bytedata = getStringData(data, "UTF-8");
 		if (Utils.isEmpty(mimeType))
 			SmallResponseUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 		else
@@ -285,10 +300,10 @@ public class ControllerEntryPoint extends SmallEntryPoint<ControllerProfile>
 	/**
 	 * Converts a string to byte data.
 	 */
-	private byte[] getStringData(String data)
+	private byte[] getStringData(String data, String encoding)
 	{
 		try {
-			return data.getBytes("UTF-8");
+			return data.getBytes(encoding);
 		} catch (UnsupportedEncodingException e) {
 			throw new SmallFrameworkException(e);
 		}

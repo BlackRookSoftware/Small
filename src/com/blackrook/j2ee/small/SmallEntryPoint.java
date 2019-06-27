@@ -51,7 +51,7 @@ import com.blackrook.j2ee.small.util.SmallUtil;
  * Parses a method's characteristics using reflection, yielding a digest of its important contents.
  * @author Matthew Tropiano 
  */
-public class SmallEntryPoint<S extends SmallServiceProfile>
+public class SmallEntryPoint<S extends SmallComponentInstance>
 {
 	/** Parameter source types. */
 	public static enum Source
@@ -127,17 +127,17 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 	private Class<?> type;
 	/** Parameter entry. */
 	private ParameterDescriptor[] parameters;
-	/** Service profile. */
-	private S serviceProfile;
+	/** Component instance. */
+	private S componentInstance;
 
 	/**
 	 * Creates an entry method around a service profile instance.
-	 * @param serviceProfile the service instance.
+	 * @param componentInstance the service instance.
 	 * @param method the method invoked.
 	 */
-	public SmallEntryPoint(S serviceProfile, Method method)
+	public SmallEntryPoint(S componentInstance, Method method)
 	{
-		this.serviceProfile = serviceProfile;
+		this.componentInstance = componentInstance;
 		this.method = method;
 		this.type = method.getReturnType();
 
@@ -251,11 +251,11 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 
 	/**
 	 * Gets the service profile that this belongs to.
-	 * @return
+	 * @return the service profile.
 	 */
 	public S getServiceProfile()
 	{
-		return serviceProfile;
+		return componentInstance;
 	}
 	
 	/**
@@ -380,7 +380,7 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 								Part[] vout = (Part[])Array.newInstance(Part.class, partlist.size());
 								int x = 0;
 								for (Part p : partlist)
-									vout[x++] = serviceProfile.getPartData(p, Part.class);
+									vout[x++] = componentInstance.getPartData(p, Part.class);
 								if (vout.length == 1)
 									map.put(pname, vout[0]);
 								else
@@ -413,12 +413,12 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 							Object[] vout = (Object[])Array.newInstance(actualType, partlist.size());
 							int x = 0;
 							for (Part p : partlist)
-								vout[x++] = serviceProfile.getPartData(p, actualType);
+								vout[x++] = componentInstance.getPartData(p, actualType);
 							value = vout;
 						}
 						else
 						{
-							value = serviceProfile.getPartData(multiformPartMap.get(parameterName).getFirst(), pinfo.getType());
+							value = componentInstance.getPartData(multiformPartMap.get(parameterName).getFirst(), pinfo.getType());
 						}
 					}
 					else if (Utils.isArray(pinfo.getType()))
@@ -431,7 +431,7 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 				}
 				case ATTRIBUTE:
 				{
-					SmallEntryPoint<?> attribDescriptor = serviceProfile.getAttributeConstructor(pinfo.getName());
+					SmallEntryPoint<?> attribDescriptor = componentInstance.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
 						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
@@ -467,7 +467,7 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 				}
 				case MODEL:
 				{
-					SmallEntryPoint<?> modelDescriptor = serviceProfile.getModelConstructor(pinfo.getName());
+					SmallEntryPoint<?> modelDescriptor = componentInstance.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
 						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
@@ -482,7 +482,12 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 				{
 					if (requestMethod == RequestMethod.POST || requestMethod == RequestMethod.PUT || requestMethod == RequestMethod.PATCH)
 					{
-						JSONDriver json = SmallToolkit.INSTANCE.getJSONDriver();
+						JSONDriver json = SmallUtil.getApplicationBean(
+							request.getServletContext(), 
+							SmallEnvironment.class, 
+							SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE
+						).getJSONDriver();
+						
 						if (SmallRequestUtil.isJSON(request) && json != null) try (Reader r = request.getReader()) {
 							invokeParams[i] = json.fromJSON(request.getReader(), type);
 						} catch (IOException e) {
@@ -510,13 +515,13 @@ public class SmallEntryPoint<S extends SmallServiceProfile>
 			
 		}
 		
-		return Utils.invokeBlind(method, serviceProfile.getInstance(), invokeParams);
+		return Utils.invokeBlind(method, componentInstance.getInstance(), invokeParams);
 	}
 	
 	@Override
 	public String toString() 
 	{
-		return serviceProfile.getClass().getSimpleName() + ":" + method.toGenericString();
+		return componentInstance.getClass().getSimpleName() + ":" + method.toGenericString();
 	}
 
 }

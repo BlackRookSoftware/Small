@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.blackrook.j2ee.small.SmallConstants;
+import com.blackrook.j2ee.small.SmallEnvironment;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.struct.Utils;
 
@@ -872,6 +874,16 @@ public final class SmallUtil
 	}
 	
 	/**
+	 * Convenience for <code>addBeginningSlash(removeEndingSlash(str))</code>.
+	 * @param str the input string.
+	 * @return the resulting string with a beginning slash and no ending slash.
+	 */
+	public static String pathify(String str)
+	{
+		return removeEndingSlash(addBeginningSlash(str));
+	}
+	
+	/**
 	 * Adds a beginning slash to the string, if no beginning slash exists.
 	 * @param str the string.
 	 * @return the resulting string with a beginning slash.
@@ -938,6 +950,17 @@ public final class SmallUtil
 			return path;
 	}
 	
+	
+	/**
+	 * Convenience method that gets the Small Application Environment.
+	 * @param request the servlet request.
+	 * @return the Small environment.
+	 */
+	public static SmallEnvironment getEnvironment(ServletContext context)
+	{
+		return (SmallEnvironment)context.getAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE);
+	}
+
 	/**
 	 * Convenience method that calls <code>session.getAttribute(attribName)</code>. 
 	 * @param session the session.

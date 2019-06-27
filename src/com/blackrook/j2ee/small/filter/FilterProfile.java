@@ -3,7 +3,7 @@ package com.blackrook.j2ee.small.filter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import com.blackrook.j2ee.small.SmallServiceProfile;
+import com.blackrook.j2ee.small.SmallComponentInstance;
 import com.blackrook.j2ee.small.annotation.Filter;
 import com.blackrook.j2ee.small.annotation.filter.FilterEntry;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
@@ -13,7 +13,7 @@ import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
  * Creates a controller profile to assist in re-calling filters.
  * @author Matthew Tropiano
  */
-public class FilterProfile extends SmallServiceProfile
+public class FilterProfile extends SmallComponentInstance
 {
 	/** Method descriptor for filter. */
 	private FilterEntryPoint entryMethod;

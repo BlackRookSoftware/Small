@@ -8,19 +8,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.blackrook.j2ee.small.SmallServiceProfile;
+import com.blackrook.j2ee.small.SmallComponentInstance;
 import com.blackrook.j2ee.small.annotation.Controller;
 import com.blackrook.j2ee.small.annotation.controller.ControllerEntry;
 import com.blackrook.j2ee.small.annotation.controller.FilterChain;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
 import com.blackrook.j2ee.small.exception.SmallFrameworkSetupException;
 import com.blackrook.j2ee.small.struct.Utils;
+import com.blackrook.j2ee.small.util.SmallUtil;
 
 /**
  * Creates a controller profile to assist in re-calling controllers by path and methods.
  * @author Matthew Tropiano
  */
-public class ControllerProfile extends SmallServiceProfile
+public class ControllerProfile extends SmallComponentInstance
 {
 	/** Class to instance. */
 	private static final Map<Class<? extends ViewResolver>, ViewResolver> VIEW_RESOLVER_MAP = 
@@ -57,6 +58,7 @@ public class ControllerProfile extends SmallServiceProfile
 		if (controllerAnnotation == null)
 			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 
+		this.path = SmallUtil.pathify(controllerAnnotation.value());
 		this.viewResolver = createViewResolver(controllerAnnotation.viewResolver());
 		this.entryMethods = new ArrayList<>();
 		
@@ -67,7 +69,7 @@ public class ControllerProfile extends SmallServiceProfile
 		String packageName = clazz.getPackage().getName();
 		do {
 			try{ Class.forName(packageName); } catch (Throwable t) {}
-			Package p = (ClassLoader.getSystemClassLoader()).getDefinedPackage(packageName);
+			Package p = (Thread.currentThread().getContextClassLoader()).getDefinedPackage(packageName);
 			if (p != null)
 			{
 				if (p.isAnnotationPresent(FilterChain.class))

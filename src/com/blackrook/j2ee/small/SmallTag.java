@@ -9,6 +9,7 @@ import javax.servlet.jsp.tagext.IterationTag;
 
 import com.blackrook.j2ee.small.annotation.Component;
 import com.blackrook.j2ee.small.exception.SmallFrameworkException;
+import com.blackrook.j2ee.small.util.SmallUtil;
 
 /**
  * A body tag that provides access to the framework toolkit.
@@ -139,13 +140,21 @@ public abstract class SmallTag extends BodyTagSupport
 
 	/**
 	 * Returns a singleton component instantiated by Small.
-	 * @param componentClass the component class.
+	 * @param clazz the component class.
 	 * @param <T> the object type.
 	 * @return a singleton component annotated with {@link Component} by class.
 	 */
-	protected <T> T getComponent(Class<T> componentClass)
+	protected <T> T getComponent(Class<T> clazz)
 	{
-		return SmallToolkit.INSTANCE.getComponent(componentClass);
+		return getEnvironment().getComponent(clazz);
+	}
+
+	/**
+	 * @return the Small environment.
+	 */
+	protected SmallEnvironment getEnvironment()
+	{
+		return SmallUtil.getEnvironment(pageContext.getServletContext());
 	}
 
 }
