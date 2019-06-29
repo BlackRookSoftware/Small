@@ -27,12 +27,12 @@ import com.blackrook.small.annotation.Component;
 import com.blackrook.small.annotation.ComponentConstructor;
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.Filter;
-import com.blackrook.small.controller.ControllerEntryPoint;
-import com.blackrook.small.controller.ControllerProfile;
+import com.blackrook.small.dispatch.controller.ControllerComponent;
+import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
+import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.filter.FilterProfile;
 import com.blackrook.small.parser.JSONDriver;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
@@ -52,14 +52,15 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
 	
-	/** The components that are instantiated. */
-	private Map<Class<?>, Object> componentInstances;
 	/** The path to controller trie. */
 	private Map<RequestMethod, URITrie> controllerEntries;
+
+	/** The components that are instantiated. */
+	private Map<Class<?>, SmallComponent> componentInstances;
 	/** The controllers that were instantiated. */
-	private Map<Class<?>, ControllerProfile> controllerComponents;
+	private Map<Class<?>, ControllerComponent> controllerComponents;
 	/** The filters that were instantiated. */
-	private Map<Class<?>, FilterProfile> filterComponents;
+	private Map<Class<?>, FilterComponent> filterComponents;
 	
 	/** List of components that listen for session events. */
 	private Queue<ServletContextListener> contextListeners;
@@ -78,8 +79,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 		this.componentsConstructing = new HashSet<>();
 		
-		this.componentInstances = new HashMap<>();
 		this.controllerEntries = new HashMap<>(16);
+
+		this.componentInstances = new HashMap<>();
 		this.controllerComponents = new HashMap<>(16);
 		this.filterComponents = new HashMap<>(16);
 		
@@ -126,6 +128,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.tempDir = tempDir;
 		initComponents(controllerRootPackages, container, ClassLoader.getSystemClassLoader());
 		initComponents(controllerRootPackages, container, Thread.currentThread().getContextClassLoader());
+		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
+			entry.getValue().invokeAfterInitializeMethods();
+		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : controllerComponents.entrySet())
+			entry.getValue().invokeAfterInitializeMethods();
+		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : filterComponents.entrySet())
+			entry.getValue().invokeAfterInitializeMethods();
 	}
 
 	/**
@@ -147,7 +155,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * @param filterClass the class to search for.
 	 * @return the corresponding filter, or null if not found.
 	 */
-	FilterProfile getFilter(Class<?> filterClass)
+	FilterComponent getFilter(Class<?> filterClass)
 	{
 		return filterComponents.get(filterClass);
 	}
@@ -185,7 +193,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					throw new SmallFrameworkSetupException("Could not load class "+className+" from classpath.");
 				}
 				
-				if (componentClass.isAnnotationPresent(Component.class) || componentClass.isAnnotationPresent(Controller.class))
+				if (isComponentClass(componentClass))
 				{
 					Object component = createOrGetComponent(componentClass);
 		
@@ -209,8 +217,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						if (controllerComponents.containsKey(componentClass))
 							continue;
 						
-						ControllerProfile profile;
-						controllerComponents.put(componentClass, profile = new ControllerProfile(component));
+						ControllerComponent profile;
+						controllerComponents.put(componentClass, profile = new ControllerComponent(component));
 						String path = SmallUtil.trimSlashes(controllerAnnotation.value());
 						for (ControllerEntryPoint entryPoint : profile.getEntryMethods())
 						{
@@ -235,7 +243,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						if (filterComponents.containsKey(componentClass))
 							continue;
 						
-						filterComponents.put(componentClass, new FilterProfile(component));
+						filterComponents.put(componentClass, new FilterComponent(component));
 					}
 				}
 				else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
@@ -268,19 +276,35 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
+	 * Checks if a class is a component class.
+	 * @param componentClass
+	 * @return
+	 */
+	private boolean isComponentClass(Class<?> componentClass)
+	{
+		return 
+			componentClass.isAnnotationPresent(Component.class) 
+			|| componentClass.isAnnotationPresent(Controller.class) 
+			|| componentClass.isAnnotationPresent(Filter.class);
+	}
+
+	/**
 	 * Creates or gets an engine singleton component by class.
 	 * @param clazz the class to create/retrieve.
 	 */
 	@SuppressWarnings("unchecked")
 	private <T> T createOrGetComponent(Class<T> clazz)
 	{
-		T instance = null;
-		if ((instance = (T)componentInstances.get(clazz)) != null)
-			return instance;
+		SmallComponent component;
+		if ((component = componentInstances.get(clazz)) != null)
+			return (T)component.getInstance();
 		else
 		{
-			instance = createComponent(clazz, getAnnotatedConstructor(clazz));
-			componentInstances.put(clazz, instance);
+			T instance = createComponent(clazz, getAnnotatedConstructor(clazz));
+			component = new SmallComponent(instance);
+			component.scanMethods();
+			component.invokeAfterConstructionMethods();
+			componentInstances.put(clazz, component);
 			return instance;
 		}
 	}

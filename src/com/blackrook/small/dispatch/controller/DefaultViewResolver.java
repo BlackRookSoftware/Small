@@ -1,4 +1,4 @@
-package com.blackrook.small.controller;
+package com.blackrook.small.dispatch.controller;
 
 
 /**

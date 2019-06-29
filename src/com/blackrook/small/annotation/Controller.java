@@ -6,8 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.blackrook.small.annotation.controller.ControllerEntry;
-import com.blackrook.small.controller.DefaultViewResolver;
-import com.blackrook.small.controller.ViewResolver;
+import com.blackrook.small.dispatch.controller.DefaultViewResolver;
+import com.blackrook.small.dispatch.controller.ViewResolver;
 
 /**
  * Annotation that is used to signify that this object is a Controller with entry points.

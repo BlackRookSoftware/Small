@@ -1,11 +1,11 @@
-package com.blackrook.small.filter;
+package com.blackrook.small.dispatch.filter;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import com.blackrook.small.SmallComponentInstance;
 import com.blackrook.small.annotation.Filter;
 import com.blackrook.small.annotation.filter.FilterEntry;
+import com.blackrook.small.dispatch.DispatchComponent;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 
@@ -13,7 +13,7 @@ import com.blackrook.small.exception.SmallFrameworkSetupException;
  * Creates a controller profile to assist in re-calling filters.
  * @author Matthew Tropiano
  */
-public class FilterProfile extends SmallComponentInstance
+public class FilterComponent extends DispatchComponent
 {
 	/** Method descriptor for filter. */
 	private FilterEntryPoint entryMethod;
@@ -23,7 +23,7 @@ public class FilterProfile extends SmallComponentInstance
 	 * @param instance the input class to profile.
 	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	public FilterProfile(Object instance)
+	public FilterComponent(Object instance)
 	{
 		super(instance);
 
@@ -33,30 +33,33 @@ public class FilterProfile extends SmallComponentInstance
 		Filter controllerAnnotation = clazz.getAnnotation(Filter.class);
 		if (controllerAnnotation == null)
 			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Filter.");
-
-		scanMethods(clazz);
 	}
 
 	@Override
-	protected void scanUnknownMethod(Method method)
+	protected void scanMethod(Method method)
 	{
-		if (!isEntryMethod(method))
-			return;
-		
-		if (method.getReturnType() != Boolean.TYPE && method.getReturnType() != Boolean.class)
-			throw new SmallFrameworkSetupException("Methods annotated with @FilterEntry must return a boolean.");
-		else if (this.entryMethod != null)
-			throw new SmallFrameworkSetupException("Filter already contains an entry point.");
-		this.entryMethod = new FilterEntryPoint(this, method);
+		if (isValidEntryMethod(method))
+		{
+			if (this.entryMethod != null)
+				throw new SmallFrameworkSetupException("Filter already contains an entry point.");
+			entryMethod = new FilterEntryPoint(this, method);
+		}
+		else if (method.isAnnotationPresent(FilterEntry.class))
+		{
+			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @FilterEntry, but must be public and return a boolean value.");
+		}
+		super.scanMethod(method);
 	}
 
-	/** Checks if a method is a valid request entry. */
-	private boolean isEntryMethod(Method method)
+	/** 
+	 * Checks if a method is a valid request entry. 
+	 */
+	private boolean isValidEntryMethod(Method method)
 	{
 		return
-			(method.getModifiers() & Modifier.PUBLIC) != 0 
-			&& method.isAnnotationPresent(FilterEntry.class)
-			&& method.getReturnType() == Boolean.TYPE 
+			method.isAnnotationPresent(FilterEntry.class) 
+			&& (method.getModifiers() & Modifier.PUBLIC) != 0
+			&& (method.getReturnType() == Boolean.TYPE || method.getReturnType() == Boolean.class) 
 			;
 	}
 	

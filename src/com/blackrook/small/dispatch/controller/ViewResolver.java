@@ -1,4 +1,4 @@
-package com.blackrook.small.controller;
+package com.blackrook.small.dispatch.controller;
 
 /**
  * Classes that implement this interface return a path to a view for a keyword or name.

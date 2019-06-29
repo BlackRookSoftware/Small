@@ -15,10 +15,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.ServerContainer;
 
-import com.blackrook.small.controller.ControllerEntryPoint;
+import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
+import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.filter.FilterProfile;
 import com.blackrook.small.parser.JSONDriver;
 import com.blackrook.small.parser.MultipartParser;
 import com.blackrook.small.parser.multipart.MultipartFormDataParser;
@@ -190,7 +190,7 @@ public final class SmallDispatcher extends HttpServlet
 		
 		for (Class<?> filterClass : entryPoint.getFilterChain())
 		{
-			FilterProfile filterProfile = applicationEnvironment.getFilter(filterClass);
+			FilterComponent filterProfile = applicationEnvironment.getFilter(filterClass);
 			if (!filterProfile.getEntryMethod().handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap))
 				return;
 		}

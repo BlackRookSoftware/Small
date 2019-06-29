@@ -1,4 +1,4 @@
-package com.blackrook.small.controller;
+package com.blackrook.small.dispatch.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -12,14 +12,14 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.small.SmallEntryPoint;
 import com.blackrook.small.annotation.controller.Attachment;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.controller.ControllerEntry;
 import com.blackrook.small.annotation.controller.FilterChain;
 import com.blackrook.small.annotation.controller.NoCache;
 import com.blackrook.small.annotation.controller.View;
-import com.blackrook.small.controller.ControllerProfile.Output;
+import com.blackrook.small.dispatch.DispatchEntryPoint;
+import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
@@ -35,7 +35,7 @@ import com.blackrook.small.util.SmallUtil;
  * Method descriptor class, specifically for controllers.
  * @author Matthew Tropiano
  */
-public class ControllerEntryPoint extends SmallEntryPoint<ControllerProfile>
+public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent>
 {
 	private static final String PREFIX_REDIRECT = "redirect:";
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
@@ -59,7 +59,7 @@ public class ControllerEntryPoint extends SmallEntryPoint<ControllerProfile>
 	 * @param controllerProfile the service instance.
 	 * @param method the method invoked.
 	 */
-	public ControllerEntryPoint(ControllerProfile controllerProfile, Method method)
+	public ControllerEntryPoint(ControllerComponent controllerProfile, Method method)
 	{
 		super(controllerProfile, method);
 		

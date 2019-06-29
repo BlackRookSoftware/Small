@@ -8,7 +8,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.blackrook.small.controller.ControllerEntryPoint;
+import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
 import com.blackrook.small.exception.SmallFrameworkParseException;
 import com.blackrook.small.util.SmallUtil;
 

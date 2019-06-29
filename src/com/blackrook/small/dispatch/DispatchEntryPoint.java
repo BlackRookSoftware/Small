@@ -1,4 +1,4 @@
-package com.blackrook.small;
+package com.blackrook.small.dispatch;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -21,9 +21,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.blackrook.small.annotation.attribs.Attribute;
-import com.blackrook.small.annotation.attribs.Model;
+import com.blackrook.small.SmallConstants;
+import com.blackrook.small.SmallEnvironment;
 import com.blackrook.small.annotation.controller.Content;
+import com.blackrook.small.annotation.dispatch.Attribute;
+import com.blackrook.small.annotation.dispatch.Model;
 import com.blackrook.small.annotation.parameters.AutoTrim;
 import com.blackrook.small.annotation.parameters.CookieParameter;
 import com.blackrook.small.annotation.parameters.Header;
@@ -51,7 +53,7 @@ import com.blackrook.small.util.SmallUtil;
  * Parses a method's characteristics using reflection, yielding a digest of its important contents.
  * @author Matthew Tropiano 
  */
-public class SmallEntryPoint<S extends SmallComponentInstance>
+public class DispatchEntryPoint<S extends DispatchComponent>
 {
 	/** Parameter source types. */
 	public static enum Source
@@ -135,7 +137,7 @@ public class SmallEntryPoint<S extends SmallComponentInstance>
 	 * @param componentInstance the service instance.
 	 * @param method the method invoked.
 	 */
-	public SmallEntryPoint(S componentInstance, Method method)
+	public DispatchEntryPoint(S componentInstance, Method method)
 	{
 		this.componentInstance = componentInstance;
 		this.method = method;
@@ -431,7 +433,7 @@ public class SmallEntryPoint<S extends SmallComponentInstance>
 				}
 				case ATTRIBUTE:
 				{
-					SmallEntryPoint<?> attribDescriptor = componentInstance.getAttributeConstructor(pinfo.getName());
+					DispatchEntryPoint<?> attribDescriptor = componentInstance.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
 						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
@@ -467,7 +469,7 @@ public class SmallEntryPoint<S extends SmallComponentInstance>
 				}
 				case MODEL:
 				{
-					SmallEntryPoint<?> modelDescriptor = componentInstance.getModelConstructor(pinfo.getName());
+					DispatchEntryPoint<?> modelDescriptor = componentInstance.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
 						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);

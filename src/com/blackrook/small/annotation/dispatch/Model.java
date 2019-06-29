@@ -1,4 +1,4 @@
-package com.blackrook.small.annotation.attribs;
+package com.blackrook.small.annotation.dispatch;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE project>
 <!-- ====================================================================== 
-     Black Rook Small Framework Build File    
+     Black Rook JSON Build File    
      Matt Tropiano                                                                
      ====================================================================== -->
 <project name="build" default="compile">
 
-	<description>Black Rook Small Framework</description>
+	<description>Black Rook JSON</description>
 
 	<property file="build.properties" />
 
@@ -15,46 +15,30 @@
 	<property name="S" value="${path.separator}" />
 
 	<!-- Project Libs -->
-	<property name="common.lib" value="${dev.base}/Common/bin" />
-	<property name="common.lang.lib" value="${dev.base}/CommonLang/bin" />
-	<property name="db.lib" value="${dev.base}/DB/bin" />
-	<property name="j2ee.lib" value="${dev.base}/J2EEServletContainer/bin" />
-
+	
 	<!-- Project Info -->
-	<property name="project.archive" value="blackrook-small" />
-	<property name="project.javadoc.title" value="Black Rook Small Framework" />
-	<property name="project.classpath" value="${common.lib}${S}${common.lang.lib}${S}${db.lib}${S}${j2ee.lib}"/>
+	<property name="project.archive" value="blackrook-json" />
+	<property name="project.javadoc.title" value="Black Rook JSON" />
+	<property name="project.classpath" value=""/>
+	<property name="project.testclass" value=""/>
+	<property name="project.testclass.main" value=""/>
 	<property name="project.javadoc.packages" value="
-		com.blackrook.j2ee.small
-		,com.blackrook.j2ee.small.annotation
-		,com.blackrook.j2ee.small.annotation.attribs
-		,com.blackrook.j2ee.small.annotation.parameters
-		,com.blackrook.j2ee.small.dao
-		,com.blackrook.j2ee.small.descriptor
-		,com.blackrook.j2ee.small.enums
-		,com.blackrook.j2ee.small.exception
-		,com.blackrook.j2ee.small.handler
-		,com.blackrook.j2ee.small.parser
-		,com.blackrook.j2ee.small.parser.multipart
-		,com.blackrook.j2ee.small.resolver
-		,com.blackrook.j2ee.small.struct
-		,com.blackrook.j2ee.small.util
+		com.blackrook.json,
+		com.blackrook.json.annotation,
+		com.blackrook.json.util
 		"
 	/>
 	
 	<import file="build-import.xml" />
 
-	<property name="jar.one.filename" value="${project.archive}-${build.version}-one.jar" />
-
 	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
         <javadoc access="protected" 
         	additionalparam="-J-Xmx512m  " author="true" 
-        	classpath="${project.classpath}${path.separator}${bin.dir}" 
+        	classpath="${bin.dir}" 
         	doctitle="${project.javadoc.title}" 
         	sourcepath="${src.dir}" 
         	packagenames="${project.javadoc.packages}"
         	destdir="${docs.dir}" 
-    		source="1.7" 
         	splitindex="true" 
         	use="true" 
         	version="true" 
@@ -64,18 +48,8 @@
         	nonavbar="false" 
         	notree="false"
     		>
-            <link href="http://download.oracle.com/javase/6/docs/api/"/>
-            <link href="http://blackrooksoftware.com/docs/common/"/>
-            <link href="http://blackrooksoftware.com/docs/commonlang/"/>
-            <link href="http://blackrooksoftware.com/docs/db/"/>
+            <link href="https://docs.oracle.com/en/java/javase/11/docs/api/"/>
         </javadoc>
     </target>	
-
-	<target name="jar.all" depends="init.jar, compile" description="JARs up all necessary classes (from required projects) into one JAR.">
-		<jar basedir="${bin.dir}" destfile="${jar.dir}/${jar.one.filename}" />
-		<jar basedir="${common.lib}" destfile="${jar.dir}/${jar.one.filename}" update="true" />
-		<jar basedir="${common.lang.lib}" destfile="${jar.dir}/${jar.one.filename}" update="true" />
-		<jar basedir="${db.lib}" destfile="${jar.dir}/${jar.one.filename}" update="true" />
-	</target>
 
 </project>

@@ -1,4 +1,4 @@
-package com.blackrook.small.controller;
+package com.blackrook.small.dispatch.controller;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.blackrook.small.SmallComponentInstance;
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.controller.ControllerEntry;
 import com.blackrook.small.annotation.controller.FilterChain;
+import com.blackrook.small.dispatch.DispatchComponent;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.struct.Utils;
@@ -21,7 +21,7 @@ import com.blackrook.small.util.SmallUtil;
  * Creates a controller profile to assist in re-calling controllers by path and methods.
  * @author Matthew Tropiano
  */
-public class ControllerProfile extends SmallComponentInstance
+public class ControllerComponent extends DispatchComponent
 {
 	/** Class to instance. */
 	private static final Map<Class<? extends ViewResolver>, ViewResolver> VIEW_RESOLVER_MAP = 
@@ -49,7 +49,7 @@ public class ControllerProfile extends SmallComponentInstance
 	 * @param instance the input class to profile.
 	 * @throws SmallFrameworkException if this profile cannot be created due to an initialization problem.
 	 */
-	public ControllerProfile(Object instance)
+	public ControllerComponent(Object instance)
 	{
 		super(instance);
 
@@ -87,8 +87,6 @@ public class ControllerProfile extends SmallComponentInstance
 		}
 		
 		this.filterChain = Utils.joinArrays(packageFilters, controllerFilters);
-
-		scanMethods(clazz);
 	}
 
 	/**
@@ -127,20 +125,21 @@ public class ControllerProfile extends SmallComponentInstance
 	}
 	
 	@Override
-	protected void scanUnknownMethod(Method method)
+	protected void scanMethod(Method method)
 	{
-		if (!isEntryMethod(method))
-			return;
-				
-		entryMethods.add(new ControllerEntryPoint(this, method));
+		if (isValidEntryMethod(method))
+			entryMethods.add(new ControllerEntryPoint(this, method));
+		else if (method.isAnnotationPresent(ControllerEntry.class))
+			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @ControllerEntry, but must be public.");
+		super.scanMethod(method);
 	}
 
 	/** Checks if a method is a valid request entry. */
-	private boolean isEntryMethod(Method method)
+	private boolean isValidEntryMethod(Method method)
 	{
 		return
-			(method.getModifiers() & Modifier.PUBLIC) != 0 
-			&& method.isAnnotationPresent(ControllerEntry.class)
+			method.isAnnotationPresent(ControllerEntry.class) 
+			&& (method.getModifiers() & Modifier.PUBLIC) != 0
 			;
 	}
 

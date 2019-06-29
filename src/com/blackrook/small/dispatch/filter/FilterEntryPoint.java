@@ -1,4 +1,4 @@
-package com.blackrook.small.filter;
+package com.blackrook.small.dispatch.filter;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -7,7 +7,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.small.SmallEntryPoint;
+import com.blackrook.small.dispatch.DispatchEntryPoint;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.struct.HashDequeMap;
@@ -17,14 +17,14 @@ import com.blackrook.small.struct.Part;
  * Filter entry method.
  * @author Matthew Tropiano
  */
-public class FilterEntryPoint extends SmallEntryPoint<FilterProfile>
+public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent>
 {
 	/**
 	 * Creates an entry method around a service profile instance.
 	 * @param filterProfile the service instance.
 	 * @param method the method invoked.
 	 */
-	public FilterEntryPoint(FilterProfile filterProfile, Method method)
+	public FilterEntryPoint(FilterComponent filterProfile, Method method)
 	{
 		super(filterProfile, method);
 	}
