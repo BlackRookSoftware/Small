@@ -270,7 +270,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 							sendStringData(response, "application/json; charset=utf-8", fname, sw.toString());
 						}
 						else
-							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for ");
+							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for " + retval.getClass());
 					}
 					break;
 				}
