@@ -70,8 +70,9 @@ public class SmallComponent
 	}
 
 	/**
-	 * Called by {@link #scanMethods(Class)} to handle a method scan for this component type.
+	 * Called to handle a single method scan for this component type.
 	 * If this method is overridden, it would be wise to call <code>super.scanMethod(m)</code>.
+	 * @param method the method to inspect.
 	 */
 	protected void scanMethod(Method method)
 	{

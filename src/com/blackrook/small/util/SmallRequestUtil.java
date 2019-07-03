@@ -277,7 +277,6 @@ public final class SmallRequestUtil
 	/**
 	 * Gets the string data of a request.
 	 * @param request the request.
-	 * @param charset the charset name.
 	 * @return the resultant string.
 	 */
 	public static byte[] getByteData(HttpServletRequest request) throws IOException

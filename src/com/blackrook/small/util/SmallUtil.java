@@ -953,7 +953,7 @@ public final class SmallUtil
 	
 	/**
 	 * Convenience method that gets the Small Application Environment.
-	 * @param request the servlet request.
+	 * @param context the servlet context.
 	 * @return the Small environment.
 	 */
 	public static SmallEnvironment getEnvironment(ServletContext context)
