@@ -43,6 +43,7 @@
 		"
 	/>
 	
+	<import file="build-dependencies.xml" />
 	<import file="build-import.xml" />
 
 	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
