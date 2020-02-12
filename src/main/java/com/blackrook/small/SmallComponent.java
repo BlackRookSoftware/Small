@@ -27,7 +27,7 @@ public class SmallComponent
 	 * Creates an entry point descriptor around an object instance.
 	 * @param instance the instance to use.
 	 */
-	public SmallComponent(Object instance)
+	protected SmallComponent(Object instance)
 	{
 		this.instance = instance;
 		this.afterInitialize = null;

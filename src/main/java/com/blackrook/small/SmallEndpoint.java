@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
@@ -130,9 +129,7 @@ public abstract class SmallEndpoint extends Endpoint
 	public void sendJSON(Object object)
 	{
 		try {
-			StringWriter sw = new StringWriter(1024);
-			getJSONDriver().toJSON(sw, object);
-			session.getBasicRemote().sendText(sw.toString());
+			session.getBasicRemote().sendText(getJSONDriver().toJSONString(object));
 		} catch (Exception e) {
 			throw new SmallFrameworkException(e);
 		}
@@ -262,14 +259,13 @@ public abstract class SmallEndpoint extends Endpoint
 	/**
 	 * Sends a JSON Object, asynchronously, to the client.
 	 * @param object the object to pass back to the connected client.
+	 * @return the {@link Future} object to monitor the sent request after the call.
 	 * @throws SmallFrameworkException on a send error.
 	 */
-	public void sendAsyncJSON(Object object)
+	public Future<Void> sendAsyncJSON(Object object)
 	{
 		try {
-			StringWriter sw = new StringWriter(1024);
-			getJSONDriver().toJSON(sw, object);
-			sendAsyncText(sw.toString());
+			return sendAsyncText(getJSONDriver().toJSONString(object));
 		} catch (Exception e) {
 			throw new SmallFrameworkException(e);
 		}
@@ -279,6 +275,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * Sends binary data, asynchronously, to the client.
 	 * @param buffer the buffer of data to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
+	 * @throws IllegalArgumentException if buffer is null.
 	 */
 	public Future<Void> sendAsyncBinary(ByteBuffer buffer)
 	{
@@ -291,7 +288,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * before it is sent. 
 	 * @param buffer the buffer of data to pass back to the connected client.
 	 * @return the {@link Future} object to monitor the sent request after the call.
-	 * @throws SmallFrameworkException on a send error.
+	 * @throws IllegalArgumentException if buffer is null.
 	 */
 	public Future<Void> sendAsyncBinary(byte[] buffer)
 	{

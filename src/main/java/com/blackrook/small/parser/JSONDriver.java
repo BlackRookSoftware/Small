@@ -2,6 +2,8 @@ package com.blackrook.small.parser;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.Writer;
 
 import com.blackrook.small.annotation.controller.ControllerEntry;
@@ -21,7 +23,7 @@ public interface JSONDriver
 	 * @return the converted object.
 	 * @throws IOException if an error occurs during the read.
 	 */
-	Object fromJSON(Reader reader, Class<?> type) throws IOException;
+	<T> T fromJSON(Reader reader, Class<T> type) throws IOException;
 
 	/**
 	 * Called when an object needs to be converted to JSON from an object.
@@ -30,5 +32,31 @@ public interface JSONDriver
 	 * @throws IOException if an error occurs during the write.
 	 */
 	void toJSON(Writer writer, Object object) throws IOException;
+	
+	/**
+	 * Converts an object to a JSON string from an object.
+	 * @param json the input JSON string.
+	 * @param type the type to convert to.
+	 * @param <T> the type result. 
+	 * @return the resultant JSON string.
+	 * @throws IOException if an error occurs during the write.
+	 */
+	default <T> T fromJSONString(String json, Class<T> type) throws IOException
+	{
+		return fromJSON(new StringReader(json), type);
+	}
+	
+	/**
+	 * Converts an object to a JSON string from an object.
+	 * @param object the object to convert and write.
+	 * @return the resultant JSON string.
+	 * @throws IOException if an error occurs during the write.
+	 */
+	default String toJSONString(Object object) throws IOException
+	{
+		StringWriter sw = new StringWriter(1024);
+		toJSON(sw, object);
+		return sw.toString();
+	}
 	
 }

@@ -105,16 +105,16 @@ public final class SmallDispatcher extends HttpServlet
         String method = request.getMethod();
         if (method.equals(METHOD_GET))
     		callControllerEntry(request, response, RequestMethod.GET, null);
-        else if (method.equals(METHOD_HEAD))
-    		callControllerEntry(request, response, RequestMethod.HEAD, null);
         else if (method.equals(METHOD_POST))
             doPost(request, response);
         else if (method.equals(METHOD_PUT))
     		callControllerEntry(request, response, RequestMethod.PUT, null);
-        else if (method.equals(METHOD_PATCH))
-			callControllerEntry(request, response, RequestMethod.PATCH, null);
         else if (method.equals(METHOD_DELETE))
     		callControllerEntry(request, response, RequestMethod.DELETE, null);
+        else if (method.equals(METHOD_PATCH))
+			callControllerEntry(request, response, RequestMethod.PATCH, null);
+        else if (method.equals(METHOD_HEAD))
+    		callControllerEntry(request, response, RequestMethod.HEAD, null);
         else if (method.equals(METHOD_OPTIONS))
     		callControllerEntry(request, response, RequestMethod.OPTIONS, null);
         else if (method.equals(METHOD_TRACE))
