@@ -53,7 +53,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private Set<Class<?>> componentsConstructing;
 	
 	/** The path to controller trie. */
-	private Map<RequestMethod, URITrie> controllerEntries;
+	private Map<RequestMethod, URITrie<ControllerEntryPoint>> controllerEntries;
 
 	/** The components that are instantiated. */
 	private Map<Class<?>, SmallComponent> componentInstances;
@@ -167,9 +167,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * @param path the path to use.
 	 * @return a URI resolution result or null if the method is never used.
 	 */
-	URITrie.Result getControllerEntryPoint(RequestMethod requestMethod, String path)
+	URITrie.Result<ControllerEntryPoint> getControllerEntryPoint(RequestMethod requestMethod, String path)
 	{
-		URITrie trie = controllerEntries.get(requestMethod);
+		URITrie<ControllerEntryPoint> trie = controllerEntries.get(requestMethod);
 		if (trie == null)
 			return null;
 		
@@ -225,9 +225,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 							String uri = path + '/' + SmallUtil.trimSlashes(entryPoint.getPath());
 							for (RequestMethod rm : entryPoint.getRequestMethods())
 							{
-								URITrie trie;
+								URITrie<ControllerEntryPoint> trie;
 								if ((trie = controllerEntries.get(rm)) == null)
-									controllerEntries.put(rm, trie = new URITrie());
+									controllerEntries.put(rm, trie = new URITrie<>());
 								
 								try {
 									trie.add(uri, entryPoint);

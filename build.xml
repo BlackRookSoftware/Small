@@ -17,7 +17,7 @@
 	<!-- Project Libs -->
 	<property name="servlet.lib.version" value="4.0.1" />
 	<property name="servlet.jar" value="javax.servlet-api-${servlet.lib.version}.jar" />
-	<property name="jsp.lib.version" value="2.0" />
+	<property name="jsp.lib.version" value="2.2" />
 	<property name="jsp.jar" value="jsp-api-${jsp.lib.version}.jar" />
 	<property name="websocket.lib.version" value="1.1" />
 	<property name="websocket.jar" value="javax.websocket-api-${websocket.lib.version}.jar" />
@@ -59,7 +59,9 @@
 	</target>
 
 	<target name="dependency.jsp">
-		<maven-jar-dl group-path="javax/servlet" artifact="jsp-api" version="${jsp.lib.version}" />
+		<maven-jar-dl group-path="javax/servlet/jsp" artifact="jsp-api" version="${jsp.lib.version}" />
+		<maven-jar-sources-dl group-path="javax/servlet/jsp" artifact="jsp-api" version="${jsp.lib.version}" />
+		<maven-jar-javadoc-dl group-path="javax/servlet/jsp" artifact="jsp-api" version="${jsp.lib.version}" />
 	</target>
 
 	<target name="dependency.websocket">

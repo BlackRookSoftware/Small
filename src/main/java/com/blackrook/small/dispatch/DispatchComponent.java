@@ -58,6 +58,7 @@ public abstract class DispatchComponent extends SmallComponent
 	/**
 	 * Gets a method on this object that constructs an attribute. 
 	 * @param attribName the attribute name.
+	 * @return the corresponding entry point, or null if no such entry point.
 	 */
 	public DispatchEntryPoint<?> getAttributeConstructor(String attribName)
 	{
@@ -67,6 +68,7 @@ public abstract class DispatchComponent extends SmallComponent
 	/**
 	 * Gets a method on this object that constructs a model object. 
 	 * @param modelName the model attribute name.
+	 * @return the corresponding entry point, or null if no such entry point.
 	 */
 	public DispatchEntryPoint<?> getModelConstructor(String modelName)
 	{
@@ -74,7 +76,11 @@ public abstract class DispatchComponent extends SmallComponent
 	}
 
 	/**
-	 * Converts a Multipart Part.
+	 * Converts a Multipart Part to a type.
+	 * @param part the part to extract a value from. 
+	 * @param type the target type.
+	 * @param <T> the return type.
+	 * @return ClassCastException if a conversion cannot occur.
 	 */
 	public <T> T getPartData(Part part, Class<T> type)
 	{

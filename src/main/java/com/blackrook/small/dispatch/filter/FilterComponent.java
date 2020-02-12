@@ -64,8 +64,7 @@ public class FilterComponent extends DispatchComponent
 	}
 	
 	/**
-	 * Returns this filter's sole entry method.
-	 * @return
+	 * @return this filter's sole entry method.
 	 */
 	public FilterEntryPoint getEntryMethod() 
 	{

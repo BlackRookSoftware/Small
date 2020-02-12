@@ -65,6 +65,7 @@ public class Part
 	/**
 	 * Returns the length of this part.
 	 * If file, this is the file length in bytes. If value, this is the value length in characters.
+	 * @return the length.
 	 */
 	public long getLength()
 	{
@@ -72,7 +73,7 @@ public class Part
 	}
 	
 	/**
-	 * Returns the content type of the uploaded file, or null if not a file.
+	 * @return the content type of the uploaded file, or null if not a file.
 	 * @see #isFile()
 	 */
 	public String getContentType()
@@ -81,7 +82,7 @@ public class Part
 	}
 
 	/**
-	 * This part's value, if it is not a file.
+	 * @return this part's value, if it is not a file.
 	 */
 	public String getValue()
 	{
@@ -90,6 +91,7 @@ public class Part
 
 	/**
 	 * Sets the name of this Part.
+	 * @param name the name.
 	 */
 	public void setName(String name)
 	{
@@ -98,6 +100,7 @@ public class Part
 
 	/**
 	 * Sets the file name of this Part.
+	 * @param fileName the file name.
 	 */
 	public void setFileName(String fileName)
 	{
@@ -106,6 +109,7 @@ public class Part
 
 	/**
 	 * Sets the file on this part.
+	 * @param file the file descriptor.
 	 */
 	public void setFile(File file)
 	{
@@ -114,6 +118,7 @@ public class Part
 
 	/**
 	 * Sets the content type on this part.
+	 * @param contentType the content type (MIME type)
 	 */
 	public void setContentType(String contentType)
 	{
@@ -122,6 +127,7 @@ public class Part
 
 	/**
 	 * Sets the value of this part, if not a file.
+	 * @param value the parameter value.
 	 */
 	public void setValue(String value)
 	{

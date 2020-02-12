@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * Copyright (c) 2019-2020 Black Rook Software
+ * 
+ * This program and the accompanying materials are made available under 
+ * the terms of the MIT License, which accompanies this distribution.
+ ******************************************************************************/
 package com.blackrook.small.struct;
 
 import java.util.HashMap;
@@ -8,21 +14,18 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
-import com.blackrook.small.exception.SmallFrameworkParseException;
-import com.blackrook.small.util.SmallUtil;
-
 /**
- * A trie that organizes mapping URI patterns to ControllerHandlers.
+ * A trie that organizes mapping URI patterns to values.
  * @author Matthew Tropiano
+ * @param <V> the value type at a resolved node.
  */
-public class URITrie
+public class URITrie<V>
 {
 	/** Token content for "default" path. */
 	public static final String DEFAULT_TOKEN = "*";
 
 	/** Root node. */
-	private Node root; 
+	private Node<V> root; 
 
 	/**
 	 * Creates a new blank URI Trie.
@@ -36,10 +39,10 @@ public class URITrie
 	 * Adds a path to the trie.
 	 * @param uri the request URI path.
 	 * @param entryPoint the mapped entry point.
-	 * @throws SmallFrameworkParseException if a path parsing error occurs.
+	 * @throws ParseException if a path parsing error occurs.
 	 * @throws PatternSyntaxException if a regex expression is invalid in one of the paths.
 	 */
-	public void add(String uri, ControllerEntryPoint entryPoint)
+	public void add(String uri, V entryPoint)
 	{
 		final int STATE_START = 0;
 		final int STATE_PATH = 1;
@@ -47,12 +50,12 @@ public class URITrie
 		final int STATE_REGEX = 3;
 		final int STATE_VARIABLE_END = 4;
 
-		Node endNode = root;
+		Node<V> endNode = root;
 		String currentVariable = null;
 		
-		uri = SmallUtil.trimSlashes(uri);
+		uri = trimSlashes(uri);
 		
-		if (!Utils.isEmpty(uri))
+		if (!isEmpty(uri))
 		{
 			StringBuilder sb = new StringBuilder();
 			int state = STATE_START;
@@ -81,7 +84,7 @@ public class URITrie
 						{
 							String token = sb.toString().trim();
 							if (token.equals(DEFAULT_TOKEN))
-								throw new SmallFrameworkParseException("Wildcard token must be the last segment.");
+								throw new ParseException("Wildcard token must be the last segment.");
 							
 							endNode.edges.add(endNode = Node.createMatchNode(token));
 							sb.delete(0, sb.length());
@@ -128,16 +131,16 @@ public class URITrie
 						if (c == '/')
 							state = STATE_START;
 						else
-							throw new SmallFrameworkParseException("Expected '/' to terminate path segment.");
+							throw new ParseException("Expected '/' to terminate path segment.");
 						break;
 						
 				}// switch
 			}// for
 			
 			if (state == STATE_VARIABLE)
-				throw new SmallFrameworkParseException("Expected '}' to terminate variable segment.");
+				throw new ParseException("Expected '}' to terminate variable segment.");
 			if (state == STATE_REGEX)
-				throw new SmallFrameworkParseException("Expected '}' to terminate variable regex segment.");
+				throw new ParseException("Expected '}' to terminate variable regex segment.");
 			
 			if (sb.length() > 0)
 			{
@@ -155,16 +158,16 @@ public class URITrie
 	}
 	
 	/**
-	 * Attempts to resolve an endpoint for a given URI.
+	 * Attempts to resolve a value for a given URI.
 	 * @param uri the input URI.
 	 * @return a result object detailing the search.
 	 */
-	public Result resolve(String uri)
+	public Result<V> resolve(String uri)
 	{
-		Node next = root;
-		Result out = new Result();
+		Node<V> next = root;
+		Result<V> out = new Result<V>();
 		
-		uri = SmallUtil.trimSlashes(uri);
+		uri = trimSlashes(uri);
 		Queue<String> pathTokens = new LinkedList<>();
 		
 		for (String p : uri.split("\\/"))
@@ -173,9 +176,9 @@ public class URITrie
 		while (next != null && next.type != NodeType.DEFAULT && !pathTokens.isEmpty())
 		{
 			String pathPart = pathTokens.poll();
-			TreeSet<Node> edgeList = next.edges;
+			TreeSet<Node<V>> edgeList = next.edges;
 			next = null;
-			for (Node edge : edgeList)
+			for (Node<V> edge : edgeList)
 			{
 				if (edge.matches(pathPart))
 				{
@@ -188,7 +191,7 @@ public class URITrie
 		}
 		
 		if (next != null)
-			out.entryPoint = next.entryPoint;
+			out.value = next.entryPoint;
 		
 		return out;
 	}
@@ -204,13 +207,13 @@ public class URITrie
 	/**
 	 * A single node.
 	 */
-	private static class Node implements Comparable<Node>
+	private static class Node<V> implements Comparable<Node<V>>
 	{
 		NodeType type;
 		String token;
 		Pattern pattern;
-		ControllerEntryPoint entryPoint;
-		TreeSet<Node> edges;
+		V entryPoint;
+		TreeSet<Node<V>> edges;
 		
 		private Node(NodeType type, String token, Pattern pattern)
 		{
@@ -221,28 +224,28 @@ public class URITrie
 			this.edges = new TreeSet<>();
 		}
 		
-		static Node createRoot()
+		static <V> Node<V> createRoot()
 		{
-			return new Node(NodeType.ROOT, null, null);
+			return new Node<V>(NodeType.ROOT, null, null);
 		}
 		
-		static Node createMatchNode(String token)
+		static <V> Node<V> createMatchNode(String token)
 		{
-			return new Node(NodeType.MATCH, token, null);
+			return new Node<V>(NodeType.MATCH, token, null);
 		}
 		
-		static Node createVariableNode(String token, Pattern pattern)
+		static <V> Node<V> createVariableNode(String token, Pattern pattern)
 		{
-			return new Node(NodeType.PATHVARIABLE, token, pattern);
+			return new Node<V>(NodeType.PATHVARIABLE, token, pattern);
 		}
 
-		static Node createDefaultNode()
+		static <V> Node<V> createDefaultNode()
 		{
-			return new Node(NodeType.DEFAULT, null, null);
+			return new Node<V>(NodeType.DEFAULT, null, null);
 		}
 
 		@Override
-		public int compareTo(Node n)
+		public int compareTo(Node<V> n)
 		{
 			return type != n.type 
 					? type.ordinal() - n.type.ordinal() 
@@ -265,16 +268,16 @@ public class URITrie
 				return true;
 			else if (type == NodeType.MATCH)
 			{
-				if (!Utils.isEmpty(token))
+				if (!isEmpty(token))
 					return token.equals(pathPart);
-				else if (!Utils.isEmpty(pattern))
+				else if (!isEmpty(pattern))
 					return pattern.matcher(pathPart).matches();
 				else
 					return false;
 			}
 			else if (type == NodeType.PATHVARIABLE)
 			{
-				if (!Utils.isEmpty(pattern))
+				if (!isEmpty(pattern))
 					return pattern.matcher(pathPart).matches();
 				else
 					return true;
@@ -293,16 +296,17 @@ public class URITrie
 	
 	/**
 	 * Result class after a URITrie search.
+	 * @param <V> the value that this holds.
 	 */
-	public static class Result
+	public static class Result<V>
 	{
-		Map<String, String> pathVariables;
-		ControllerEntryPoint entryPoint; 
+		private Map<String, String> pathVariables;
+		private V value; 
 		
 		private Result()
 		{
 			this.pathVariables = null;
-			this.entryPoint = null;
+			this.value = null;
 		}
 		
 		private void addVariable(String var, String value)
@@ -313,21 +317,21 @@ public class URITrie
 		}
 		
 		/**
-		 * Checks if this result has a found entry point in it.
+		 * Checks if this result has a found value in it.
 		 * @return true if so, false if not.
 		 */
-		public boolean hasEndpoint()
+		public boolean hasValue()
 		{
-			return entryPoint != null;
+			return value != null;
 		}
 		
 		/**
-		 * Gets the found entry point, if any.
-		 * @return an entry point to call, or null if no entry point.
+		 * Gets the found value, if any.
+		 * @return a value to return, or null if no value.
 		 */
-		public ControllerEntryPoint getEntryPoint() 
+		public V getValue() 
 		{
-			return entryPoint;
+			return value;
 		}
 		
 		/**
@@ -341,4 +345,66 @@ public class URITrie
 		
 	}
 
+	/**
+	 * An exception thrown when a bad URI parse happens.
+	 */
+	public static class ParseException extends RuntimeException
+	{
+		private static final long serialVersionUID = -7627728030467051063L;
+		
+		private ParseException(String message)
+		{
+			super(message);
+		}
+	}
+	
+	private static boolean isEmpty(Object obj)
+	{
+		return obj == null || (obj instanceof String && ((String)obj).trim().isEmpty());
+	}
+
+	/**
+	 * Trims slashes from the ends.
+	 * @param str the input string.
+	 * @return the input string with slashes removed from both ends.
+	 * @see #removeBeginningSlash(String)
+	 * @see #removeEndingSlash(String)
+	 */
+	private static String trimSlashes(String str)
+	{
+		return removeBeginningSlash(removeEndingSlash(str));
+	}
+
+	/**
+	 * Removes the beginning slashes, if any, from a string.
+	 * @param str the string.
+	 * @return the resulting string without a beginning slash.
+	 */
+	private static String removeBeginningSlash(String str)
+	{
+		if (isEmpty(str))
+			return str;
+		
+		int i = 0;
+		while (i < str.length() && str.charAt(i) == '/')
+			i++;
+		return i > 0 ? str.substring(i) : str;
+	}
+
+	/**
+	 * Removes the ending slashes, if any, from a string.
+	 * @param str the string.
+	 * @return the resulting string without an ending slash.
+	 */
+	private static String removeEndingSlash(String str)
+	{
+		if (isEmpty(str))
+			return str;
+		
+		int i = str.length();
+		while (i > 0 && str.charAt(i - 1) == '/')
+			i--;
+		return i > 0 ? str.substring(0, i) : str;
+	}
+	
 }

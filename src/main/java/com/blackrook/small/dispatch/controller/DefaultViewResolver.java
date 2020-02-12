@@ -8,7 +8,6 @@ package com.blackrook.small.dispatch.controller;
  */
 public class DefaultViewResolver implements ViewResolver
 {
-
 	/** Always returns <code>"/WEB-INF/jsp/" + keyword + ".jsp"</code> for every keyword. */
 	@Override
 	public String resolveView(String keyword)

@@ -19,6 +19,7 @@ import com.blackrook.small.annotation.controller.FilterChain;
 import com.blackrook.small.annotation.controller.NoCache;
 import com.blackrook.small.annotation.controller.View;
 import com.blackrook.small.dispatch.DispatchEntryPoint;
+import com.blackrook.small.dispatch.DispatchMVCEntryPoint;
 import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
@@ -35,7 +36,7 @@ import com.blackrook.small.util.SmallUtil;
  * Method descriptor class, specifically for controllers.
  * @author Matthew Tropiano
  */
-public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent>
+public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent> implements DispatchMVCEntryPoint<Void>
 {
 	private static final String PREFIX_REDIRECT = "redirect:";
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
@@ -122,7 +123,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 
 	/**
-	 * Gets the request methods on this entry point.
+	 * @return the request methods handled by this entry point. 
 	 */
 	public RequestMethod[] getRequestMethods() 
 	{
@@ -130,8 +131,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 	
 	/**
-	 * Gets the full path of the entry method.
-	 * @return
+	 * @return the full path of the entry method.
 	 */
 	public String getPath() 
 	{
@@ -139,8 +139,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 	
 	/**
-	 * Returns the forced MIME type to use.
-	 * If null, the dispatcher decides it.
+	 * @return the forced MIME type to use. If null, the dispatcher decides it.
 	 */
 	public String getMimeType()
 	{
@@ -148,7 +147,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 
 	/**
-	 * The method's output type, if controller call.
+	 * @return method's output type, if controller call.
 	 */
 	public Output getOutputType()
 	{
@@ -156,7 +155,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 
 	/**
-	 * If true, a directive is sent to the client to not cache the response data.  
+	 * @return true, if a directive will be sent to the client to not cache the response data, false if not.  
 	 */
 	public boolean isNoCache()
 	{
@@ -164,27 +163,25 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 
 	/**
-	 * Gets this method's full filter chain (package to controller to this method).
+	 * @return this method's full filter chain (package to controller to this method).
 	 */
 	public Class<?>[] getFilterChain()
 	{
 		return filterChain;
 	}
 
-	/**
-	 * Completes a full controller request call.
-	 */
-	public void handleCall(
+	@Override
+	public Void handleCall(
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
-		HashDequeMap<String, Part> multiformPartMap
+		HashDequeMap<String, Part> partMap
 	){
 		Object retval = null;
 		try {
-			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
+			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 		} catch (Exception e) {
 			throw new SmallFrameworkException("An exception occurred in a Controller method.", e);
 		}
@@ -211,7 +208,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					break;
 				}
 				case ATTACHMENT:
-					fname = SmallRequestUtil.getPage(request);
+					fname = SmallRequestUtil.getFileName(request);
 					// fall through.
 				case CONTENT:
 				{
@@ -279,6 +276,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					break;
 			}
 		}
+		return null;
 	}
 	
 	/**

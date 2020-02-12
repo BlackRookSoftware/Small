@@ -116,8 +116,7 @@ public class ControllerComponent extends DispatchComponent
 	}
 
 	/**
-	 * Gets the entry points on this controller.
-	 * @return
+	 * @return the entry points on this controller.
 	 */
 	public List<ControllerEntryPoint> getEntryMethods() 
 	{

@@ -59,8 +59,9 @@ public abstract class MultipartParser implements Iterable<Part>
 	}
 
 	/**
-	 * Returns true if a request is a multiform request, false
-	 * otherwise.
+	 * Checks if the request is a multipart form.
+	 * @param request the servlet request.
+	 * @return true if a request is a multipart request, false otherwise.
 	 */
 	public static boolean isMultipart(HttpServletRequest request)
 	{
@@ -71,6 +72,8 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * Parses the request content.
 	 * @param request the servlet request to parse. 
 	 * @param outputDir the temporary directory for read files.
+	 * @throws MultipartParserException if a parsing error occurs in parsing the content.
+	 * @throws IOException if a read error occurs.
 	 */
 	public void parse(HttpServletRequest request, File outputDir) throws MultipartParserException, IOException
 	{
@@ -101,6 +104,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	 * @param startBoundaryBytes the boundary string for each part as bytes in the correct encoding.
 	 * @throws MultipartParserException if something is malformed in the request body.
 	 * @throws UnsupportedEncodingException if the part encoding is not supported.
+	 * @throws IOException if a read error occurs.
 	 */
 	protected abstract void parseData(ServletInputStream inStream, File outputDir, String startBoundary, String endBoundary, byte[] startBoundaryBytes)
 		throws MultipartParserException, UnsupportedEncodingException, IOException;
@@ -191,12 +195,12 @@ public abstract class MultipartParser implements Iterable<Part>
 	}
 
 	/**
-	 * Scans an input stream until it hits a part boundary.
+	 * Scans an input stream into an output stream until it hits a part boundary.
 	 * @param in the input stream.
 	 * @param out the output stream.
 	 * @param boundaryBytes the boundary as bytes.
-	 * @throws IOException if the input stream could not be 
-	 * read or the output stream could not be written to.
+	 * @return the amount of bytes read.
+	 * @throws IOException if the input stream could not be read or the output stream could not be written to.
 	 */
 	protected int scanDataUntilBoundary(InputStream in, OutputStream out, byte[] boundaryBytes) throws IOException
 	{
@@ -233,6 +237,7 @@ public abstract class MultipartParser implements Iterable<Part>
 
 	/**
 	 * Creates a temporary file for read part data.
+	 * @param filename the Part's file name (extension is pulled from this).
 	 * @param outputDir the temporary output directory.
 	 * @return the file created.
 	 * @throws IOException if the canonical path could not be read.
@@ -263,7 +268,7 @@ public abstract class MultipartParser implements Iterable<Part>
 	}
 
 	/**
-	 * Returns all of the parts parsed by this parser.
+	 * @return all of the parts parsed by this parser.
 	 */
 	public List<Part> getPartList()
 	{

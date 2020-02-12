@@ -169,9 +169,9 @@ public final class SmallDispatcher extends HttpServlet
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashDequeMap<String, Part> multiformPartMap)
 	{
 		String path = SmallUtil.trimSlashes(SmallRequestUtil.getPath(request));
-		Result result = applicationEnvironment.getControllerEntryPoint(requestMethod, path);
+		Result<ControllerEntryPoint> result = applicationEnvironment.getControllerEntryPoint(requestMethod, path);
 		
-		if (result == null || !result.hasEndpoint())
+		if (result == null || !result.hasValue())
 		{
 			SmallResponseUtil.sendError(response, 404, "Not found. No handler for "+requestMethod.name()+ " '"+path+"'");
 			return;
@@ -186,7 +186,7 @@ public final class SmallDispatcher extends HttpServlet
 		// Get path variables.
 		Map<String, String> pathVariables = result.getPathVariables() != null ? result.getPathVariables() : (new HashMap<String, String>());
 		
-		ControllerEntryPoint entryPoint = result.getEntryPoint();
+		ControllerEntryPoint entryPoint = result.getValue();
 		
 		for (Class<?> filterClass : entryPoint.getFilterChain())
 		{

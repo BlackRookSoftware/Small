@@ -158,6 +158,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * it may not be the last one in the complete message.
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param buffer the buffer of data to pass back to the connected client.
+	 * @param isLast if true, this is the last part of the message.
 	 * @throws SmallFrameworkException on a send error.
 	 */
 	public void sendBinaryPartial(ByteBuffer buffer, boolean isLast)
@@ -193,6 +194,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * This method should not be used for repeated sends, as the array is wrapped in a ByteBuffer
 	 * before it is sent. 
 	 * @param buffer the buffer of data to pass back to the connected client.
+	 * @param isLast if true, this is the last part of the message.
 	 * @throws SmallFrameworkException on a send error.
 	 */
 	public void sendBinaryPartial(byte[] buffer, boolean isLast)

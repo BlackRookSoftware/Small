@@ -114,10 +114,11 @@ public final class SmallRequestUtil
 	}
 
 	/**
-	 * Get the base page parsed out of the request URI.
+	 * Get the base file name parsed out of the request URI.
 	 * @param request the request.
+	 * @return the page.
 	 */
-	public static String getPage(HttpServletRequest request)
+	public static String getFileName(HttpServletRequest request)
 	{
 		String requestURI = request.getRequestURI();
 		int slashIndex = requestURI.lastIndexOf('/');
@@ -275,9 +276,10 @@ public final class SmallRequestUtil
 	}
 
 	/**
-	 * Gets the string data of a request.
+	 * Gets the binary payload of a request.
 	 * @param request the request.
-	 * @return the resultant string.
+	 * @return the resultant byte array of the data.
+	 * @throws IOException if the data could not be read. 
 	 */
 	public static byte[] getByteData(HttpServletRequest request) throws IOException
 	{
@@ -294,10 +296,11 @@ public final class SmallRequestUtil
 	/**
 	 * Gets the string data of a request.
 	 * @param request the request.
-	 * @param charset the charset name.
 	 * @return the resultant string.
+	 * @throws UnsupportedEncodingException if the provided charset name is not a valid charset.
+	 * @throws IOException if  
 	 */
-	public static String getStringData(HttpServletRequest request, String charset) throws UnsupportedEncodingException, IOException
+	public static String getStringData(HttpServletRequest request) throws UnsupportedEncodingException, IOException
 	{
 		StringBuffer sb = new StringBuffer();
 		try (Reader ir = request.getReader()) {
@@ -310,12 +313,17 @@ public final class SmallRequestUtil
 	}
 	
 	/**
-	 * Get content data from the request and attempts to return it.
+	 * Get content data from the request and attempts to return it as the desired type.
+	 * Assumes UTF-8 if the request does not specify an encoding.
+	 * @param <R> the return type.
 	 * @param request the request to read from.
 	 * @param type the type to convert to.
+	 * @return the data returned as the requested type.
+	 * @throws UnsupportedEncodingException if the incoming request is not a recognized charset.
+	 * @throws IOException if a read error occurs.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T getContentData(HttpServletRequest request, Class<T> type) throws UnsupportedEncodingException, IOException
+	public static <R> R getContentData(HttpServletRequest request, Class<R> type) throws UnsupportedEncodingException, IOException
 	{
 		String contentTypeString = request.getContentType();
 		String mimeType = null;
@@ -334,25 +342,23 @@ public final class SmallRequestUtil
 		}
 
 		if (byte[].class.isAssignableFrom(type))
-			return (T)getByteData(request);
+			return (R)getByteData(request);
 		if (ByteArrayInputStream.class.isAssignableFrom(type))
-			return (T)new ByteArrayInputStream(getByteData(request));
+			return (R)new ByteArrayInputStream(getByteData(request));
 		if (ServletInputStream.class.isAssignableFrom(type))
-			return (T)request.getInputStream();
+			return (R)request.getInputStream();
 		if (InputStream.class.isAssignableFrom(type))
-			return (T)request.getInputStream();
-		
+			return (R)request.getInputStream();
 		if (StringReader.class.isAssignableFrom(type))
-			return (T)new StringReader(getStringData(request, charset));
-
+			return (R)new StringReader(getStringData(request));
 		if (BufferedReader.class.isAssignableFrom(type))
-			return (T)request.getReader();
+			return (R)request.getReader();
 		if (InputStreamReader.class.isAssignableFrom(type))
-			return (T)new InputStreamReader(request.getInputStream(), charset);
+			return (R)new InputStreamReader(request.getInputStream(), charset);
 		if (Reader.class.isAssignableFrom(type))
-			return (T)request.getReader();
+			return (R)request.getReader();
 
-		return Utils.createForType(getStringData(request, charset), type);
+		return Utils.createForType(getStringData(request), type);
 	}
 
 	/**

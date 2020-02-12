@@ -52,6 +52,7 @@ import com.blackrook.small.util.SmallUtil;
  * Entry method descriptor class.
  * Parses a method's characteristics using reflection, yielding a digest of its important contents.
  * @author Matthew Tropiano 
+ * @param <S> The entry point type.
  */
 public class DispatchEntryPoint<S extends DispatchComponent>
 {
@@ -261,8 +262,14 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 	}
 	
 	/**
-	 * Calls a method on a filter or controller.
-	 * Returns its return value.
+	 * 
+	 * @param requestMethod the incoming request method.
+	 * @param request the HTTP request.
+	 * @param response the HTTP response.
+	 * @param pathVariableMap the path variable map.
+	 * @param cookieMap the cookie map.
+	 * @param partMap the map of name to multipart parts.
+	 * @return the function's return value.
 	 */
 	protected Object invoke(
 		RequestMethod requestMethod, 
@@ -270,9 +277,8 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 		HttpServletResponse response, 
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
-		HashDequeMap<String, Part> multiformPartMap
-	)
-	{
+		HashDequeMap<String, Part> partMap
+	) {
 		Object[] invokeParams = new Object[parameters.length];
 	
 		String path = null;
@@ -289,7 +295,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					invokeParams[i] = Utils.createForType("Parameter " + i, path, pinfo.getType());
 					break;
 				case PATH_FILE:
-					pathFile = pathFile != null ? pathFile : SmallRequestUtil.getPage(request);
+					pathFile = pathFile != null ? pathFile : SmallRequestUtil.getFileName(request);
 					invokeParams[i] = Utils.createForType("Parameter " + i, pathFile, pinfo.getType());
 					break;
 				case PATH_QUERY:
@@ -373,9 +379,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					if (Map.class.isAssignableFrom(pinfo.getType()))
 					{
 						Map<String, Object> map = new HashMap<String, Object>();
-						if (multiformPartMap != null)
+						if (partMap != null)
 						{
-							for (Map.Entry<String, Deque<Part>> entry : multiformPartMap.entrySet())
+							for (Map.Entry<String, Deque<Part>> entry : partMap.entrySet())
 							{
 								String pname = entry.getKey();
 								Deque<Part> partlist = entry.getValue();
@@ -406,12 +412,12 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				{
 					String parameterName = pinfo.getName();
 					Object value = null;
-					if (multiformPartMap != null && multiformPartMap.containsKey(parameterName))
+					if (partMap != null && partMap.containsKey(parameterName))
 					{
 						if (Utils.isArray(pinfo.getType()))
 						{
 							Class<?> actualType = Utils.getArrayType(pinfo.getType());
-							Queue<Part> partlist = multiformPartMap.get(parameterName);
+							Queue<Part> partlist = partMap.get(parameterName);
 							Object[] vout = (Object[])Array.newInstance(actualType, partlist.size());
 							int x = 0;
 							for (Part p : partlist)
@@ -420,7 +426,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 						}
 						else
 						{
-							value = componentInstance.getPartData(multiformPartMap.get(parameterName).getFirst(), pinfo.getType());
+							value = componentInstance.getPartData(partMap.get(parameterName).getFirst(), pinfo.getType());
 						}
 					}
 					else if (Utils.isArray(pinfo.getType()))
@@ -436,7 +442,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					DispatchEntryPoint<?> attribDescriptor = componentInstance.getAttributeConstructor(pinfo.getName());
 					if (attribDescriptor != null)
 					{
-						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
+						Object attrib = attribDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 						ScopeType scope = pinfo.getSourceScopeType();
 						switch (scope)
 						{
@@ -472,7 +478,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					DispatchEntryPoint<?> modelDescriptor = componentInstance.getModelConstructor(pinfo.getName());
 					if (modelDescriptor != null)
 					{
-						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
+						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 						SmallRequestUtil.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
@@ -514,7 +520,6 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 			// check for trim-able object.
 			if (pinfo.getTrim() && invokeParams[i] != null && invokeParams[i].getClass() == String.class)
 				invokeParams[i] = ((String)invokeParams[i]).trim(); 
-			
 		}
 		
 		return Utils.invokeBlind(method, componentInstance.getInstance(), invokeParams);
