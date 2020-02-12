@@ -1126,7 +1126,7 @@ public final class SmallUtil
 	 */
 	public static void simulateLag(long maxMillis)
 	{
-		long millis = randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 :maxMillis);
+		long millis = randomLagSimulator.nextLong() % (maxMillis <= 1 ? 1 : maxMillis);
 		try {Thread.sleep(millis);} catch (InterruptedException e) {}
 	}
 

@@ -23,8 +23,8 @@ import com.blackrook.small.parser.JSONDriver;
 import com.blackrook.small.parser.MultipartParser;
 import com.blackrook.small.parser.multipart.MultipartFormDataParser;
 import com.blackrook.small.parser.multipart.MultipartParserException;
+import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
-import com.blackrook.small.struct.Part;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.struct.URITrie.Result;
 import com.blackrook.small.util.SmallRequestUtil;
@@ -38,7 +38,16 @@ import com.blackrook.small.util.SmallUtil;
  */
 public final class SmallDispatcher extends HttpServlet
 {
-	private static final long serialVersionUID = -1100613497491582949L;
+	private static final long serialVersionUID = 438331119650683748L;
+	
+	private static final String METHOD_DELETE = "DELETE";
+    private static final String METHOD_HEAD = "HEAD";
+    private static final String METHOD_GET = "GET";
+    private static final String METHOD_OPTIONS = "OPTIONS";
+    private static final String METHOD_POST = "POST";
+    private static final String METHOD_PUT = "PUT";
+    private static final String METHOD_PATCH = "PATCH";
+    private static final String METHOD_TRACE = "TRACE";
 	
 	private SmallEnvironment applicationEnvironment;
 	
@@ -91,37 +100,31 @@ public final class SmallDispatcher extends HttpServlet
 	}
 
 	@Override
-	public final void doGet(HttpServletRequest request, HttpServletResponse response)
-	{
-		callControllerEntry(request, response, RequestMethod.GET, null);
-	}
-
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
+        String method = request.getMethod();
+        if (method.equals(METHOD_GET))
+    		callControllerEntry(request, response, RequestMethod.GET, null);
+        else if (method.equals(METHOD_HEAD))
+    		callControllerEntry(request, response, RequestMethod.HEAD, null);
+        else if (method.equals(METHOD_POST))
+            doPost(request, response);
+        else if (method.equals(METHOD_PUT))
+    		callControllerEntry(request, response, RequestMethod.PUT, null);
+        else if (method.equals(METHOD_PATCH))
+			callControllerEntry(request, response, RequestMethod.PATCH, null);
+        else if (method.equals(METHOD_DELETE))
+    		callControllerEntry(request, response, RequestMethod.DELETE, null);
+        else if (method.equals(METHOD_OPTIONS))
+    		callControllerEntry(request, response, RequestMethod.OPTIONS, null);
+        else if (method.equals(METHOD_TRACE))
+    		doTrace(request, response);
+        else
+			SmallResponseUtil.sendError(response, 501, "The server cannot process this request method.");
+    }
+    
 	@Override
-	public final void doHead(HttpServletRequest request, HttpServletResponse response)
-	{
-		callControllerEntry(request, response, RequestMethod.HEAD, null);
-	}
-
-	@Override
-	public final void doPut(HttpServletRequest request, HttpServletResponse response)
-	{
-		callControllerEntry(request, response, RequestMethod.PUT, null);
-	}
-
-	@Override
-	public final void doDelete(HttpServletRequest request, HttpServletResponse response)
-	{
-		callControllerEntry(request, response, RequestMethod.DELETE, null);
-	}
-
-	@Override
-	public final void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
-	{
-		callControllerEntry(request, response, RequestMethod.OPTIONS, null);
-	}
-
-	@Override
-	public final void doPost(HttpServletRequest request, HttpServletResponse response)
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		if (MultipartFormDataParser.isMultipart(request))
 		{
@@ -160,7 +163,12 @@ public final class SmallDispatcher extends HttpServlet
 			}
 		}
 		else
-			callControllerEntry(request, response, RequestMethod.POST, null);
+		{
+			if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
+				callControllerEntry(request, response, RequestMethod.PATCH, null);
+			else
+				callControllerEntry(request, response, RequestMethod.POST, null);
+		}
 	}
 	
 	/**

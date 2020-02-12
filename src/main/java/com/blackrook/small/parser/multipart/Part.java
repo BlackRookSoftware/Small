@@ -1,4 +1,4 @@
-package com.blackrook.small.struct;
+package com.blackrook.small.parser.multipart;
 
 import java.io.File;
 

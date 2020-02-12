@@ -24,7 +24,7 @@ import com.blackrook.small.enums.RequestMethod;
  * <li>If the content type is <code>application/json</code> and a JSONDriver is specified, it is parsed as JSON and converted to the parameter type.</li>
  * <li>Otherwise, it is read as-is and will be converted to an appropriate type.</li>
  * </ul>
- * Note that its use on a parameter is worthless if the request method is not {@link RequestMethod#POST}, {@link RequestMethod#PUT}, or {@link RequestMethod#PATCH}.
+ * Note that its use on a parameter is worthless if the request method is not {@link RequestMethod#POST} or {@link RequestMethod#PUT}.
  * <p>
  * If on a method, this turns the returned object after running the method into data that is put into the response body.
  * <ul>

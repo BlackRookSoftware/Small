@@ -10,7 +10,7 @@ import com.blackrook.small.SmallComponent;
 import com.blackrook.small.annotation.dispatch.Attribute;
 import com.blackrook.small.annotation.dispatch.Model;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.struct.Part;
+import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.Utils;
 
 /**

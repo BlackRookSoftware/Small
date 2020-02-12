@@ -41,8 +41,8 @@ import com.blackrook.small.enums.ScopeType;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.parser.JSONDriver;
 import com.blackrook.small.parser.StringParser;
+import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
-import com.blackrook.small.struct.Part;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.util.SmallRequestUtil;
 import com.blackrook.small.util.SmallResponseUtil;
@@ -488,7 +488,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				}
 				case CONTENT:
 				{
-					if (requestMethod == RequestMethod.POST || requestMethod == RequestMethod.PUT || requestMethod == RequestMethod.PATCH)
+					if (requestMethod == RequestMethod.POST || requestMethod == RequestMethod.PUT)
 					{
 						JSONDriver json = SmallUtil.getApplicationBean(
 							request.getServletContext(), 

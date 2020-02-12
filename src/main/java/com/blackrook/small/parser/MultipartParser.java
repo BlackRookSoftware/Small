@@ -15,7 +15,7 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
 import com.blackrook.small.parser.multipart.MultipartParserException;
-import com.blackrook.small.struct.Part;
+import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.Utils;
 
 /**

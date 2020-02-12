@@ -7,8 +7,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.enums.RequestMethod;
+import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
-import com.blackrook.small.struct.Part;
 
 /**
  * Describes an entry point that is meant to handle part of the MVC call stack.
