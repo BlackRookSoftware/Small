@@ -49,6 +49,6 @@ import com.blackrook.small.enums.RequestMethod;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Content
 {
-	/** Forced MIME-Type. */
+	/** @return the forced MIME-Type. */
 	String value() default "";
 }

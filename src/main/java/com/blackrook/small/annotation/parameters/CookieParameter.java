@@ -23,6 +23,6 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CookieParameter
 {
-	/** Name of the cookie. */
+	/** @return the name of the cookie. */
 	String value();
 }

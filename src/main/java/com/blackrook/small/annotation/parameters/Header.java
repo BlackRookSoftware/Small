@@ -18,6 +18,6 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Header
 {
-	/** The name of the header value. */
+	/** @return the name of the header value. */
 	String value();
 }

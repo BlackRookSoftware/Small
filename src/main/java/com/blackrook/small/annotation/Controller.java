@@ -26,13 +26,14 @@ import com.blackrook.small.dispatch.controller.ViewResolver;
 public @interface Controller
 {
 	/**
-	 * The "directory" path to use for the controller.
+	 * @return the "directory" path to use for the controller.
 	 */
 	String value() default "";
 	
 	/** 
 	 * The view resolver class to use.
 	 * Default is {@link DefaultViewResolver}. 
+	 * @return the class.
 	 */
 	Class<? extends ViewResolver> viewResolver() default DefaultViewResolver.class;
 	

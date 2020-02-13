@@ -26,11 +26,12 @@ public @interface ControllerEntry
 	 * The entry point path (after controller path resolution).
 	 * <p>
 	 * If blank, this is the DEFAULT entry point, if no matching method is found.
-	 * You may not specify more than one DEFAULT entry in a controller. Specified path is ignored. 
+	 * You may not specify more than one DEFAULT entry in a controller. Specified path is ignored.
+	 * @return the path.
 	 */
 	String value() default "";
 	
-	/** The request methods that this entry point accepts. */
+	/** @return the request methods that this entry point accepts. */
 	RequestMethod[] method() default { RequestMethod.GET, RequestMethod.POST };
 	
 }

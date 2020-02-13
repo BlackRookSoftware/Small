@@ -20,6 +20,7 @@ public interface JSONDriver
 	 * Called when an object needs to be converted to an object from JSON.
 	 * @param reader the provided reader to read JSON from.
 	 * @param type the target object type.
+	 * @param <T> the return type.
 	 * @return the converted object.
 	 * @throws IOException if an error occurs during the read.
 	 */
@@ -54,7 +55,7 @@ public interface JSONDriver
 	 */
 	default String toJSONString(Object object) throws IOException
 	{
-		StringWriter sw = new StringWriter(1024);
+		StringWriter sw = new StringWriter(2048);
 		toJSON(sw, object);
 		return sw.toString();
 	}

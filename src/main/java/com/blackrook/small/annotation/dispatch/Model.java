@@ -28,7 +28,8 @@ public @interface Model
 {
 	/** 
 	 * Name of the model attribute to set. 
-	 * If no name is specified, the class name is used. 
+	 * If no name is specified, the class name is used.
+	 * @return the name.
 	 */
 	String value() default "";
 }

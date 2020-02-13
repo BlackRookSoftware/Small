@@ -76,7 +76,7 @@
 	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
         <javadoc access="protected" 
         	additionalparam="-J-Xmx512m  " author="true" 
-        	classpath="${bin.dir}" 
+        	classpath="${bin.dir}${S}${dev.base}/${servlet.jar}${S}${dev.base}/${jsp.jar}${S}${dev.base}/${websocket.jar}" 
         	doctitle="${project.javadoc.title}" 
         	sourcepath="${src.dir}" 
         	packagenames="${project.javadoc.packages}"

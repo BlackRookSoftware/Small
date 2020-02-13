@@ -3,7 +3,7 @@ package com.blackrook.small.dispatch.controller;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -248,9 +248,19 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					{
 						byte[] data = (byte[])retval;
 						if (Utils.isEmpty(mimeType))
-							SmallResponseUtil.sendData(response, getMimeType(), null, new ByteArrayInputStream(data), data.length);
-						else
 							SmallResponseUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
+						else
+							SmallResponseUtil.sendData(response, mimeType, null, new ByteArrayInputStream(data), data.length);
+					}
+					// InputStream
+					else if (InputStream.class.isAssignableFrom(returnType))
+					{
+						InputStream inStream = (InputStream)retval;
+						if (Utils.isEmpty(mimeType))
+							SmallResponseUtil.sendData(response, "application/octet-stream", null, inStream, -1);
+						else
+							SmallResponseUtil.sendData(response, mimeType, null, inStream, -1);
+						Utils.close(inStream);
 					}
 					// Object output.
 					else
@@ -258,13 +268,11 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 						JSONDriver driver;
 						if ((driver = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver()) != null)
 						{
-							StringWriter sw = new StringWriter(1024);
 							try {
-								driver.toJSON(sw, retval);
+								sendStringData(response, "application/json; charset=utf-8", fname, driver.toJSONString(retval));
 							} catch (IOException e) {
 								SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
 							}
-							sendStringData(response, "application/json; charset=utf-8", fname, sw.toString());
 						}
 						else
 							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for " + retval.getClass());

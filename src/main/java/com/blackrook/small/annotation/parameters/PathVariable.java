@@ -20,6 +20,6 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PathVariable
 {
-	/** Name of the path variable. */
+	/** @return the name of the path variable. */
 	String value();
 }

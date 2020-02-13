@@ -23,6 +23,6 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Parameter
 {
-	/** Name of the request parameter. */
+	/** @return the name of the request parameter. */
 	String value();
 }

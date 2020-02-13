@@ -19,6 +19,6 @@ import com.blackrook.small.annotation.Controller;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FilterChain
 {
-	/** The list of filter classes. */
+	/** @return the list of filter classes. */
 	Class<?>[] value();
 }

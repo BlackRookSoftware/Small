@@ -22,8 +22,8 @@ import com.blackrook.small.enums.ScopeType;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Attribute
 {
-	/** Name of the attribute. */
+	/** @return the name of the attribute. */
 	String value();
-	/** The preferred scope to use to search for the matching attribute. */
+	/** @return the preferred scope to use to search for the matching attribute. */
 	ScopeType scope();
 }
