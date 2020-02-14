@@ -8,7 +8,7 @@ Copyright (c) 2019-2020 Black Rook Software. All rights reserved.
 
 ### Required Libraries
 
-Any servlet container implementation (javax.servlet-api.jar).  
+Any servlet 2.X+ container implementation (javax.servlet-api.jar).  
 Any JSP implementation (jsp-api.jar).  
 Any Websocket container implementation (javax.websocket-api.jar).  
 

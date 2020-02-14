@@ -67,10 +67,8 @@ public final class SmallDispatcher extends HttpServlet
 	public void init() throws ServletException
 	{
 		super.init();
-		applicationEnvironment = new SmallEnvironment();
 		ServletContext servletContext = getServletContext();
 		ServerContainer serverContainer = (ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer");
-		servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, applicationEnvironment);
 		
 		String packages = getInitParameter(SmallConstants.INIT_PARAM_APPLICATION_PACKAGE_ROOTS);
 		if (Utils.isEmpty(packages))
@@ -96,7 +94,12 @@ public final class SmallDispatcher extends HttpServlet
 		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
 			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
 	
-		applicationEnvironment.init(serverContainer, controllerRootPackages, jsonDriver, tempDir);
+		if ((applicationEnvironment = SmallUtil.getEnvironment(servletContext)) == null)
+		{
+			applicationEnvironment = new SmallEnvironment();
+			applicationEnvironment.init(serverContainer, controllerRootPackages, jsonDriver, tempDir);			
+			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, applicationEnvironment);
+		}
 	}
 
 	@Override
