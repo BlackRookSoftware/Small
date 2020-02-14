@@ -27,7 +27,7 @@ This library contains classes for J2EE application creation and management.
 ### Why?
 
 The world needs a singleton management system for removing the tedium of writing servlet
-applications, and something less hefty than Spring.
+applications, and something less hefty than Spring that also doesn't need the Apache Commons bloat.
 
 
 ### Library
