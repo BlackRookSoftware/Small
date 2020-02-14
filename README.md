@@ -1,17 +1,22 @@
 # Black Rook Small
 
-Copyright (c) 2019 Black Rook Software. All rights reserved.  
+Copyright (c) 2019-2020 Black Rook Software. All rights reserved.  
 [https://github.com/BlackRookSoftware/Small](https://github.com/BlackRookSoftware/Small)
+
+[Latest Release](https://github.com/BlackRookSoftware/Small/releases/latest)    
+[Online Javadoc](https://blackrooksoftware.github.io/Small/javadoc/)
 
 ### Required Libraries
 
-Any servlet container implementation (servlet-api.jar).
+Any servlet container implementation (javax.servlet-api.jar).  
+Any JSP implementation (jsp-api.jar).  
+Any Websocket container implementation (javax.websocket-api.jar).  
 
+Most servlet container servers will provide implementations of these.
 
 ### Required Java Modules
 
 [java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
-[javax.servlet](https://javaee.github.io/javaee-spec/javadocs/)
 
 
 ### Introduction
@@ -60,6 +65,12 @@ To clean up everything:
 
 	ant clean
 	
+
+### Javadocs
+
+Online Javadocs can be found at: [https://blackrooksoftware.github.io/Small/javadoc/](https://blackrooksoftware.github.io/Small/javadoc/)
+
+
 ### Other
 
 This program and the accompanying materials are made available under the 
