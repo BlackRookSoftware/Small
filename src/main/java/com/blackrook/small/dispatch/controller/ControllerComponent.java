@@ -69,7 +69,7 @@ public class ControllerComponent extends DispatchComponent
 		String packageName = clazz.getPackage().getName();
 		do {
 			try{ Class.forName(packageName); } catch (Throwable t) {}
-			Package p = (Thread.currentThread().getContextClassLoader()).getDefinedPackage(packageName);
+			Package p = Package.getPackage(packageName);
 			if (p != null)
 			{
 				if (p.isAnnotationPresent(FilterChain.class))
