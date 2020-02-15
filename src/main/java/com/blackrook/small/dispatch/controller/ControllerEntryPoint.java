@@ -32,6 +32,7 @@ import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.parser.JSONDriver;
+import com.blackrook.small.parser.XMLDriver;
 import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
@@ -227,7 +228,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 						File outfile = (File)retval;
 						if (outfile == null || !outfile.exists())
 							SmallResponseUtil.sendCode(response, 404, "File not found.");
-						else if (Utils.isEmpty(mimeType))
+						else if (!Utils.isEmpty(mimeType))
 							SmallResponseUtil.sendFileContents(response, mimeType, outfile);
 						else
 							SmallResponseUtil.sendFileContents(response, outfile);
@@ -269,8 +270,21 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 							SmallResponseUtil.sendData(response, mimeType, null, inStream, -1);
 						Utils.close(inStream);
 					}
-					// Object output.
-					else
+					// Object output, XML.
+					else if (SmallUtil.isXML(mimeType))
+					{
+						XMLDriver handler;
+						if ((handler = SmallUtil.getEnvironment(request.getServletContext()).getXMLHandler(returnType)) != null)
+						{
+							try {
+								sendStringData(response, "application/xml; charset=utf-8", fname, handler.toXMLString(retval));
+							} catch (IOException e) {
+								SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
+							}
+						}
+					}
+					// Object output, JSON.
+					else if (SmallUtil.isJSON(mimeType) || Utils.isEmpty(mimeType))
 					{
 						JSONDriver driver;
 						if ((driver = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver()) != null)
@@ -282,7 +296,13 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 							}
 						}
 						else
-							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for " + retval.getClass());
+						{
+							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
+						}
+					}
+					else
+					{
+						SmallResponseUtil.sendCode(response, 500, "No suitable converter found for " + retval.getClass());
 					}
 					break;
 				}

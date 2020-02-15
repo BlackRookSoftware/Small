@@ -58,21 +58,17 @@ public final class SmallRequestUtil
 	 */
 	public static boolean isJSON(HttpServletRequest request)
 	{
-		String type = request.getContentType();
-		return type.startsWith("application/json");
+		return SmallUtil.isJSON(request.getContentType());
 	}
 
 	/**
-	 * Checks if the request is JSON-formatted.
+	 * Checks if the request is XML-formatted.
 	 * @param request the request object.
 	 * @return true if so, false if not.
 	 */
 	public static boolean isXML(HttpServletRequest request)
 	{
-		String type = request.getContentType();
-		return 
-			type.startsWith("application/xml")
-			|| type.startsWith("text/xml");
+		return SmallUtil.isXML(request.getContentType());
 	}
 
 	/**

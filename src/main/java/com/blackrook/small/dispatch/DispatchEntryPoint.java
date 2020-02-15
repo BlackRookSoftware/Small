@@ -28,8 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.blackrook.small.SmallConstants;
-import com.blackrook.small.SmallEnvironment;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.dispatch.Attribute;
 import com.blackrook.small.annotation.dispatch.Model;
@@ -48,6 +46,7 @@ import com.blackrook.small.enums.ScopeType;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.parser.JSONDriver;
 import com.blackrook.small.parser.StringParser;
+import com.blackrook.small.parser.XMLDriver;
 import com.blackrook.small.parser.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
@@ -497,25 +496,54 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				{
 					if (requestMethod == RequestMethod.POST || requestMethod == RequestMethod.PUT)
 					{
-						JSONDriver json = SmallUtil.getApplicationBean(
-							request.getServletContext(), 
-							SmallEnvironment.class, 
-							SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE
-						).getJSONDriver();
-						
-						if (SmallRequestUtil.isJSON(request) && json != null) try (Reader r = request.getReader()) {
-							invokeParams[i] = json.fromJSON(request.getReader(), type);
-						} catch (IOException e) {
-							SmallResponseUtil.sendError(response, 500, "Server could not read request.");
-							throw new SmallFrameworkException(e);
-						} else try {
-							content = content != null ? content : SmallRequestUtil.getContentData(request, pinfo.getType());
-							invokeParams[i] = content;
-						} catch (UnsupportedEncodingException e) {
-							SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
-						} catch (IOException e) {
-							SmallResponseUtil.sendError(response, 500, "Server could not read request.");
-							throw new SmallFrameworkException(e);
+						if (SmallRequestUtil.isJSON(request)) 
+						{ 
+							try (Reader r = request.getReader()) 
+							{
+								JSONDriver json = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver();
+								if (json != null)
+									invokeParams[i] = json.fromJSON(request.getReader(), type);
+								else
+									SmallResponseUtil.sendError(response, 415, "Unsupported Media Type - JSON");
+							} 
+							catch (IOException e) 
+							{
+								SmallResponseUtil.sendError(response, 500, "Server could not read request.");
+								throw new SmallFrameworkException(e);
+							}
+						} 
+						else if (SmallRequestUtil.isXML(request)) 
+						{ 
+							try (Reader r = request.getReader()) 
+							{
+								XMLDriver xml = SmallUtil.getEnvironment(request.getServletContext()).getXMLHandler(type);
+								if (xml != null)
+									invokeParams[i] = xml.fromXML(request.getReader());
+								else
+									SmallResponseUtil.sendError(response, 415, "Unsupported Media Type - XML");
+							} 
+							catch (IOException e) 
+							{
+								SmallResponseUtil.sendError(response, 500, "Server could not read request.");
+								throw new SmallFrameworkException(e);
+							}
+						} 
+						else 
+						{ 
+							try 
+							{
+								content = content != null ? content : SmallRequestUtil.getContentData(request, pinfo.getType());
+								invokeParams[i] = content;
+							} 
+							catch (UnsupportedEncodingException e) 
+							{
+								SmallResponseUtil.sendError(response, 400, "The encoding type for the " + requestMethod.name() + " request is not supported.");
+							} 
+							catch (IOException e) 
+							{
+								SmallResponseUtil.sendError(response, 500, "Server could not read request.");
+								throw new SmallFrameworkException(e);
+							}
 						}
 					}
 					else

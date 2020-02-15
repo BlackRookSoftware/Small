@@ -41,6 +41,7 @@ import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.parser.JSONDriver;
+import com.blackrook.small.parser.XMLDriver;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.util.SmallUtil;
@@ -55,6 +56,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private File tempDir;
 	/** JSON driver. */
 	private JSONDriver jsonDriver;
+	/** XML handler mapping. */
+	private Map<Class<?>, XMLDriver> xmlHandlerMap;
 	
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
@@ -83,6 +86,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	{
 		this.tempDir = null;
 		this.jsonDriver = null;
+		this.xmlHandlerMap = new HashMap<>();
 
 		this.componentsConstructing = new HashSet<>();
 		
@@ -104,6 +108,15 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	public JSONDriver getJSONDriver()
 	{
 		return jsonDriver;
+	}
+
+	/**
+	 * Gets an XML handler for a particular class.
+	 * @return the instantiated driver.
+	 */
+	public XMLDriver getXMLHandler(Class<?> handler)
+	{
+		return (XMLDriver)xmlHandlerMap.get(handler);
 	}
 
 	/**

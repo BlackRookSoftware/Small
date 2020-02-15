@@ -16,7 +16,8 @@ Most servlet container servers will provide implementations of these.
 
 ### Required Java Modules
 
-[java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
+[java.xml](https://docs.oracle.com/en/java/javase/11/docs/api/java.xml/module-summary.html)  
+* [java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
 
 
 ### Introduction

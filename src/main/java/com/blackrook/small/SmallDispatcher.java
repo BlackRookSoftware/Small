@@ -10,9 +10,12 @@ package com.blackrook.small;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -28,6 +31,7 @@ import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.parser.JSONDriver;
 import com.blackrook.small.parser.MultipartParser;
+import com.blackrook.small.parser.XMLDriver;
 import com.blackrook.small.parser.multipart.MultipartFormDataParser;
 import com.blackrook.small.parser.multipart.MultipartParserException;
 import com.blackrook.small.parser.multipart.Part;
@@ -55,6 +59,8 @@ public final class SmallDispatcher extends HttpServlet
     private static final String METHOD_PUT = "PUT";
     private static final String METHOD_PATCH = "PATCH";
     private static final String METHOD_TRACE = "TRACE";
+    
+    private static final String[] NO_ROOT_PACKAGES = new String[0];
 	
 	private SmallEnvironment applicationEnvironment;
 	
@@ -68,25 +74,90 @@ public final class SmallDispatcher extends HttpServlet
 	{
 		super.init();
 		ServletContext servletContext = getServletContext();
-		ServerContainer serverContainer = (ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer");
-		
-		String packages = getInitParameter(SmallConstants.INIT_PARAM_APPLICATION_PACKAGE_ROOTS);
-		if (Utils.isEmpty(packages))
-			throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
-
-		String[] controllerRootPackages = packages.split("\\,\\s*");
-
+		if ((applicationEnvironment = SmallUtil.getEnvironment(servletContext)) == null)
+		{
+			applicationEnvironment = createEnvironment(servletContext, (ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer"));
+			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, applicationEnvironment);
+		}
+	}
+	
+	private SmallEnvironment createEnvironment(ServletContext servletContext, ServerContainer serverContainer)
+	{
 		JSONDriver jsonDriver = null;
-		String jsonDriverClassName = getInitParameter(SmallConstants.INIT_PARAM_APPLICATION_JSON_DRIVER);
-		if (!Utils.isEmpty(jsonDriverClassName)) try {
-			Class<?> jsonDriverClass = Class.forName(jsonDriverClassName, true, ClassLoader.getSystemClassLoader());
-			jsonDriver = (JSONDriver)Utils.create(jsonDriverClass);  
-		} catch (ClassCastException e) {
-			throw new SmallFrameworkSetupException("The provided class, "+jsonDriverClassName+" is not an implementation of JSONDriver.");
-		} catch (ClassNotFoundException e) {
-			throw new SmallFrameworkSetupException("The provided class, "+jsonDriverClassName+" cannot be found.");
+		String[] controllerRootPackages = NO_ROOT_PACKAGES;
+		Set<String> xmlDriverKeys = new HashSet<>(); 
+		Map<String, Class<?>> xmlClassMap = new HashMap<>(); 
+		Map<String, XMLDriver> xmlClassDriverMap = new HashMap<>(); 
+		
+		Enumeration<String> initParamEnum = getInitParameterNames();
+		while (initParamEnum.hasMoreElements())
+		{
+			String initParamName = initParamEnum.nextElement();
+			if (initParamName.equals(SmallConstants.INIT_PARAM_APPLICATION_PACKAGE_ROOTS))
+			{
+				String packages = getInitParameter(initParamName);
+				if (Utils.isEmpty(packages))
+					throw new SmallFrameworkSetupException("The root package init parameter was not specified.");
+				controllerRootPackages = packages.split("\\,\\s*");
+			}
+			else if (initParamName.equals(SmallConstants.INIT_PARAM_APPLICATION_JSON_DRIVER))
+			{
+				String jsonDriverClassName = getInitParameter(initParamName);
+				if (!Utils.isEmpty(jsonDriverClassName)) try {
+					Class<?> jsonDriverClass = Class.forName(jsonDriverClassName, true, ClassLoader.getSystemClassLoader());
+					jsonDriver = (JSONDriver)Utils.create(jsonDriverClass);  
+				} catch (ClassCastException e) {
+					throw new SmallFrameworkSetupException("The provided class, "+jsonDriverClassName+" is not an implementation of JSONDriver.");
+				} catch (ClassNotFoundException e) {
+					throw new SmallFrameworkSetupException("The provided class, "+jsonDriverClassName+" cannot be found.");
+				}
+			}
+			else if (initParamName.startsWith(SmallConstants.INIT_PARAM_APPLICATION_XML_HANDLER_CLASS_PREFIX))
+			{
+				String key = getInitParameter(initParamName.substring(SmallConstants.INIT_PARAM_APPLICATION_XML_HANDLER_CLASS_PREFIX.length()));
+				xmlDriverKeys.add(key);
+				
+				String classHandled = getInitParameter(initParamName);
+				try {
+					xmlClassMap.put(key, Class.forName(classHandled, true, ClassLoader.getSystemClassLoader()));
+				} catch (ClassCastException e) {
+					throw new SmallFrameworkSetupException("The provided class, "+classHandled+" is not an implementation of JSONDriver.");
+				} catch (ClassNotFoundException e) {
+					throw new SmallFrameworkSetupException("The provided class, "+classHandled+" cannot be found.");
+				}
+			}
+			else if (initParamName.startsWith(SmallConstants.INIT_PARAM_APPLICATION_XML_HANDLER_DRIVER_PREFIX))
+			{
+				String key = getInitParameter(initParamName.substring(SmallConstants.INIT_PARAM_APPLICATION_XML_HANDLER_DRIVER_PREFIX.length()));
+				xmlDriverKeys.add(key);
+				
+				String driverClass = getInitParameter(initParamName);
+				try {
+					Class<?> xmlDriverClass = Class.forName(driverClass, true, ClassLoader.getSystemClassLoader());
+					XMLDriver xmlDriver = (XMLDriver)Utils.create(xmlDriverClass);  
+					xmlClassDriverMap.put(key, xmlDriver);
+				} catch (ClassCastException e) {
+					throw new SmallFrameworkSetupException("The provided class, "+driverClass+" is not an implementation of XMLDriver.");
+				} catch (ClassNotFoundException e) {
+					throw new SmallFrameworkSetupException("The provided class, "+driverClass+" cannot be found.");
+				}
+			}
 		}
 
+		for (String key : xmlDriverKeys)
+		{
+			Class<?> xmlclass = xmlClassMap.get(key);
+			XMLDriver xmldriver = xmlClassDriverMap.get(key);
+			
+			if (xmlclass == null ^ xmldriver == null)
+			{
+				if (xmlclass == null)
+					throw new SmallFrameworkSetupException("XMLDriver key " + key + " does not have a matching class.");
+				if (xmldriver == null)
+					throw new SmallFrameworkSetupException("XML class key " + key + " does not have a matching XMLDriver implementation.");
+			}
+		}
+		
 		File tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir");
 		if (tempDir == null)
 			tempDir = new File(System.getProperty("java.io.tmpdir"));
@@ -94,12 +165,9 @@ public final class SmallDispatcher extends HttpServlet
 		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
 			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
 	
-		if ((applicationEnvironment = SmallUtil.getEnvironment(servletContext)) == null)
-		{
-			applicationEnvironment = new SmallEnvironment();
-			applicationEnvironment.init(serverContainer, controllerRootPackages, jsonDriver, tempDir);			
-			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, applicationEnvironment);
-		}
+		SmallEnvironment env = new SmallEnvironment();
+		env.init(serverContainer, controllerRootPackages, jsonDriver, tempDir);			
+		return env;
 	}
 
 	@Override

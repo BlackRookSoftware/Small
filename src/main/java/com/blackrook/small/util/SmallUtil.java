@@ -773,6 +773,29 @@ public final class SmallUtil
 	}
 	
 	/**
+	 * Checks if a MIME-Type is JSON-formatted.
+	 * @param request the request object.
+	 * @return true if so, false if not.
+	 */
+	public static boolean isJSON(String type)
+	{
+		return type != null && type.startsWith("application/json");
+	}
+
+	/**
+	 * Checks if a MIME-Type is XML-formatted.
+	 * @param request the request object.
+	 * @return true if so, false if not.
+	 */
+	public static boolean isXML(String type)
+	{
+		return type != null && (
+			type.startsWith("application/xml")
+			|| type.startsWith("text/xml")
+		);
+	}
+
+	/**
 	 * Converts a String to an HTML-safe string.
 	 * @param input the input string to convert.
 	 * @return the converted string.
