@@ -112,11 +112,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 	/**
 	 * Gets an XML handler for a particular class.
+	 * @param clazz the class to get the XML driver for. 
 	 * @return the instantiated driver.
 	 */
-	public XMLDriver getXMLHandler(Class<?> handler)
+	public XMLDriver getXMLHandler(Class<?> clazz)
 	{
-		return (XMLDriver)xmlHandlerMap.get(handler);
+		return (XMLDriver)xmlHandlerMap.get(clazz);
 	}
 
 	/**

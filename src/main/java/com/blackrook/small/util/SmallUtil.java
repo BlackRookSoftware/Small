@@ -774,7 +774,7 @@ public final class SmallUtil
 	
 	/**
 	 * Checks if a MIME-Type is JSON-formatted.
-	 * @param request the request object.
+	 * @param type the content type.
 	 * @return true if so, false if not.
 	 */
 	public static boolean isJSON(String type)
@@ -784,7 +784,7 @@ public final class SmallUtil
 
 	/**
 	 * Checks if a MIME-Type is XML-formatted.
-	 * @param request the request object.
+	 * @param type the content type.
 	 * @return true if so, false if not.
 	 */
 	public static boolean isXML(String type)
