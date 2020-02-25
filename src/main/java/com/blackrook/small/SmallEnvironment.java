@@ -143,12 +143,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Initializes the environment.
 	 * @param servletContext the servler context to use.
 	 */
-	void init(ServerContainer container, String[] controllerRootPackages, JSONDriver jsonDriver, File tempDir)
+	void init(ServerContainer websocketServerContainer, String[] controllerRootPackages, JSONDriver jsonDriver, File tempDir)
 	{
 		this.jsonDriver = jsonDriver;
 		this.tempDir = tempDir;
-		initComponents(controllerRootPackages, container, ClassLoader.getSystemClassLoader());
-		initComponents(controllerRootPackages, container, Thread.currentThread().getContextClassLoader());
+		initComponents(controllerRootPackages, websocketServerContainer, ClassLoader.getSystemClassLoader());
+		initComponents(controllerRootPackages, websocketServerContainer, Thread.currentThread().getContextClassLoader());
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
 			entry.getValue().invokeAfterInitializeMethods();
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : controllerComponents.entrySet())
@@ -201,7 +201,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Init visible controllers using a class loader.
 	 * @param loader the {@link ClassLoader} to look in.
 	 */
-	private void initComponents(String[] packageNames, ServerContainer serverContainer, ClassLoader loader)
+	private void initComponents(String[] packageNames, ServerContainer websocketServerContainer, ClassLoader loader)
 	{
 		for (String packageName : packageNames) 
 			for (String className : Utils.getClasses(packageName, loader))
@@ -269,26 +269,26 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				}
 				else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
 				{
-					if (serverContainer == null)
+					if (websocketServerContainer == null)
 						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
 					ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
 					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
 					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, this);
 					try {
-						serverContainer.addEndpoint(config);
+						websocketServerContainer.addEndpoint(config);
 					} catch (DeploymentException e) {
 						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"!", e);
 					}
 				}
 				else if (Endpoint.class.isAssignableFrom(componentClass))
 				{
-					if (serverContainer == null)
+					if (websocketServerContainer == null)
 						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
 					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, "/" + componentClass.getName()).build();
 					try {
-						serverContainer.addEndpoint(config);
+						websocketServerContainer.addEndpoint(config);
 					} catch (DeploymentException e) {
 						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"!", e);
 					}

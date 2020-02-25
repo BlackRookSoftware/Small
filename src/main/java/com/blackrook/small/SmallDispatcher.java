@@ -81,7 +81,7 @@ public final class SmallDispatcher extends HttpServlet
 		}
 	}
 	
-	private SmallEnvironment createEnvironment(ServletContext servletContext, ServerContainer serverContainer)
+	private SmallEnvironment createEnvironment(ServletContext servletContext, ServerContainer websocketServerContainer)
 	{
 		JSONDriver jsonDriver = null;
 		String[] controllerRootPackages = NO_ROOT_PACKAGES;
@@ -166,7 +166,7 @@ public final class SmallDispatcher extends HttpServlet
 			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
 	
 		SmallEnvironment env = new SmallEnvironment();
-		env.init(serverContainer, controllerRootPackages, jsonDriver, tempDir);			
+		env.init(websocketServerContainer, controllerRootPackages, jsonDriver, tempDir);			
 		return env;
 	}
 
@@ -186,7 +186,7 @@ public final class SmallDispatcher extends HttpServlet
         else if (method.equals(METHOD_POST))
             doPost(request, response);
         else if (method.equals(METHOD_PUT))
-    		callControllerEntry(request, response, RequestMethod.PUT, null);
+            doPut(request, response);
         else if (method.equals(METHOD_DELETE))
     		callControllerEntry(request, response, RequestMethod.DELETE, null);
         else if (method.equals(METHOD_PATCH))
@@ -205,47 +205,57 @@ public final class SmallDispatcher extends HttpServlet
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		if (MultipartFormDataParser.isMultipart(request))
-		{
-			MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
-			if (parser == null)
-				SmallResponseUtil.sendError(response, 400, "The multipart POST request type is not supported.");
-			else
-			{
-				try {
-					parser.parse(request, applicationEnvironment.getTemporaryDirectory());
-				} catch (UnsupportedEncodingException e) {
-					SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
-				} catch (MultipartParserException e) {
-					SmallResponseUtil.sendError(response, 500, "The server could not parse the multiform request. " + e.getMessage());
-				} catch (IOException e) {
-					SmallResponseUtil.sendError(response, 500, "The server could not read the request. " + e.getMessage());
-				}
-				
-				List<Part> parts = parser.getPartList();
-				
-				HashDequeMap<String, Part> partMap = new HashDequeMap<>();
-				for (Part part : parts)
-					partMap.addLast(part.getName(), part);
-				
-				try {
-					callControllerEntry(request, response, RequestMethod.POST, partMap);
-				} finally {
-					// clean up files.
-					for (Part part : parts)
-						if (part.isFile())
-						{
-							File tempFile = part.getFile();
-							tempFile.delete();
-						}
-				}
-			}
-		}
+			doMultipart(RequestMethod.POST, request, response);
+		else if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
+			callControllerEntry(request, response, RequestMethod.PATCH, null);
+		else
+			callControllerEntry(request, response, RequestMethod.POST, null);
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest request, HttpServletResponse response)
+	{
+		if (MultipartFormDataParser.isMultipart(request))
+			doMultipart(RequestMethod.PUT, request, response);
+		else if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
+			callControllerEntry(request, response, RequestMethod.PATCH, null);
+		else
+			callControllerEntry(request, response, RequestMethod.PUT, null);
+	}
+
+	private void doMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response)
+	{
+		MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
+		if (parser == null)
+			SmallResponseUtil.sendError(response, 400, "The multipart POST request type is not supported.");
 		else
 		{
-			if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
-				callControllerEntry(request, response, RequestMethod.PATCH, null);
-			else
-				callControllerEntry(request, response, RequestMethod.POST, null);
+			try {
+				parser.parse(request, applicationEnvironment.getTemporaryDirectory());
+			} catch (UnsupportedEncodingException e) {
+				SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
+			} catch (MultipartParserException e) {
+				SmallResponseUtil.sendError(response, 500, "The server could not parse the multiform request. " + e.getMessage());
+			} catch (IOException e) {
+				SmallResponseUtil.sendError(response, 500, "The server could not read the request. " + e.getMessage());
+			}
+			
+			List<Part> parts = parser.getPartList();
+			
+			HashDequeMap<String, Part> partMap = new HashDequeMap<>();
+			for (Part part : parts)
+				partMap.addLast(part.getName(), part);
+			
+			try {
+				callControllerEntry(request, response, method, partMap);
+			} finally {
+				// clean up files.
+				for (Part part : parts) if (part.isFile())
+				{
+					File tempFile = part.getFile();
+					tempFile.delete();
+				}
+			}
 		}
 	}
 	
