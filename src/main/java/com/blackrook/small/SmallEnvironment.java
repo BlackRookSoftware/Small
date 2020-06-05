@@ -56,8 +56,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private File tempDir;
 	/** JSON driver. */
 	private JSONDriver jsonDriver;
-	/** XML handler mapping. */
-	private Map<Class<?>, XMLDriver> xmlHandlerMap;
+	/** XML driver. */
+	private XMLDriver xmlDriver;
 	
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
@@ -86,7 +86,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	{
 		this.tempDir = null;
 		this.jsonDriver = null;
-		this.xmlHandlerMap = new HashMap<>();
+		this.xmlDriver = null;
 
 		this.componentsConstructing = new HashSet<>();
 		
@@ -111,13 +111,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
-	 * Gets an XML handler for a particular class.
-	 * @param clazz the class to get the XML driver for. 
+	 * Gets this application's XML converter driver.
 	 * @return the instantiated driver.
 	 */
-	public XMLDriver getXMLHandler(Class<?> clazz)
+	public XMLDriver getXMLDriver()
 	{
-		return (XMLDriver)xmlHandlerMap.get(clazz);
+		return xmlDriver;
 	}
 
 	/**
@@ -143,10 +142,11 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Initializes the environment.
 	 * @param servletContext the servler context to use.
 	 */
-	void init(ServerContainer websocketServerContainer, String[] controllerRootPackages, JSONDriver jsonDriver, File tempDir)
+	void init(ServerContainer websocketServerContainer, String[] controllerRootPackages, File tempDir)
 	{
-		this.jsonDriver = jsonDriver;
 		this.tempDir = tempDir;
+		this.jsonDriver = null;
+		this.xmlDriver = null;
 		initComponents(controllerRootPackages, websocketServerContainer, ClassLoader.getSystemClassLoader());
 		initComponents(controllerRootPackages, websocketServerContainer, Thread.currentThread().getContextClassLoader());
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
@@ -164,6 +164,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	{
 		tempDir = null;
 		jsonDriver = null;
+		xmlDriver = null;
 		componentsConstructing.clear();
 		controllerEntries.clear();
 		componentInstances.clear();
@@ -226,7 +227,13 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					
 					if (HttpSessionAttributeListener.class.isAssignableFrom(componentClass))
 						sessionAttributeListeners.add((HttpSessionAttributeListener)component);
-					
+
+					if (JSONDriver.class.isAssignableFrom(componentClass))
+						jsonDriver = (JSONDriver)component;
+
+					if (XMLDriver.class.isAssignableFrom(componentClass))
+						xmlDriver = (XMLDriver)component;
+
 					if (componentClass.isAnnotationPresent(Controller.class))
 					{
 						if (componentClass.isAnnotationPresent(Filter.class))

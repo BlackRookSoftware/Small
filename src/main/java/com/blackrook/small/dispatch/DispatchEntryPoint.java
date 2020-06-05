@@ -516,9 +516,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 						{ 
 							try (Reader r = request.getReader()) 
 							{
-								XMLDriver xml = SmallUtil.getEnvironment(request.getServletContext()).getXMLHandler(type);
+								XMLDriver xml = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver();
 								if (xml != null)
-									invokeParams[i] = xml.fromXML(request.getReader());
+									invokeParams[i] = xml.fromXML(request.getReader(), type);
 								else
 									SmallResponseUtil.sendError(response, 415, "Unsupported Media Type - XML");
 							} 

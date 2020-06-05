@@ -274,7 +274,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					else if (SmallUtil.isXML(mimeType))
 					{
 						XMLDriver handler;
-						if ((handler = SmallUtil.getEnvironment(request.getServletContext()).getXMLHandler(returnType)) != null)
+						if ((handler = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver()) != null)
 						{
 							try {
 								sendStringData(response, "application/xml; charset=utf-8", fname, handler.toXMLString(retval));

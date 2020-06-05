@@ -22,11 +22,13 @@ public interface XMLDriver
 {
 	/**
 	 * Called when an object needs to be converted to an object from XML.
+	 * @param <T> the return type.
 	 * @param reader the provided reader to read XML from.
+	 * @param type the incoming type.
 	 * @return the converted object.
 	 * @throws IOException if an error occurs during the read.
 	 */
-	Object fromXML(Reader reader) throws IOException;
+	<T> T fromXML(Reader reader, Class<T> type) throws IOException;
 
 	/**
 	 * Called when an object needs to be converted to XML from an object.
@@ -38,13 +40,15 @@ public interface XMLDriver
 
 	/**
 	 * Converts an object to a XML string from an object.
-	 * @param json the input XML string.
+	 * @param <T> the return type.
+	 * @param xml the input XML string.
+	 * @param type the incoming type.
 	 * @return the resultant XML string.
 	 * @throws IOException if an error occurs during the write.
 	 */
-	default Object fromXMLString(String json) throws IOException
+	default <T> T fromXMLString(String xml, Class<T> type) throws IOException
 	{
-		return fromXML(new StringReader(json));
+		return fromXML(new StringReader(xml), type);
 	}
 	
 	/**
