@@ -23,7 +23,6 @@ public interface XMLDriver
 	/**
 	 * Called when an object needs to be converted to an object from XML.
 	 * @param reader the provided reader to read XML from.
-	 * @param type the target object type.
 	 * @return the converted object.
 	 * @throws IOException if an error occurs during the read.
 	 */
@@ -40,7 +39,6 @@ public interface XMLDriver
 	/**
 	 * Converts an object to a XML string from an object.
 	 * @param json the input XML string.
-	 * @param type the type to convert to.
 	 * @return the resultant XML string.
 	 * @throws IOException if an error occurs during the write.
 	 */
