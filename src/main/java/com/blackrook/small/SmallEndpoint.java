@@ -22,7 +22,7 @@ import javax.websocket.server.ServerEndpoint;
 
 import com.blackrook.small.annotation.Component;
 import com.blackrook.small.exception.SmallFrameworkException;
-import com.blackrook.small.parser.JSONDriver;
+import com.blackrook.small.roles.JSONDriver;
 
 /**
  * A base Endpoint that contains useful stuff for instantiated endpoints.
@@ -56,7 +56,7 @@ public abstract class SmallEndpoint extends Endpoint
 	public void onOpen(Session session, EndpointConfig config)
 	{
 		this.session = session;
-		this.environment = (SmallEnvironment)config.getUserProperties().get(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE);
+		this.environment = (SmallEnvironment)config.getUserProperties().get(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
 	}
 
 	/**

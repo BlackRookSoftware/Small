@@ -5,7 +5,7 @@
  * distribution, and is available at 
  * http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
  ******************************************************************************/
-package com.blackrook.small.parser;
+package com.blackrook.small.roles;
 
 import java.io.IOException;
 import java.io.Reader;

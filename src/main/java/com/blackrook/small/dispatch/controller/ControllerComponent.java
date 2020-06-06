@@ -94,6 +94,9 @@ public class ControllerComponent extends DispatchComponent
 		}
 		
 		this.filterChain = Utils.joinArrays(packageFilters, controllerFilters);
+		
+		// TODO: Scan methods for entry points.
+		
 	}
 
 	/**

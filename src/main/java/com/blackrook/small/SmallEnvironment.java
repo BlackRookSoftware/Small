@@ -40,8 +40,8 @@ import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.parser.JSONDriver;
-import com.blackrook.small.parser.XMLDriver;
+import com.blackrook.small.roles.JSONDriver;
+import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.util.SmallUtil;
@@ -147,8 +147,11 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.tempDir = tempDir;
 		this.jsonDriver = null;
 		this.xmlDriver = null;
-		initComponents(controllerRootPackages, websocketServerContainer, ClassLoader.getSystemClassLoader());
-		initComponents(controllerRootPackages, websocketServerContainer, Thread.currentThread().getContextClassLoader());
+		if (!Utils.isEmpty(controllerRootPackages))
+		{
+			initComponents(controllerRootPackages, websocketServerContainer, ClassLoader.getSystemClassLoader());
+			initComponents(controllerRootPackages, websocketServerContainer, Thread.currentThread().getContextClassLoader());
+		}
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
 			entry.getValue().invokeAfterInitializeMethods();
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : controllerComponents.entrySet())
@@ -245,10 +248,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						if (controllerComponents.containsKey(componentClass))
 							continue;
 						
-						ControllerComponent profile;
-						controllerComponents.put(componentClass, profile = new ControllerComponent(component));
+						ControllerComponent controller;
+						controllerComponents.put(componentClass, controller = new ControllerComponent(component));
 						String path = SmallUtil.trimSlashes(controllerAnnotation.value());
-						for (ControllerEntryPoint entryPoint : profile.getEntryMethods())
+						for (ControllerEntryPoint entryPoint : controller.getEntryMethods())
 						{
 							String uri = path + '/' + SmallUtil.trimSlashes(entryPoint.getPath());
 							for (RequestMethod rm : entryPoint.getRequestMethods())
@@ -281,7 +284,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					
 					ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
 					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
-					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, this);
+					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
 					try {
 						websocketServerContainer.addEndpoint(config);
 					} catch (DeploymentException e) {

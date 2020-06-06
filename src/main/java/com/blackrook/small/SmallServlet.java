@@ -42,7 +42,7 @@ import com.blackrook.small.util.SmallUtil;
  * Attaches an attribute to the application scope for the component system.
  * @author Matthew Tropiano
  */
-public final class SmallDispatcher extends HttpServlet
+public final class SmallServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 438331119650683748L;
 	
@@ -55,17 +55,14 @@ public final class SmallDispatcher extends HttpServlet
     private static final String METHOD_PATCH = "PATCH";
     private static final String METHOD_TRACE = "TRACE";
     
-    private String[] applicationPackageRoots;
 	private SmallEnvironment applicationEnvironment;
 	
 	/**
 	 * Creates the dispatcher servlet. 
-	 * @param applicationPackageRoots the package roots to scan for the application.
 	 */
-	public SmallDispatcher(String... applicationPackageRoots)
+	public SmallServlet()
 	{
 		this.applicationEnvironment = null;
-		this.applicationPackageRoots = applicationPackageRoots;
 	}
 	
 	@Override
@@ -76,24 +73,10 @@ public final class SmallDispatcher extends HttpServlet
 		if ((applicationEnvironment = SmallUtil.getEnvironment(servletContext)) == null)
 		{
 			applicationEnvironment = createEnvironment(servletContext);
-			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE, applicationEnvironment);
+			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, applicationEnvironment);
 		}
 	}
 	
-	private SmallEnvironment createEnvironment(ServletContext servletContext)
-	{
-		File tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir");
-		if (tempDir == null)
-			tempDir = new File(System.getProperty("java.io.tmpdir"));
-	
-		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
-			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
-	
-		SmallEnvironment env = new SmallEnvironment();
-		env.init((ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer"), applicationPackageRoots, tempDir);			
-		return env;
-	}
-
 	@Override
 	public void destroy()
 	{
@@ -108,9 +91,9 @@ public final class SmallDispatcher extends HttpServlet
         if (method.equals(METHOD_GET))
     		callControllerEntry(request, response, RequestMethod.GET, null);
         else if (method.equals(METHOD_POST))
-            doPost(request, response);
+        	callPost(request, response);
         else if (method.equals(METHOD_PUT))
-            doPut(request, response);
+        	callPut(request, response);
         else if (method.equals(METHOD_DELETE))
     		callControllerEntry(request, response, RequestMethod.DELETE, null);
         else if (method.equals(METHOD_PATCH))
@@ -125,29 +108,43 @@ public final class SmallDispatcher extends HttpServlet
 			SmallResponseUtil.sendError(response, 501, "The server cannot process this request method.");
     }
     
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+	private SmallEnvironment createEnvironment(ServletContext servletContext)
+	{
+		SmallConfiguration smallConfig = (SmallConfiguration)servletContext.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
+		
+		File tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir");
+		if (tempDir == null)
+			tempDir = new File(System.getProperty("java.io.tmpdir"));
+	
+		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
+			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
+	
+		SmallEnvironment env = new SmallEnvironment();
+		env.init((ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer"), smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
+		return env;
+	}
+
+	private void callPost(HttpServletRequest request, HttpServletResponse response)
 	{
 		if (MultipartFormDataParser.isMultipart(request))
-			doMultipart(RequestMethod.POST, request, response);
+			callMultipart(RequestMethod.POST, request, response);
 		else if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.POST, null);
 	}
 
-	@Override
-	protected void doPut(HttpServletRequest request, HttpServletResponse response)
+	private void callPut(HttpServletRequest request, HttpServletResponse response)
 	{
 		if (MultipartFormDataParser.isMultipart(request))
-			doMultipart(RequestMethod.PUT, request, response);
+			callMultipart(RequestMethod.PUT, request, response);
 		else if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.PUT, null);
 	}
 
-	private void doMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response)
+	private void callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response)
 	{
 		MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
 		if (parser == null)

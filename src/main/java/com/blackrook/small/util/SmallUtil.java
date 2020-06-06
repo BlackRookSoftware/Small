@@ -988,7 +988,7 @@ public final class SmallUtil
 	 */
 	public static SmallEnvironment getEnvironment(ServletContext context)
 	{
-		return (SmallEnvironment)context.getAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE);
+		return (SmallEnvironment)context.getAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
 	}
 
 	/**

@@ -13,5 +13,6 @@ package com.blackrook.small;
  */
 public interface SmallConstants
 {
-	String SMALL_APPLICATION_ENVIRONMENT_ARTTRIBUTE = "small.application.environment.class";
+	String SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE = "small.application.environment";
+	String SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE = "small.application.configuration";
 }
