@@ -40,7 +40,9 @@ import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
+import com.blackrook.small.roles.DefaultMIMETypeDriver;
 import com.blackrook.small.roles.JSONDriver;
+import com.blackrook.small.roles.MIMETypeDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
@@ -58,6 +60,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private JSONDriver jsonDriver;
 	/** XML driver. */
 	private XMLDriver xmlDriver;
+	/** MIME-Type driver. */
+	private MIMETypeDriver mimeTypeDriver;
 	
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
@@ -87,6 +91,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.tempDir = null;
 		this.jsonDriver = null;
 		this.xmlDriver = null;
+		this.mimeTypeDriver = new DefaultMIMETypeDriver();
 
 		this.componentsConstructing = new HashSet<>();
 		
@@ -103,7 +108,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	
 	/**
 	 * Gets this application's JSON converter driver.
-	 * @return the instantiated driver.
+	 * @return the supplied driver, or null if none found.
 	 */
 	public JSONDriver getJSONDriver()
 	{
@@ -112,11 +117,20 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 	/**
 	 * Gets this application's XML converter driver.
-	 * @return the instantiated driver.
+	 * @return the supplied driver, or null if none found.
 	 */
 	public XMLDriver getXMLDriver()
 	{
 		return xmlDriver;
+	}
+	
+	/**
+	 * Gets this application's MIME-Type resolver driver.
+	 * @return the instantiated driver.
+	 */
+	public MIMETypeDriver getMIMETypeDriver()
+	{
+		return mimeTypeDriver;
 	}
 
 	/**
@@ -237,6 +251,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					if (XMLDriver.class.isAssignableFrom(componentClass))
 						xmlDriver = (XMLDriver)componentInstance;
 
+					if (MIMETypeDriver.class.isAssignableFrom(componentClass))
+						mimeTypeDriver = (MIMETypeDriver)componentInstance;
 					
 					SmallComponent component;
 					if (componentClass.isAnnotationPresent(Controller.class))

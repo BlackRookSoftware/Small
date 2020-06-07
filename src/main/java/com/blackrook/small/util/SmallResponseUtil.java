@@ -28,20 +28,6 @@ public final class SmallResponseUtil
 
 	/**
 	 * Sends a file to the client.
-	 * Via this method, most browsers will be forced to download the file in
-	 * question, as this adds "Content-Disposition" headers to the response.
-	 * The file's MIME type is guessed by its extension.
-	 * The file's name becomes the filename in the content's "disposition".
-	 * @param response servlet response object.
-	 * @param file the file content to send.
-	 */
-	public static void sendFile(HttpServletResponse response, File file)
-	{
-		sendFileContents(response, SmallUtil.getMIMEType(file.getName()), file, file.getName());
-	}
-
-	/**
-	 * Sends a file to the client.
 	 * The file's name becomes the filename in the content's "disposition".
 	 * Via this method, most browsers will be forced to download the file in
 	 * question separately, as this adds "Content-Disposition" headers to the response.
@@ -52,19 +38,6 @@ public final class SmallResponseUtil
 	public static void sendFile(HttpServletResponse response, String mimeType, File file)
 	{
 		sendFileContents(response, mimeType, file, file.getName());
-	}
-
-	/**
-	 * Sends the contents of a file to the client.
-	 * Via this method, most browsers will attempt to open the file in-browser,
-	 * as this has no "Content-Disposition" attached to it.
-	 * The file's MIME type is guessed by its extension.
-	 * @param response servlet response object.
-	 * @param file the file content to send.
-	 */
-	public static void sendFileContents(HttpServletResponse response, File file)
-	{
-		sendFileContents(response, SmallUtil.getMIMEType(file.getName()), file, null);
 	}
 
 	/**

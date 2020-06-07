@@ -231,7 +231,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 						else if (!Utils.isEmpty(mimeType))
 							SmallResponseUtil.sendFileContents(response, mimeType, outfile);
 						else
-							SmallResponseUtil.sendFileContents(response, outfile);
+							SmallResponseUtil.sendFileContents(response, SmallUtil.getMIMEType(request.getServletContext(), outfile.getName()), outfile);
 					}
 					// StringBuffer data output.
 					else if (StringBuffer.class.isAssignableFrom(returnType))
