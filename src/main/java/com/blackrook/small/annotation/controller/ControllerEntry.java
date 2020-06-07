@@ -15,7 +15,6 @@ import java.lang.annotation.Target;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.annotation.Controller;
-import com.blackrook.small.enums.RequestMethod;
 
 /**
  * Public methods with this annotation in {@link Controller}-annotated objects are
@@ -37,8 +36,5 @@ public @interface ControllerEntry
 	 * @return the path.
 	 */
 	String value() default "";
-	
-	/** @return the request methods that this entry point accepts. */
-	RequestMethod[] method() default { RequestMethod.GET, RequestMethod.POST };
 	
 }

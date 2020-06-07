@@ -57,8 +57,9 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
     private static final String METHOD_PUT = "PUT";
     private static final String METHOD_PATCH = "PATCH";
     private static final String METHOD_TRACE = "TRACE";
-    
-    /** The application environment. */
+    private static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
+
+	/** The application environment. */
 	private SmallEnvironment environment;
 	
 	/**
@@ -133,14 +134,53 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
         else if (method.equals(METHOD_PATCH))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
         else if (method.equals(METHOD_HEAD))
-    		callControllerEntry(request, response, RequestMethod.HEAD, null);
-        else if (method.equals(METHOD_OPTIONS))
-    		callControllerEntry(request, response, RequestMethod.OPTIONS, null);
-        else if (method.equals(METHOD_TRACE))
+        	callHead(request, response);
+        else if (SmallUtil.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
+        	callOptions(request, response);
+        else if (SmallUtil.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
     		doTrace(request, response);
         else
-			SmallResponseUtil.sendError(response, 501, "The server cannot process this request method.");
+			SmallResponseUtil.sendError(response, 405, "Method is not allowed.");
     }
+
+	private void callHead(HttpServletRequest request, HttpServletResponse response)
+	{
+		// HEAD is a GET with no body.
+		callControllerEntry(request, response, RequestMethod.GET, null);
+		response.setContentLength(0);
+	}
+
+	private void callOptions(HttpServletRequest request, HttpServletResponse response)
+	{
+		// OPTIONS sends back a header with allowed methods.
+		StringBuilder sb = new StringBuilder();
+		String path = SmallUtil.trimSlashes(SmallRequestUtil.getPath(request));
+		SmallConfiguration config = SmallUtil.getConfiguration(getServletContext());
+		
+		Result<ControllerEntryPoint> result;
+		
+		if ((result = environment.getControllerEntryPoint(RequestMethod.GET, path)) != null && result.hasValue())
+		{
+			sb.append(sb.length() > 0 ? ", " : "").append("GET");
+			sb.append(sb.length() > 0 ? ", " : "").append("HEAD");
+		}
+		if ((result = environment.getControllerEntryPoint(RequestMethod.POST, path)) != null && result.hasValue())
+			sb.append(sb.length() > 0 ? ", " : "").append("POST");
+		if ((result = environment.getControllerEntryPoint(RequestMethod.PUT, path)) != null && result.hasValue())
+			sb.append(sb.length() > 0 ? ", " : "").append("PUT");
+		if ((result = environment.getControllerEntryPoint(RequestMethod.PATCH, path)) != null && result.hasValue())
+			sb.append(sb.length() > 0 ? ", " : "").append("PATCH");
+		if ((result = environment.getControllerEntryPoint(RequestMethod.DELETE, path)) != null && result.hasValue())
+			sb.append(sb.length() > 0 ? ", " : "").append("DELETE");
+		
+		if (config.allowOptions())
+			sb.append(sb.length() > 0 ? ", " : "").append("OPTIONS");
+		if (config.allowTrace())
+			sb.append(sb.length() > 0 ? ", " : "").append("TRACE");
+			
+		if (sb.length() > 0)
+			response.setHeader("Allow", sb.toString());
+	}
     
 	private SmallEnvironment createEnvironment(ServletContext servletContext)
 	{
@@ -162,7 +202,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	{
 		if (MultipartFormDataParser.isMultipart(request))
 			callMultipart(RequestMethod.POST, request, response);
-		else if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
+		else if ("PATCH".equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.POST, null);
@@ -172,7 +212,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	{
 		if (MultipartFormDataParser.isMultipart(request))
 			callMultipart(RequestMethod.PUT, request, response);
-		else if (request.getHeader("X-HTTP-Method-Override").equalsIgnoreCase("PATCH"))
+		else if ("PATCH".equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.PUT, null);

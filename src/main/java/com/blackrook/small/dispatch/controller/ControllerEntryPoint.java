@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
@@ -23,6 +24,7 @@ import com.blackrook.small.annotation.controller.Attachment;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.controller.ControllerEntry;
 import com.blackrook.small.annotation.controller.FilterChain;
+import com.blackrook.small.annotation.controller.HTTPMethod;
 import com.blackrook.small.annotation.controller.NoCache;
 import com.blackrook.small.annotation.controller.View;
 import com.blackrook.small.dispatch.DispatchEntryPoint;
@@ -78,10 +80,23 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 
 		ControllerEntry controllerEntry = method.getAnnotation(ControllerEntry.class);
 		
-		if (Utils.isEmpty(controllerEntry.method()))
+		LinkedList<RequestMethod> requestMethodsFound = new LinkedList<>();
+
+		if (method.isAnnotationPresent(HTTPMethod.GET.class))
+			requestMethodsFound.add(RequestMethod.GET);
+		if (method.isAnnotationPresent(HTTPMethod.POST.class))
+			requestMethodsFound.add(RequestMethod.POST);
+		if (method.isAnnotationPresent(HTTPMethod.PUT.class))
+			requestMethodsFound.add(RequestMethod.PUT);
+		if (method.isAnnotationPresent(HTTPMethod.PATCH.class))
+			requestMethodsFound.add(RequestMethod.PATCH);
+		if (method.isAnnotationPresent(HTTPMethod.DELETE.class))
+			requestMethodsFound.add(RequestMethod.DELETE);
+		
+		if (requestMethodsFound.isEmpty())
 			this.requestMethods = REQUEST_METHODS_GET;
 		else
-			this.requestMethods = controllerEntry.method();
+			requestMethodsFound.toArray(this.requestMethods = new RequestMethod[requestMethodsFound.size()]);
 		
 		this.path = SmallUtil.pathify(controllerEntry.value());
 
@@ -324,7 +339,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	private void sendStringData(HttpServletResponse response, String mimeType, String fileName, String data)
 	{
 		byte[] bytedata = getStringData(data, "UTF-8");
-		if (Utils.isEmpty(mimeType))
+		if (!Utils.isEmpty(mimeType))
 			SmallResponseUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 		else
 			SmallResponseUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);

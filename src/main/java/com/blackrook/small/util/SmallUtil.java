@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.websocket.server.ServerContainer;
 
+import com.blackrook.small.SmallConfiguration;
 import com.blackrook.small.SmallConstants;
 import com.blackrook.small.SmallEnvironment;
 import com.blackrook.small.exception.SmallFrameworkException;
@@ -790,6 +791,16 @@ public final class SmallUtil
 	public static SmallEnvironment getEnvironment(ServletContext context)
 	{
 		return (SmallEnvironment)context.getAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
+	}
+
+	/**
+	 * Convenience method that gets the Small Configuration stub used to start this application.
+	 * @param context the servlet context.
+	 * @return the Small environment.
+	 */
+	public static SmallConfiguration getConfiguration(ServletContext context)
+	{
+		return (SmallConfiguration)context.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
 	}
 
 	/**

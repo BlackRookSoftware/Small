@@ -42,5 +42,17 @@ public interface SmallConfiguration
 	 * TODO: Implement!
 	 */
 	String getStaticDocumentPath();
-	
+
+	/**
+	 * Checks if the OPTIONS HTTP method is allowed for all endpoints.
+	 * @return true if allowed, false if not.
+	 */
+	boolean allowOptions();
+
+	/**
+	 * Checks if the TRACE HTTP method is allowed for all endpoints.
+	 * @return true if allowed, false if not.
+	 */
+	boolean allowTrace();
+
 }

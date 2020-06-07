@@ -17,15 +17,11 @@ public enum RequestMethod
 	GET,
 	/** Standard POST request. */
 	POST,
-	/** Standard HEAD request. */
-	HEAD,
 	/** Standard PUT request. */
 	PUT,
 	/** Standard PATCH request. */
 	PATCH,
 	/** Standard DELETE request. */
 	DELETE,
-	/** Standard OPTIONS request. */
-	OPTIONS,
 	;
 }
