@@ -20,16 +20,19 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.websocket.server.ServerContainer;
+import javax.servlet.http.HttpSessionAttributeListener;
+import javax.servlet.http.HttpSessionBindingEvent;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 
 import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
 import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.parser.MultipartParser;
-import com.blackrook.small.parser.multipart.MultipartFormDataParser;
-import com.blackrook.small.parser.multipart.MultipartParserException;
-import com.blackrook.small.parser.multipart.Part;
+import com.blackrook.small.multipart.MultipartFormDataParser;
+import com.blackrook.small.multipart.MultipartParser;
+import com.blackrook.small.multipart.MultipartParserException;
+import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.struct.URITrie.Result;
@@ -42,7 +45,7 @@ import com.blackrook.small.util.SmallUtil;
  * Attaches an attribute to the application scope for the component system.
  * @author Matthew Tropiano
  */
-public final class SmallServlet extends HttpServlet
+public final class SmallServlet extends HttpServlet implements HttpSessionAttributeListener, HttpSessionListener
 {
 	private static final long serialVersionUID = 438331119650683748L;
 	
@@ -55,14 +58,15 @@ public final class SmallServlet extends HttpServlet
     private static final String METHOD_PATCH = "PATCH";
     private static final String METHOD_TRACE = "TRACE";
     
-	private SmallEnvironment applicationEnvironment;
+    /** The application environment. */
+	private SmallEnvironment environment;
 	
 	/**
 	 * Creates the dispatcher servlet. 
 	 */
 	public SmallServlet()
 	{
-		this.applicationEnvironment = null;
+		this.environment = null;
 	}
 	
 	@Override
@@ -70,10 +74,10 @@ public final class SmallServlet extends HttpServlet
 	{
 		super.init();
 		ServletContext servletContext = getServletContext();
-		if ((applicationEnvironment = SmallUtil.getEnvironment(servletContext)) == null)
+		if ((environment = SmallUtil.getEnvironment(servletContext)) == null)
 		{
-			applicationEnvironment = createEnvironment(servletContext);
-			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, applicationEnvironment);
+			environment = createEnvironment(servletContext);
+			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, environment);
 		}
 	}
 	
@@ -81,7 +85,37 @@ public final class SmallServlet extends HttpServlet
 	public void destroy()
 	{
 		super.destroy();
-		applicationEnvironment.destroy();
+		environment.destroy();
+	}
+
+	@Override
+	public void sessionCreated(HttpSessionEvent se)
+	{
+		environment.sessionCreated(se);
+	}
+
+	@Override
+	public void sessionDestroyed(HttpSessionEvent se)
+	{
+		environment.sessionDestroyed(se);
+	}
+
+	@Override
+	public void attributeAdded(HttpSessionBindingEvent event)
+	{
+		environment.attributeAdded(event);
+	}
+
+	@Override
+	public void attributeRemoved(HttpSessionBindingEvent event)
+	{
+		environment.attributeRemoved(event);
+	}
+
+	@Override
+	public void attributeReplaced(HttpSessionBindingEvent event)
+	{
+		environment.attributeReplaced(event);
 	}
 
 	@Override
@@ -120,7 +154,7 @@ public final class SmallServlet extends HttpServlet
 			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
 	
 		SmallEnvironment env = new SmallEnvironment();
-		env.init((ServerContainer)servletContext.getAttribute("javax.websocket.server.ServerContainer"), smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
+		env.init(servletContext, smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
 		return env;
 	}
 
@@ -152,7 +186,7 @@ public final class SmallServlet extends HttpServlet
 		else
 		{
 			try {
-				parser.parse(request, applicationEnvironment.getTemporaryDirectory());
+				parser.parse(request, environment.getTemporaryDirectory());
 			} catch (UnsupportedEncodingException e) {
 				SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
 			} catch (MultipartParserException e) {
@@ -180,13 +214,10 @@ public final class SmallServlet extends HttpServlet
 		}
 	}
 	
-	/**
-	 * Fetches a regular controller entry and invokes the correct method.
-	 */
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashDequeMap<String, Part> multiformPartMap)
 	{
 		String path = SmallUtil.trimSlashes(SmallRequestUtil.getPath(request));
-		Result<ControllerEntryPoint> result = applicationEnvironment.getControllerEntryPoint(requestMethod, path);
+		Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(requestMethod, path);
 		
 		if (result == null || !result.hasValue())
 		{
@@ -207,7 +238,7 @@ public final class SmallServlet extends HttpServlet
 		
 		for (Class<?> filterClass : entryPoint.getFilterChain())
 		{
-			FilterComponent filterProfile = applicationEnvironment.getFilter(filterClass);
+			FilterComponent filterProfile = environment.getFilter(filterClass);
 			if (!filterProfile.getEntryMethod().handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap))
 				return;
 		}

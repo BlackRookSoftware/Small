@@ -11,7 +11,7 @@ package com.blackrook.small.parser;
  * Parser for lines that are broken by RFC-standard style text lines (most HTTP headers).
  * @author Matthew Tropiano
  */
-public class RFCParser implements StringParser
+public class RFCParser
 {
 	/** Characters. */
 	private char[] characters;

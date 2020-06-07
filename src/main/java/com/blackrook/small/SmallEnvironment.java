@@ -142,15 +142,15 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Initializes the environment.
 	 * @param servletContext the servler context to use.
 	 */
-	void init(ServerContainer websocketServerContainer, String[] controllerRootPackages, File tempDir)
+	void init(ServletContext context, String[] controllerRootPackages, File tempDir)
 	{
 		this.tempDir = tempDir;
 		this.jsonDriver = null;
 		this.xmlDriver = null;
 		if (!Utils.isEmpty(controllerRootPackages))
 		{
-			initComponents(controllerRootPackages, websocketServerContainer, ClassLoader.getSystemClassLoader());
-			initComponents(controllerRootPackages, websocketServerContainer, Thread.currentThread().getContextClassLoader());
+			initComponents(context, controllerRootPackages, ClassLoader.getSystemClassLoader());
+			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
 		}
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
 			entry.getValue().invokeAfterInitializeMethods();
@@ -205,7 +205,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Init visible controllers using a class loader.
 	 * @param loader the {@link ClassLoader} to look in.
 	 */
-	private void initComponents(String[] packageNames, ServerContainer websocketServerContainer, ClassLoader loader)
+	private void initComponents(ServletContext context, String[] packageNames, ClassLoader loader)
 	{
 		for (String packageName : packageNames) 
 			for (String className : Utils.getClasses(packageName, loader))
@@ -220,23 +220,25 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				
 				if (isComponentClass(componentClass))
 				{
-					Object component = createOrGetComponent(componentClass);
+					Object componentInstance = createOrGetComponent(componentClass);
 		
 					if (ServletContextListener.class.isAssignableFrom(componentClass))
-						contextListeners.add((ServletContextListener)component);
+						contextListeners.add((ServletContextListener)componentInstance);
 					
 					if (HttpSessionListener.class.isAssignableFrom(componentClass))
-						sessionListeners.add((HttpSessionListener)component);
+						sessionListeners.add((HttpSessionListener)componentInstance);
 					
 					if (HttpSessionAttributeListener.class.isAssignableFrom(componentClass))
-						sessionAttributeListeners.add((HttpSessionAttributeListener)component);
+						sessionAttributeListeners.add((HttpSessionAttributeListener)componentInstance);
 
 					if (JSONDriver.class.isAssignableFrom(componentClass))
-						jsonDriver = (JSONDriver)component;
+						jsonDriver = (JSONDriver)componentInstance;
 
 					if (XMLDriver.class.isAssignableFrom(componentClass))
-						xmlDriver = (XMLDriver)component;
+						xmlDriver = (XMLDriver)componentInstance;
 
+					
+					SmallComponent component;
 					if (componentClass.isAnnotationPresent(Controller.class))
 					{
 						if (componentClass.isAnnotationPresent(Filter.class))
@@ -247,11 +249,14 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						// check for double-include. Skip.
 						if (controllerComponents.containsKey(componentClass))
 							continue;
+
+						component = new ControllerComponent(componentInstance);
+						controllerComponents.put(componentClass, (ControllerComponent)component);
+						component.scanMethods();
+						component.invokeAfterConstructionMethods();
 						
-						ControllerComponent controller;
-						controllerComponents.put(componentClass, controller = new ControllerComponent(component));
 						String path = SmallUtil.trimSlashes(controllerAnnotation.value());
-						for (ControllerEntryPoint entryPoint : controller.getEntryMethods())
+						for (ControllerEntryPoint entryPoint : ((ControllerComponent)component).getEntryMethods())
 						{
 							String uri = path + '/' + SmallUtil.trimSlashes(entryPoint.getPath());
 							for (RequestMethod rm : entryPoint.getRequestMethods())
@@ -274,11 +279,22 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						if (filterComponents.containsKey(componentClass))
 							continue;
 						
-						filterComponents.put(componentClass, new FilterComponent(component));
+						component = new FilterComponent(componentInstance);
+						filterComponents.put(componentClass, (FilterComponent)component);
+						component.scanMethods();
+						component.invokeAfterConstructionMethods();
+					}
+					else
+					{
+						component = new SmallComponent(componentInstance);
+						componentInstances.put(componentClass, component);
+						component.scanMethods();
+						component.invokeAfterConstructionMethods();
 					}
 				}
 				else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
 				{
+					ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
 					if (websocketServerContainer == null)
 						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
@@ -293,6 +309,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				}
 				else if (Endpoint.class.isAssignableFrom(componentClass))
 				{
+					ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
 					if (websocketServerContainer == null)
 						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
@@ -331,12 +348,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 			return (T)component.getInstance();
 		else
 		{
-			T instance = createComponent(clazz, getAnnotatedConstructor(clazz));
-			component = new SmallComponent(instance);
-			component.scanMethods();
-			component.invokeAfterConstructionMethods();
-			componentInstances.put(clazz, component);
-			return instance;
+			return createComponent(clazz, getAnnotatedConstructor(clazz));
 		}
 	}
 
@@ -448,5 +460,5 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		for (HttpSessionAttributeListener listener : sessionAttributeListeners)
 			listener.attributeReplaced(httpsbe);
 	}
-	
+
 }

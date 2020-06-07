@@ -17,7 +17,7 @@ import com.blackrook.small.SmallComponent;
 import com.blackrook.small.annotation.dispatch.Attribute;
 import com.blackrook.small.annotation.dispatch.Model;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.parser.multipart.Part;
+import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.Utils;
 
 /**
@@ -59,6 +59,7 @@ public abstract class DispatchComponent extends SmallComponent
 		{
 			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @Attribute, but must be public and cannot return void.");
 		}
+		
 		super.scanMethod(method);
 	}
 

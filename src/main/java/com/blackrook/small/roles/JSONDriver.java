@@ -13,12 +13,15 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.controller.ControllerEntry;
 
 /**
- * The JSON driver for Small.
- * <p>In order to return Objects from {@link ControllerEntry}-annotated methods, a class 
- * that implements this class needs to be set on initialize. 
+ * Describes a JSON driver for Small.
+ * <p>In order to return Objects from {@link Content}-annotated, {@link ControllerEntry}-annotated methods, a class 
+ * that implements this class needs to be in the component search.
+ * <p>Only one component needs to have this role. This is used for conversion if the output content MIME-type
+ * is <code>application/json</code> or no MIME-type is specified. 
  * @author Matthew Tropiano
  */
 public interface JSONDriver

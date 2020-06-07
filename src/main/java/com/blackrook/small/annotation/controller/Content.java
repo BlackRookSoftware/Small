@@ -16,24 +16,30 @@ import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 
 import com.blackrook.small.enums.RequestMethod;
+import com.blackrook.small.roles.JSONDriver;
+import com.blackrook.small.roles.XMLDriver;
 
 /**
  * Annotates a parameter or method. Should be used on Controllers.
  * <p>
- * On parameters, the request body content is passed in as the following: 
+ * On <b>parameters</b>, the request body content is passed in as the following: 
  * <ul>
- * <li>
- * If the content type is <code>text/plain</code>, and the 
- * parameter type is a primitive value, boxed primitive value, primitive/boxed array, char[], byte[], 
- * or String, the content is parsed and cast to the appropriate type, if possible.
- * </li>
- * <li>If the content type is any of the <code>application/xml</code> equivalents, a SAX Reader is made for the XML.</li>
- * <li>If the content type is <code>application/json</code> and a JSONDriver is specified, it is parsed as JSON and converted to the parameter type.</li>
- * <li>Otherwise, it is read as-is and will be converted to an appropriate type.</li>
+ * 		<li>If the content type is <code>text/plain</code>, 
+ * 			<ul>
+ * 				<li>
+ * 					...and the parameter type is a primitive value, boxed primitive value, 
+ * 					primitive/boxed array, char[], byte[], or String, the content is parsed 
+ * 					and cast to the appropriate type, if possible.
+ * 				</li>
+ * 			</ul>
+ * 		</li>
+ * 		<li>If the content type is any of the <code>application/xml</code> equivalents and a {@link XMLDriver} component is found, the driver is used to convert to the target type.</li>
+ * 		<li>If the content type is <code>application/json</code> and a {@link JSONDriver} is found, the driver is used to convert to the target type.</li>
+ * 		<li>Otherwise, an error is thrown.</li>
  * </ul>
- * Note that its use on a parameter is worthless if the request method is not {@link RequestMethod#POST} or {@link RequestMethod#PUT}.
+ * Note that its use on a parameter is worthless if the request method is not {@link RequestMethod#POST}, {@link RequestMethod#PUT}, or {@link RequestMethod#PATCH}.
  * <p>
- * If on a method, this turns the returned object after running the method into data that is put into the response body.
+ * If on a <b>method</b>, this converts the returned object after running the method into data that is put into the response body.
  * <ul>
  * <li>If return type is a {@link File}, 
  * 		<ul>
@@ -41,9 +47,14 @@ import com.blackrook.small.enums.RequestMethod;
  * 			<li>...and is null, this sends a 404.</li>
  * 		</ul>
  * </li>
- * <li>If return type is a {@link Reader}, {@link CharSequence}, {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code>.</li>
- * <li>If return type is byte[] or {@link ByteBuffer} binary data is sent back. Content type is <code>application/octet-stream</code>.</li>
- * <li>If return type is Object and a JSONDriver is specified, content type is <code>application/json</code> and the object is converted.</li>
+ * <li>If return type is a {@link Reader}, {@link CharSequence}, {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code> if unspecified.</li>
+ * <li>If return type is byte[] or {@link ByteBuffer} binary data is sent back. Content type is <code>application/octet-stream</code> if unspecified.</li>
+ * <li>If return type is any other object type,
+ * 		<ul>
+ * 			<li>...and a {@link XMLDriver} component is found, and the specified content type is <code>application/xml</code> or an XML subtype, the object is converted to XML.</li>
+ * 			<li>...and a {@link JSONDriver} component is found, content type is <code>application/json</code> and the object is converted.</li>
+ * 		</ul>
+ * </li>
  * </ul>
  * If a String value is given on this annotation, it is interpreted as the forced MIME-Type to use, but only for File, String and binary output.
  * 

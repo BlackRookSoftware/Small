@@ -42,8 +42,8 @@
 		com.blackrook.small.dispatch.filter,
 		com.blackrook.small.enums,
 		com.blackrook.small.exception,
+		com.blackrook.small.multipart,
 		com.blackrook.small.parser,
-		com.blackrook.small.parser.multipart,
 		com.blackrook.small.roles,
 		com.blackrook.small.struct,
 		com.blackrook.small.util

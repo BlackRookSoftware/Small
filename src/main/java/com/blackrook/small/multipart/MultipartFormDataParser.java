@@ -5,7 +5,7 @@
  * distribution, and is available at 
  * http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
  ******************************************************************************/
-package com.blackrook.small.parser.multipart;
+package com.blackrook.small.multipart;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,7 +18,6 @@ import java.io.UnsupportedEncodingException;
 
 import javax.servlet.ServletInputStream;
 
-import com.blackrook.small.parser.MultipartParser;
 import com.blackrook.small.struct.Utils;
 
 /**

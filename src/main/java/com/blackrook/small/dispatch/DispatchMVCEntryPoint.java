@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.enums.RequestMethod;
-import com.blackrook.small.parser.multipart.Part;
+import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 
 /**

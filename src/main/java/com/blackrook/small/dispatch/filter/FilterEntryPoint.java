@@ -18,7 +18,7 @@ import com.blackrook.small.dispatch.DispatchEntryPoint;
 import com.blackrook.small.dispatch.DispatchMVCEntryPoint;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
-import com.blackrook.small.parser.multipart.Part;
+import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 
 /**

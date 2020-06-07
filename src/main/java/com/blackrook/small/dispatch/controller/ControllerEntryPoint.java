@@ -31,7 +31,7 @@ import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.parser.multipart.Part;
+import com.blackrook.small.multipart.Part;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.HashDequeMap;

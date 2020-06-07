@@ -32,9 +32,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.blackrook.small.exception.SmallFrameworkException;
-import com.blackrook.small.parser.MultipartParser;
+import com.blackrook.small.multipart.MultipartFormDataParser;
+import com.blackrook.small.multipart.MultipartParser;
 import com.blackrook.small.parser.RFCParser;
-import com.blackrook.small.parser.multipart.MultipartFormDataParser;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.struct.TypeProfileFactory.Profile;
 import com.blackrook.small.struct.TypeProfileFactory.Profile.FieldInfo;
@@ -657,7 +657,7 @@ public final class SmallRequestUtil
 	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
 	 * (best to use public classes in these cases), or if the object cannot be instantiated.
 	 */
-	public static <T extends Object> T setModelFields(HttpServletRequest request, Class<T> type)
+	public static <T> T setModelFields(HttpServletRequest request, Class<T> type)
 	{
 		return setModelFields(request, Utils.create(type));
 	}
@@ -681,7 +681,7 @@ public final class SmallRequestUtil
 	 * @throws RuntimeException if an exception occurs - notably if the fields or setters on the class cannot be reached
 	 * (best to use public classes in these cases).
 	 */
-	public static <T extends Object> T setModelFields(HttpServletRequest request, T target)
+	public static <T> T setModelFields(HttpServletRequest request, T target)
 	{
 		HttpSession session = request.getSession();
 		ServletContext context = session != null ? session.getServletContext() : null;

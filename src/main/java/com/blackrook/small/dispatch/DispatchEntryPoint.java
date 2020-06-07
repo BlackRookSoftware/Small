@@ -12,8 +12,6 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Deque;
@@ -44,8 +42,7 @@ import com.blackrook.small.annotation.parameters.PathVariable;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.enums.ScopeType;
 import com.blackrook.small.exception.SmallFrameworkException;
-import com.blackrook.small.parser.StringParser;
-import com.blackrook.small.parser.multipart.Part;
+import com.blackrook.small.multipart.Part;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.HashDequeMap;
@@ -328,27 +325,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				case HEADER:
 				{
 					String headerName = pinfo.getName();
-					if (StringParser.class.isAssignableFrom(pinfo.getType()))
-					{
-						try {
-							Constructor<?> constructor = pinfo.getType().getConstructor(String.class);
-							invokeParams[i] = constructor.newInstance(request.getHeader(headerName));
-						} catch (IllegalArgumentException e) {
-							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
-						} catch (InstantiationException e) {
-							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
-						} catch (IllegalAccessException e) {
-							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
-						} catch (InvocationTargetException e) {
-							throw new SmallFrameworkException("Error occurred in HeaderParser constructor.", e);
-						} catch (SecurityException e) {
-							throw new SmallFrameworkException("Target class does not have a public constructor that takes a String as its sole parameter.");
-						} catch (NoSuchMethodException e) {
-							throw new SmallFrameworkException("Target class does not have a public constructor that takes a String as its sole parameter.");
-						}
-					}
-					else
-						invokeParams[i] = Utils.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
+					invokeParams[i] = Utils.createForType("Parameter " + i, request.getHeader(headerName), pinfo.getType());
 					break;
 				}
 				case HEADER_MAP:

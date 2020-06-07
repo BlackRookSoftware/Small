@@ -13,9 +13,15 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import com.blackrook.small.annotation.controller.Content;
+import com.blackrook.small.annotation.controller.ControllerEntry;
+
 /**
- * A class that reads an incoming XML document and returns a deserialized object.
- * There is one driver for each handled class.
+ * Describes an XML conversion driver for Small.
+ * <p>In order to return Objects from {@link Content}-annotated, {@link ControllerEntry}-annotated methods, a class 
+ * that implements this class needs to be in the component search.
+ * <p>Only one component needs to have this role. This is used for conversion if the output content MIME-type
+ * is <code>application/xml</code> (and its family types). Unspecified output types are passed to a {@link JSONDriver}. 
  * @author Matthew Tropiano
  */
 public interface XMLDriver

@@ -18,6 +18,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.websocket.server.ServerContainer;
 
 import com.blackrook.small.SmallConstants;
 import com.blackrook.small.SmallEnvironment;
@@ -1082,6 +1083,16 @@ public final class SmallUtil
 		return inFile.exists() ? inFile : null;
 	}
 
+	/**
+	 * Attempts to fetch the Websocket Server Container from a servlet context.
+	 * @param context the servlet context to use. 
+	 * @return the server container, or null if it wasn't found, usually because it wasn't configured or it is unsupported.
+	 */
+	public static ServerContainer getWebsocketServerContainer(ServletContext context)
+	{
+		return (ServerContainer)context.getAttribute("javax.websocket.server.ServerContainer");
+	}
+	
 	/**
 	 * Gets a file path that is on the application path.
 	 * @param context the servlet context to use. 
