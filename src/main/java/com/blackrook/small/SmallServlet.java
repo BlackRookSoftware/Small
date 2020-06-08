@@ -256,7 +256,8 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	
 	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashDequeMap<String, Part> multiformPartMap)
 	{
-		String path = SmallUtil.trimSlashes(SmallRequestUtil.getPath(request));
+		String path = SmallRequestUtil.getPath(request);
+		
 		Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(requestMethod, path);
 		
 		if (result == null || !result.hasValue())

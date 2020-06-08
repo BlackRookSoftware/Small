@@ -54,6 +54,8 @@ import com.blackrook.small.util.SmallUtil;
  */
 public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessionListener 
 {
+	private static final MIMETypeDriver DEFAULT_MIME = new DefaultMIMETypeDriver();
+	
 	/** Tempdir root. */
 	private File tempDir;
 	/** JSON driver. */
@@ -91,7 +93,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.tempDir = null;
 		this.jsonDriver = null;
 		this.xmlDriver = null;
-		this.mimeTypeDriver = new DefaultMIMETypeDriver();
+		this.mimeTypeDriver = null;
 
 		this.componentsConstructing = new HashSet<>();
 		
@@ -161,10 +163,17 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.tempDir = tempDir;
 		this.jsonDriver = null;
 		this.xmlDriver = null;
+		this.mimeTypeDriver = DEFAULT_MIME;
+		
 		if (!Utils.isEmpty(controllerRootPackages))
 		{
 			initComponents(context, controllerRootPackages, ClassLoader.getSystemClassLoader());
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
+		}
+		for (Map.Entry<RequestMethod, URITrie<ControllerEntryPoint>> entry : controllerEntries.entrySet())
+		{
+			System.out.print(entry.getKey() + " ");
+			entry.getValue().printTo(System.out);
 		}
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
 			entry.getValue().invokeAfterInitializeMethods();
@@ -182,11 +191,15 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		tempDir = null;
 		jsonDriver = null;
 		xmlDriver = null;
+		mimeTypeDriver = null;
 		componentsConstructing.clear();
 		controllerEntries.clear();
 		componentInstances.clear();
 		controllerComponents.clear();
 		filterComponents.clear();
+		contextListeners.clear();
+		sessionListeners.clear();
+		sessionAttributeListeners.clear();
 	}
 
 	/**
@@ -209,10 +222,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	URITrie.Result<ControllerEntryPoint> getControllerEntryPoint(RequestMethod requestMethod, String path)
 	{
 		URITrie<ControllerEntryPoint> trie = controllerEntries.get(requestMethod);
-		if (trie == null)
-			return null;
-		
-		return trie.resolve(path);
+		return trie != null ? trie.resolve(SmallUtil.trimSlashes(path)) : null;
 	}
 
 	/**
@@ -221,7 +231,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 */
 	private void initComponents(ServletContext context, String[] packageNames, ClassLoader loader)
 	{
-		for (String packageName : packageNames) 
+		for (String packageName : packageNames)
+		{
 			for (String className : Utils.getClasses(packageName, loader))
 			{
 				Class<?> componentClass = null;
@@ -337,6 +348,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					}
 				}
 			}
+		}
 	}
 
 	/**

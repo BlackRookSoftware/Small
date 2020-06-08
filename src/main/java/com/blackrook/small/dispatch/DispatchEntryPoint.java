@@ -540,7 +540,22 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 	@Override
 	public String toString() 
 	{
-		return componentInstance.getClass().getSimpleName() + ":" + method.toGenericString();
+		StringBuilder sb = new StringBuilder();
+		sb.append(componentInstance.getClass().getSimpleName())
+			.append(":")
+			.append(method.getName())
+			.append('(');
+		
+		java.lang.reflect.Parameter[] p = method.getParameters();
+		for (int i = 0; i < p.length; i++)
+		{
+			sb.append(p[i].getType().getSimpleName());
+			if (i < p.length - 1)
+				sb.append(", ");
+		}
+			
+		sb.append(')');
+		return sb.toString();
 	}
 
 }

@@ -982,4 +982,27 @@ public final class SmallUtil
 		try {Thread.sleep(millis);} catch (InterruptedException e) {}
 	}
 
+	/**
+	 * Opens an {@link InputStream} to a resource using the current thread's {@link ClassLoader}.
+	 * @param pathString the resource pathname.
+	 * @return an open {@link InputStream} for reading the resource or null if not found.
+	 * @see ClassLoader#getResourceAsStream(String)
+	 */
+	public static InputStream openResource(String pathString)
+	{
+		return Thread.currentThread().getContextClassLoader().getResourceAsStream(pathString);
+	}
+
+	/**
+	 * Opens an {@link InputStream} to a resource using a provided ClassLoader.
+	 * @param classLoader the provided {@link ClassLoader} to use.
+	 * @param pathString the resource pathname.
+	 * @return an open {@link InputStream} for reading the resource or null if not found.
+	 * @see ClassLoader#getResourceAsStream(String)
+	 */
+	public static InputStream openResource(ClassLoader classLoader, String pathString)
+	{
+		return classLoader.getResourceAsStream(pathString);
+	}
+
 }

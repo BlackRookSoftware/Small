@@ -27,23 +27,6 @@ public interface SmallConfiguration
 	String[] getApplicationPackageRoots();
 
 	/**
-	 * Gets the classpath prefix to use for fetching static pages and data.
-	 * If null, this search is skipped.
-	 * @return the path to use (can be null).
-	 * TODO: Implement!
-	 */
-	String getStaticResourcePath();
-
-	/**
-	 * Gets the prefix to use for fetching static pages and data.
-	 * If this path is a relative path, it is relative to the current working directory.
-	 * If null, this search is skipped.
-	 * @return the path to use (can be null).
-	 * TODO: Implement!
-	 */
-	String getStaticDocumentPath();
-
-	/**
 	 * Checks if the OPTIONS HTTP method is allowed for all endpoints.
 	 * @return true if allowed, false if not.
 	 */
