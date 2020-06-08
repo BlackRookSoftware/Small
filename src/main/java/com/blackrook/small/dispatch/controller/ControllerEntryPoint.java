@@ -223,11 +223,11 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 			{
 				case VIEW:
 				{
-					String viewKey = String.valueOf(retval);
-					if (viewKey.startsWith(PREFIX_REDIRECT))
-						SmallResponseUtil.sendRedirect(response, viewKey.substring(PREFIX_REDIRECT.length()));
+					String viewName = String.valueOf(retval);
+					if (viewName.startsWith(PREFIX_REDIRECT))
+						SmallResponseUtil.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
 					else
-						SmallUtil.sendToView(request, response, getServiceProfile().getViewResolver().resolveView(viewKey));
+						SmallUtil.getEnvironment(request.getServletContext()).handleView(request, response, viewName);
 					break;
 				}
 				case ATTACHMENT:
@@ -294,7 +294,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 							try {
 								sendStringData(response, "application/xml; charset=utf-8", fname, handler.toXMLString(retval));
 							} catch (IOException e) {
-								SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
+								SmallResponseUtil.sendCode(response, 501, "No suitable converter found for object.");
 							}
 						}
 					}
@@ -307,17 +307,17 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 							try {
 								sendStringData(response, "application/json; charset=utf-8", fname, driver.toJSONString(retval));
 							} catch (IOException e) {
-								SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
+								SmallResponseUtil.sendCode(response, 501, "No suitable converter found for object.");
 							}
 						}
 						else
 						{
-							SmallResponseUtil.sendCode(response, 500, "No suitable converter found for object.");
+							SmallResponseUtil.sendCode(response, 501, "No suitable converter found for object.");
 						}
 					}
 					else
 					{
-						SmallResponseUtil.sendCode(response, 500, "No suitable converter found for " + retval.getClass());
+						SmallResponseUtil.sendCode(response, 501, "No suitable converter found for " + retval.getClass());
 					}
 					break;
 				}

@@ -11,9 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.controller.ControllerEntry;
@@ -30,11 +28,9 @@ import com.blackrook.small.util.SmallUtil;
  */
 public class ControllerComponent extends DispatchComponent
 {
-	/** Class to instance. */
-	private static final Map<Class<? extends ViewResolver>, ViewResolver> VIEW_RESOLVER_MAP = 
-			new HashMap<Class<? extends ViewResolver>, ViewResolver>();
-
-	/** Controller output handling types. */
+	/** 
+	 * Controller output handling types. 
+	 */
 	public static enum Output
 	{
 		CONTENT,
@@ -44,8 +40,6 @@ public class ControllerComponent extends DispatchComponent
 
 	/** Base URL path. */
 	private String path;
-	/** View resolver. */
-	private ViewResolver viewResolver;
 	/** Filter class list. */
 	private Class<?>[] filterChain;
 	/** Method map. */
@@ -66,7 +60,6 @@ public class ControllerComponent extends DispatchComponent
 			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 
 		this.path = SmallUtil.pathify(controllerAnnotation.value());
-		this.viewResolver = createViewResolver(controllerAnnotation.viewResolver());
 		this.entryMethods = new ArrayList<>();
 		
 		// accumulate filter chains.
@@ -98,29 +91,19 @@ public class ControllerComponent extends DispatchComponent
 	}
 
 	/**
-	 * Gets the base path for this controller.
-	 * @return
+	 * @return the base path for this controller.
 	 */
-	String getPath() 
+	public String getPath() 
 	{
 		return path;
 	}
 	
 	/**
-	 * Returns the list of filters to call.
+	 * @return the list of filter classes to call.
 	 */
-	Class<?>[] getFilterChain()
+	public Class<?>[] getFilterChain()
 	{
 		return filterChain;
-	}
-
-	/**
-	 * Gets this controller's view resolver.
-	 * @return
-	 */
-	ViewResolver getViewResolver()
-	{
-		return viewResolver;
 	}
 
 	/**
@@ -150,26 +133,4 @@ public class ControllerComponent extends DispatchComponent
 			;
 	}
 
-	/**
-	 * Returns the instance of view resolver to use for resolving views.
-	 */
-	private static ViewResolver createViewResolver(Class<? extends ViewResolver> vclass)
-	{
-		if (!VIEW_RESOLVER_MAP.containsKey(vclass))
-		{
-			synchronized (VIEW_RESOLVER_MAP)
-			{
-				if (VIEW_RESOLVER_MAP.containsKey(vclass))
-					return VIEW_RESOLVER_MAP.get(vclass);
-				else
-				{
-					ViewResolver resolver = Utils.create(vclass);
-					VIEW_RESOLVER_MAP.put(vclass, resolver);
-					return resolver;
-				}
-			}
-		}
-		return VIEW_RESOLVER_MAP.get(vclass);
-	}
-	
 }

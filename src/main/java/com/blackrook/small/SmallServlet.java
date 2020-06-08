@@ -222,13 +222,13 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	{
 		MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
 		if (parser == null)
-			SmallResponseUtil.sendError(response, 400, "The multipart POST request type is not supported.");
+			SmallResponseUtil.sendError(response, 400, "The multipart request type is not supported.");
 		else
 		{
 			try {
 				parser.parse(request, environment.getTemporaryDirectory());
 			} catch (UnsupportedEncodingException e) {
-				SmallResponseUtil.sendError(response, 400, "The encoding type for the POST request is not supported.");
+				SmallResponseUtil.sendError(response, 400, "The encoding type for the request is not supported.");
 			} catch (MultipartParserException e) {
 				SmallResponseUtil.sendError(response, 500, "The server could not parse the multiform request. " + e.getMessage());
 			} catch (IOException e) {

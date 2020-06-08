@@ -10,9 +10,11 @@ package com.blackrook.small;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -20,6 +22,8 @@ import java.util.regex.PatternSyntaxException;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextListener;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionEvent;
@@ -43,6 +47,7 @@ import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.roles.DefaultMIMETypeDriver;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.MIMETypeDriver;
+import com.blackrook.small.roles.ViewDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
@@ -64,6 +69,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private XMLDriver xmlDriver;
 	/** MIME-Type driver. */
 	private MIMETypeDriver mimeTypeDriver;
+	/** View driver list. */
+	private List<ViewDriver> viewDriverList;
 	
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
@@ -94,6 +101,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.jsonDriver = null;
 		this.xmlDriver = null;
 		this.mimeTypeDriver = null;
+		this.viewDriverList = null;
 
 		this.componentsConstructing = new HashSet<>();
 		
@@ -155,6 +163,21 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
+	 * Goes through the list of 
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param viewName the name of the view to handle.
+	 * @return true if the view was handled by this component, false if not.
+	 */
+	public boolean handleView(HttpServletRequest request, HttpServletResponse response, String viewName)
+	{
+		for (int i = 0; i < viewDriverList.size(); i++)
+			if (viewDriverList.get(i).handleView(request, response, viewName))
+				return true;
+		return false;
+	}
+
+	/**
 	 * Initializes the environment.
 	 * @param servletContext the servler context to use.
 	 */
@@ -164,6 +187,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.jsonDriver = null;
 		this.xmlDriver = null;
 		this.mimeTypeDriver = DEFAULT_MIME;
+		this.viewDriverList = new ArrayList<>();
 		
 		if (!Utils.isEmpty(controllerRootPackages))
 		{
@@ -192,6 +216,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		jsonDriver = null;
 		xmlDriver = null;
 		mimeTypeDriver = null;
+		viewDriverList = null;
 		componentsConstructing.clear();
 		controllerEntries.clear();
 		componentInstances.clear();
@@ -264,7 +289,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 					if (MIMETypeDriver.class.isAssignableFrom(componentClass))
 						mimeTypeDriver = (MIMETypeDriver)componentInstance;
-					
+
+					if (ViewDriver.class.isAssignableFrom(componentClass))
+						viewDriverList.add((ViewDriver)componentInstance);
+
 					SmallComponent component;
 					if (componentClass.isAnnotationPresent(Controller.class))
 					{

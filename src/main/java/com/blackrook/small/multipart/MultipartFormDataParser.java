@@ -47,13 +47,10 @@ public class MultipartFormDataParser extends MultipartParser
 		File outFile = null; 
 		Part currentPart = null;
 
-		InputStream fin = null;		
 		OutputStream out = null;
 		
-		try {
-			
-			fin = new BufferedInputStream(sis, 65536);
-			
+		try (InputStream fin = new BufferedInputStream(sis, 65536)) 
+		{
 			String line = null;
 
 			currentPart = new Part();
@@ -142,7 +139,6 @@ public class MultipartFormDataParser extends MultipartParser
 		} catch (IOException e) {
 			throw new MultipartParserException("Could not read request body.", e);
 		} finally {
-			Utils.close(fin);
 			Utils.close(out);
 		}
 		

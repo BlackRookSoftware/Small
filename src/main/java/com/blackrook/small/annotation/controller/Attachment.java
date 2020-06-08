@@ -13,11 +13,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 
 /**
- * Annotates a method. Should be used on Controllers.
+ * Should be used on {@link ControllerEntry}-annotated methods on {@link Controller}-annotated classes.
  * <p>
  * This turns the method return body content into an "attachment" via <code>Content-Disposition</code> headers (file downloads).
  * <p>Most effective on {@link File} return types.

@@ -941,7 +941,7 @@ public final class SmallUtil
 	}
 
 	/**
-	 * Includes the output of a view in the response.
+	 * Includes the output of a view in the response handled by a request dispatcher.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 * @param path target view path relative to the application context.
@@ -956,7 +956,7 @@ public final class SmallUtil
 	}
 
 	/**
-	 * Surreptitiously forwards the request to a view.
+	 * Surreptitiously forwards the request to a view handled by a request dispatcher.
 	 * @param request servlet request object.
 	 * @param response servlet response object.
 	 * @param path target view path relative to the application context.

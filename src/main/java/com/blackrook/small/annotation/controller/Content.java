@@ -15,12 +15,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 
+import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 
 /**
- * Annotates a parameter or method. Should be used on Controllers.
+ * Should be used on {@link ControllerEntry}-annotated methods on {@link Controller}-annotated classes.
  * <p>
  * On <b>parameters</b>, the request body content is passed in as the following: 
  * <ul>

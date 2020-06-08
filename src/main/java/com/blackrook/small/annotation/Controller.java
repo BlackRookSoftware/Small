@@ -13,8 +13,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.blackrook.small.annotation.controller.ControllerEntry;
-import com.blackrook.small.dispatch.controller.DefaultViewResolver;
-import com.blackrook.small.dispatch.controller.ViewResolver;
 
 /**
  * Annotation that is used to signify that this object is a Controller with entry points.
@@ -36,12 +34,5 @@ public @interface Controller
 	 * @return the "directory" path to use for the controller.
 	 */
 	String value() default "";
-	
-	/** 
-	 * The view resolver class to use.
-	 * Default is {@link DefaultViewResolver}. 
-	 * @return the class.
-	 */
-	Class<? extends ViewResolver> viewResolver() default DefaultViewResolver.class;
 	
 }
