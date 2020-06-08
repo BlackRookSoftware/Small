@@ -1,2 +1,4 @@
-/** This package contains thrown exceptions. */
+/** 
+ * Contains exceptions. 
+ */
 package com.blackrook.small.exception;

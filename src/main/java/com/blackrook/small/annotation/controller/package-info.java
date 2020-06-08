@@ -1,2 +1,4 @@
-/** Contains controller-centric annotations. */
+/** 
+ * Contains controller-centric annotations. 
+ */
 package com.blackrook.small.annotation.controller;

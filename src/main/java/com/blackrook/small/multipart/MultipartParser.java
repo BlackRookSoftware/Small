@@ -21,6 +21,7 @@ import java.util.Random;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
+import com.blackrook.small.exception.request.MultipartParserException;
 import com.blackrook.small.parser.RFCParser;
 import com.blackrook.small.struct.Utils;
 

@@ -1,2 +1,4 @@
-/** This package contains sets of important enumerations. */
+/** 
+ * Contains sets of important enumerations. 
+ */
 package com.blackrook.small.enums;

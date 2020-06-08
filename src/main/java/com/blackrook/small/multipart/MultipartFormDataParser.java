@@ -18,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 
 import javax.servlet.ServletInputStream;
 
+import com.blackrook.small.exception.request.MultipartParserException;
 import com.blackrook.small.struct.Utils;
 
 /**

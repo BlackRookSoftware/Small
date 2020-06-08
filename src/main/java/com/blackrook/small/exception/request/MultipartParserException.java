@@ -5,7 +5,7 @@
  * distribution, and is available at 
  * http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
  ******************************************************************************/
-package com.blackrook.small.multipart;
+package com.blackrook.small.exception.request;
 
 /**
  * Exception thrown when a multiform request is not parsed properly.

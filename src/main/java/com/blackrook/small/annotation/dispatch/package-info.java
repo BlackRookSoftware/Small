@@ -1,2 +1,4 @@
-/** Contains dispatch component-centric annotations. */
+/** 
+ * Contains dispatch component-centric annotations.
+ */
 package com.blackrook.small.annotation.dispatch;
