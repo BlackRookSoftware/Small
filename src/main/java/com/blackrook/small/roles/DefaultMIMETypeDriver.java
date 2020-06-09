@@ -14,7 +14,7 @@ public class DefaultMIMETypeDriver implements MIMETypeDriver
 	
 	public DefaultMIMETypeDriver()
 	{
-		this.mapping = new HashMap<>(240, 1f);
+		this.mapping = new HashMap<>(250, 1f);
 		setMIMEType("323", "text/h323");
 		setMIMEType("3g2", "video/3gpp2");
 		setMIMEType("3gp", "video/3gpp");
@@ -50,9 +50,11 @@ public class DefaultMIMETypeDriver implements MIMETypeDriver
 		setMIMEType("cmx", "image/x-cmx");
 		setMIMEType("cod", "image/cis-cod");
 		setMIMEType("cpio", "application/x-cpio");
+		setMIMEType("cpp", "text/plain");
 		setMIMEType("crd", "application/x-mscardfile");
 		setMIMEType("crl", "application/pkix-crl");
 		setMIMEType("crt", "application/x-x509-ca-cert");
+		setMIMEType("cs", "text/plain");
 		setMIMEType("csh", "application/x-csh");
 		setMIMEType("css", "text/css");
 		setMIMEType("csv", "text/csv");
@@ -80,6 +82,7 @@ public class DefaultMIMETypeDriver implements MIMETypeDriver
 		setMIMEType("h", "text/plain");
 		setMIMEType("hdf", "application/x-hdf");
 		setMIMEType("hlp", "application/winhlp");
+		setMIMEType("hpp", "text/plain");
 		setMIMEType("hqx", "application/mac-binhex40");
 		setMIMEType("hta", "application/hta");
 		setMIMEType("htc", "text/x-component");
@@ -91,6 +94,7 @@ public class DefaultMIMETypeDriver implements MIMETypeDriver
 		setMIMEType("iii", "application/x-iphone");
 		setMIMEType("ins", "application/x-internet-signup");
 		setMIMEType("isp", "application/x-internet-signup");
+		setMIMEType("java", "text/plain");
 		setMIMEType("jfif", "image/pipeg");
 		setMIMEType("jpe", "image/jpeg");
 		setMIMEType("jpeg", "image/jpeg");

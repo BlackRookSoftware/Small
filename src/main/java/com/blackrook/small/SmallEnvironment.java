@@ -59,7 +59,12 @@ import com.blackrook.small.util.SmallUtil;
  */
 public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessionListener 
 {
+	/**
+	 * Default MIME-Type driver.
+	 */
 	private static final MIMETypeDriver DEFAULT_MIME = new DefaultMIMETypeDriver();
+	
+	// =======================================================================
 	
 	/** Tempdir root. */
 	private File tempDir;
@@ -75,7 +80,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
 	
-	/** The path to controller trie. */
+	/** The method to path to controller trie. */
 	private Map<RequestMethod, URITrie<ControllerEntryPoint>> controllerEntries;
 
 	/** The components that are instantiated. */
@@ -105,7 +110,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 		this.componentsConstructing = new HashSet<>();
 		
-		this.controllerEntries = new HashMap<>(16);
+		this.controllerEntries = new HashMap<>(8);
 
 		this.componentInstances = new HashMap<>();
 		this.controllerComponents = new HashMap<>(16);

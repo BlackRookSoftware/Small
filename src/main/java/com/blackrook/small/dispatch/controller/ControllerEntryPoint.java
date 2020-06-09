@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +34,9 @@ import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
+import com.blackrook.small.exception.request.NoConverterException;
+import com.blackrook.small.exception.request.NoViewHandlerException;
+import com.blackrook.small.exception.request.NotFoundException;
 import com.blackrook.small.multipart.Part;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
@@ -201,13 +205,9 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	){
-		Object retval = null;
-		try {
-			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
-		} catch (Exception e) {
-			throw new SmallFrameworkException("An exception occurred in a Controller method.", e);
-		}
+	) throws ServletException, IOException 
+	{
+		Object retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 		
 		if (noCache)
 		{
@@ -226,13 +226,15 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					String viewName = String.valueOf(retval);
 					if (viewName.startsWith(PREFIX_REDIRECT))
 						SmallResponseUtil.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
-					else
-						SmallUtil.getEnvironment(request.getServletContext()).handleView(request, response, viewName);
+					else if (!SmallUtil.getEnvironment(request.getServletContext()).handleView(request, response, viewName))
+						throw new NoViewHandlerException("No view handler for \"" + viewName + "\".");
 					break;
 				}
 				case ATTACHMENT:
+				{
 					fname = SmallRequestUtil.getFileName(request);
 					// fall through.
+				}
 				case CONTENT:
 				{
 					Class<?> returnType = getType();
@@ -242,7 +244,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					{
 						File outfile = (File)retval;
 						if (outfile == null || !outfile.exists())
-							SmallResponseUtil.sendCode(response, 404, "File not found.");
+							throw new NotFoundException("File not found.");
 						else if (!Utils.isEmpty(mimeType))
 							SmallResponseUtil.sendFileContents(response, mimeType, outfile);
 						else
@@ -278,52 +280,47 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					// InputStream
 					else if (InputStream.class.isAssignableFrom(returnType))
 					{
-						InputStream inStream = (InputStream)retval;
-						if (Utils.isEmpty(mimeType))
-							SmallResponseUtil.sendData(response, "application/octet-stream", null, inStream, -1);
-						else
-							SmallResponseUtil.sendData(response, mimeType, null, inStream, -1);
-						Utils.close(inStream);
+						try (InputStream inStream = (InputStream)retval)
+						{
+							if (Utils.isEmpty(mimeType))
+								SmallResponseUtil.sendData(response, "application/octet-stream", null, inStream, -1);
+							else
+								SmallResponseUtil.sendData(response, mimeType, null, inStream, -1);
+						}
 					}
 					// Object output, XML.
 					else if (SmallUtil.isXML(mimeType))
 					{
-						XMLDriver handler;
-						if ((handler = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver()) != null)
-						{
-							try {
-								sendStringData(response, "application/xml; charset=utf-8", fname, handler.toXMLString(retval));
-							} catch (IOException e) {
-								SmallResponseUtil.sendCode(response, 501, "No suitable converter found for object.");
-							}
-						}
+						XMLDriver driver = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver();
+						if (driver == null)
+							throw new NoConverterException("XML encoding not supported.");
+						if (fname != null)
+							response.setHeader("Content-Disposition", "attachment; filename=\"" + fname + "\"");
+						response.setContentType("application/xml; charset=utf-8");
+						driver.toXML(response.getWriter(), retval);
 					}
 					// Object output, JSON.
 					else if (SmallUtil.isJSON(mimeType) || Utils.isEmpty(mimeType))
 					{
-						JSONDriver driver;
-						if ((driver = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver()) != null)
-						{
-							try {
-								sendStringData(response, "application/json; charset=utf-8", fname, driver.toJSONString(retval));
-							} catch (IOException e) {
-								SmallResponseUtil.sendCode(response, 501, "No suitable converter found for object.");
-							}
-						}
-						else
-						{
-							SmallResponseUtil.sendCode(response, 501, "No suitable converter found for object.");
-						}
+						JSONDriver driver = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver();
+						if (driver == null)
+							throw new NoConverterException("JSON encoding not supported.");
+						if (fname != null)
+							response.setHeader("Content-Disposition", "attachment; filename=\"" + fname + "\"");
+						response.setContentType("application/json; charset=utf-8");
+						driver.toJSON(response.getWriter(), retval);
 					}
 					else
 					{
-						SmallResponseUtil.sendCode(response, 501, "No suitable converter found for " + retval.getClass());
+						throw new NoConverterException("No suitable converter found for " + retval.getClass());
 					}
 					break;
 				}
 				default:
+				{
 					// Do nothing.
 					break;
+				}
 			}
 		}
 		return null;

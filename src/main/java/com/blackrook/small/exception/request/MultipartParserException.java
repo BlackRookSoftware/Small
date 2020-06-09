@@ -7,22 +7,16 @@
  ******************************************************************************/
 package com.blackrook.small.exception.request;
 
+import javax.servlet.ServletException;
+
 /**
  * Exception thrown when a multiform request is not parsed properly.
  * @author Matthew Tropiano
  */
-public class MultipartParserException extends Exception
+public class MultipartParserException extends ServletException
 {
-	private static final long serialVersionUID = 8446356442244138570L;
+	private static final long serialVersionUID = 806778136910826566L;
 
-	/**
-	 * Creates a new exception.
-	 */
-	public MultipartParserException()
-	{
-		super();
-	}
-	
 	/**
 	 * Creates a new exception.
 	 * @param message the exception message.
@@ -33,15 +27,6 @@ public class MultipartParserException extends Exception
 	}
 
 	/**
-	 * Creates a new exception.
-	 * @param exception the exception cause.
-	 */
-	public MultipartParserException(Throwable exception)
-	{
-		super(exception);
-	}
-	
-	/**
 	 * Creates a new exception with a message.
 	 * @param message the exception message.
 	 * @param exception the exception cause.
@@ -50,5 +35,5 @@ public class MultipartParserException extends Exception
 	{
 		super(message, exception);
 	}
-	
+
 }

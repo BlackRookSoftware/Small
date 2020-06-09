@@ -9,10 +9,11 @@ package com.blackrook.small;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -29,7 +30,13 @@ import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
 import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
+import com.blackrook.small.exception.request.BeanCreationException;
+import com.blackrook.small.exception.request.MethodNotAllowedException;
 import com.blackrook.small.exception.request.MultipartParserException;
+import com.blackrook.small.exception.request.NoConverterException;
+import com.blackrook.small.exception.request.NoViewHandlerException;
+import com.blackrook.small.exception.request.NotFoundException;
+import com.blackrook.small.exception.request.UnsupportedMediaTypeException;
 import com.blackrook.small.multipart.MultipartFormDataParser;
 import com.blackrook.small.multipart.MultipartParser;
 import com.blackrook.small.multipart.Part;
@@ -89,6 +96,25 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		environment.destroy();
 	}
 
+	private SmallEnvironment createEnvironment(ServletContext servletContext)
+	{
+		SmallConfiguration smallConfig = (SmallConfiguration)servletContext.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
+		
+		File tempDir = null;
+
+		if (smallConfig.getTempPath() != null)
+			tempDir = new File(smallConfig.getTempPath());
+		else if ((tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir")) == null)
+			tempDir = new File(System.getProperty("java.io.tmpdir"));
+	
+		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
+			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
+	
+		SmallEnvironment env = new SmallEnvironment();
+		env.init(servletContext, smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
+		return env;
+	}
+
 	@Override
 	public void sessionCreated(HttpSessionEvent se)
 	{
@@ -120,30 +146,69 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	}
 
 	@Override
-    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    protected void service(HttpServletRequest request, HttpServletResponse response)
     {
         String method = request.getMethod();
-        if (method.equals(METHOD_GET))
-    		callControllerEntry(request, response, RequestMethod.GET, null);
-        else if (method.equals(METHOD_POST))
-        	callPost(request, response);
-        else if (method.equals(METHOD_PUT))
-        	callPut(request, response);
-        else if (method.equals(METHOD_DELETE))
-    		callControllerEntry(request, response, RequestMethod.DELETE, null);
-        else if (method.equals(METHOD_PATCH))
-			callControllerEntry(request, response, RequestMethod.PATCH, null);
-        else if (method.equals(METHOD_HEAD))
-        	callHead(request, response);
-        else if (SmallUtil.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
-        	callOptions(request, response);
-        else if (SmallUtil.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
-    		doTrace(request, response);
-        else
-			SmallResponseUtil.sendError(response, 405, "Method is not allowed.");
+        try 
+        {
+            if (method.equals(METHOD_GET))
+        		callControllerEntry(request, response, RequestMethod.GET, null);
+            else if (method.equals(METHOD_POST))
+            	callPost(request, response);
+            else if (method.equals(METHOD_PUT))
+            	callPut(request, response);
+            else if (method.equals(METHOD_DELETE))
+        		callControllerEntry(request, response, RequestMethod.DELETE, null);
+            else if (method.equals(METHOD_PATCH))
+    			callControllerEntry(request, response, RequestMethod.PATCH, null);
+            else if (method.equals(METHOD_HEAD))
+            	callHead(request, response);
+            else if (SmallUtil.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
+            	callOptions(request, response);
+            else if (SmallUtil.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
+        		doTrace(request, response);
+            else
+    			throw new MethodNotAllowedException("Method " + method + " not allowed.");
+        }
+        catch (NotFoundException e) 
+        {
+            SmallResponseUtil.sendError(response, 404, e.getLocalizedMessage());
+        }
+        catch (MethodNotAllowedException e) 
+        {
+            SmallResponseUtil.sendError(response, 405, e.getLocalizedMessage());
+        }
+        catch (BeanCreationException e) 
+        {
+            SmallResponseUtil.sendError(response, 500, e.getLocalizedMessage());
+        }
+        catch (MultipartParserException e) 
+        {
+            SmallResponseUtil.sendError(response, 400, e.getLocalizedMessage());
+        }
+        catch (NoConverterException e) 
+        {
+            SmallResponseUtil.sendError(response, 501, e.getLocalizedMessage());
+        }
+        catch (UnsupportedMediaTypeException e) 
+        {
+            SmallResponseUtil.sendError(response, 415, e.getLocalizedMessage());
+        }
+        catch (NoViewHandlerException e) 
+        {
+            SmallResponseUtil.sendError(response, 500, e.getLocalizedMessage());
+        }
+        catch (IOException e) 
+        {
+            SmallResponseUtil.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+        }
+        catch (Exception e) 
+        {
+            SmallResponseUtil.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+        }
     }
 
-	private void callHead(HttpServletRequest request, HttpServletResponse response)
+	private void callHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		// HEAD is a GET with no body.
 		callControllerEntry(request, response, RequestMethod.GET, null);
@@ -157,22 +222,12 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		String path = SmallUtil.trimSlashes(SmallRequestUtil.getPath(request));
 		SmallConfiguration config = SmallUtil.getConfiguration(getServletContext());
 		
-		Result<ControllerEntryPoint> result;
-		
-		if ((result = environment.getControllerEntryPoint(RequestMethod.GET, path)) != null && result.hasValue())
+		for (RequestMethod m : getMethodsForPath(path))
 		{
-			sb.append(sb.length() > 0 ? ", " : "").append("GET");
-			sb.append(sb.length() > 0 ? ", " : "").append("HEAD");
+			sb.append(sb.length() > 0 ? ", " : "").append(m.name());
+			if (m == RequestMethod.GET)
+				sb.append(sb.length() > 0 ? ", " : "").append("HEAD");
 		}
-		if ((result = environment.getControllerEntryPoint(RequestMethod.POST, path)) != null && result.hasValue())
-			sb.append(sb.length() > 0 ? ", " : "").append("POST");
-		if ((result = environment.getControllerEntryPoint(RequestMethod.PUT, path)) != null && result.hasValue())
-			sb.append(sb.length() > 0 ? ", " : "").append("PUT");
-		if ((result = environment.getControllerEntryPoint(RequestMethod.PATCH, path)) != null && result.hasValue())
-			sb.append(sb.length() > 0 ? ", " : "").append("PATCH");
-		if ((result = environment.getControllerEntryPoint(RequestMethod.DELETE, path)) != null && result.hasValue())
-			sb.append(sb.length() > 0 ? ", " : "").append("DELETE");
-		
 		if (config.allowOptions())
 			sb.append(sb.length() > 0 ? ", " : "").append("OPTIONS");
 		if (config.allowTrace())
@@ -181,59 +236,44 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		if (sb.length() > 0)
 			response.setHeader("Allow", sb.toString());
 	}
-    
-	private SmallEnvironment createEnvironment(ServletContext servletContext)
+	
+	private Set<RequestMethod> getMethodsForPath(String path)
 	{
-		SmallConfiguration smallConfig = (SmallConfiguration)servletContext.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
-		
-		File tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir");
-		if (tempDir == null)
-			tempDir = new File(System.getProperty("java.io.tmpdir"));
-	
-		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
-			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
-	
-		SmallEnvironment env = new SmallEnvironment();
-		env.init(servletContext, smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
-		return env;
+		Set<RequestMethod> out = new HashSet<>();
+		for (RequestMethod m : RequestMethod.values())
+			if (environment.getControllerEntryPoint(m, path) != null)
+				out.add(m);
+		return out;
 	}
-
-	private void callPost(HttpServletRequest request, HttpServletResponse response)
+    
+	private void callPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		if (MultipartFormDataParser.isMultipart(request))
 			callMultipart(RequestMethod.POST, request, response);
-		else if ("PATCH".equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
+		else if (METHOD_PATCH.equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.POST, null);
 	}
 
-	private void callPut(HttpServletRequest request, HttpServletResponse response)
+	private void callPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		if (MultipartFormDataParser.isMultipart(request))
 			callMultipart(RequestMethod.PUT, request, response);
-		else if ("PATCH".equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
+		else if (METHOD_PATCH.equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.PUT, null);
 	}
 
-	private void callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response)
+	private void callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
 		if (parser == null)
-			SmallResponseUtil.sendError(response, 400, "The multipart request type is not supported.");
+			throw new UnsupportedMediaTypeException("The " + request.getContentType() + " request type is not supported for multipart requests.");
 		else
 		{
-			try {
-				parser.parse(request, environment.getTemporaryDirectory());
-			} catch (UnsupportedEncodingException e) {
-				SmallResponseUtil.sendError(response, 400, "The encoding type for the request is not supported.");
-			} catch (MultipartParserException e) {
-				SmallResponseUtil.sendError(response, 500, "The server could not parse the multiform request. " + e.getMessage());
-			} catch (IOException e) {
-				SmallResponseUtil.sendError(response, 500, "The server could not read the request. " + e.getMessage());
-			}
+			parser.parse(request, environment.getTemporaryDirectory());
 			
 			List<Part> parts = parser.getPartList();
 			
@@ -254,7 +294,12 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		}
 	}
 	
-	private void callControllerEntry(HttpServletRequest request, HttpServletResponse response, RequestMethod requestMethod, HashDequeMap<String, Part> multiformPartMap)
+	private void callControllerEntry(
+		HttpServletRequest request, 
+		HttpServletResponse response, 
+		RequestMethod requestMethod, 
+		HashDequeMap<String, Part> multiformPartMap
+	) throws ServletException, IOException
 	{
 		String path = SmallRequestUtil.getPath(request);
 		
@@ -262,8 +307,10 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		
 		if (result == null || !result.hasValue())
 		{
-			SmallResponseUtil.sendError(response, 404, "Not found. No handler for "+requestMethod.name()+ " '"+path+"'");
-			return;
+			if (getMethodsForPath(path).isEmpty())
+				throw new NotFoundException("Not found. No handler for "+requestMethod.name()+ " '"+path+"'");
+			else
+				throw new MethodNotAllowedException("Method " + requestMethod.name() + " not allowed.");
 		}
 		
 		// get cookies from request.

@@ -7,9 +7,11 @@
  ******************************************************************************/
 package com.blackrook.small.dispatch.filter;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 import com.blackrook.small.dispatch.DispatchEntryPoint;
 import com.blackrook.small.dispatch.DispatchMVCEntryPoint;
 import com.blackrook.small.enums.RequestMethod;
-import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 
@@ -46,15 +47,10 @@ public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent> implem
 		HttpServletResponse response, 
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
-		HashDequeMap<String, Part> multiformPartMap
-	){
-		Object retval = null;
-		try {
-			retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, multiformPartMap);
-		} catch (Exception e) {
-			throw new SmallFrameworkException("An exception occurred in a Filter method.", e);
-		}
-		return (Boolean)retval;
+		HashDequeMap<String, Part> partMap
+	) throws ServletException, IOException 
+	{
+		return (Boolean)invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 	}
 
 }

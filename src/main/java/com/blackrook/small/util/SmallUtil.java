@@ -11,19 +11,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Random;
 
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.websocket.server.ServerContainer;
 
 import com.blackrook.small.SmallConfiguration;
 import com.blackrook.small.SmallConstants;
 import com.blackrook.small.SmallEnvironment;
-import com.blackrook.small.exception.SmallFrameworkException;
+import com.blackrook.small.exception.request.BeanCreationException;
 import com.blackrook.small.roles.MIMETypeDriver;
 import com.blackrook.small.struct.Utils;
 
@@ -811,7 +810,8 @@ public final class SmallUtil
 	 */
 	public static String getMIMEType(ServletContext context, String filename)
 	{
-		return getEnvironment(context).getMIMETypeDriver().getMIMEType(Utils.getFileExtension(filename));
+		String type = getEnvironment(context).getMIMETypeDriver().getMIMEType(Utils.getFileExtension(filename));
+		return type != null ? type : "application/octet-stream";
 	}
 
 	/**
@@ -823,7 +823,7 @@ public final class SmallUtil
 	 * @param <T> the object type.
 	 * @return a typecast object on the application scope.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz)
 	{
@@ -841,7 +841,7 @@ public final class SmallUtil
 	 * @param name the attribute name.
 	 * @param <T> the object type.
 	 * @return a typecast object on the application scope.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz, String name)
 	{
@@ -856,7 +856,7 @@ public final class SmallUtil
 	 * @param create if true, instantiate this class in the application's servlet context (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @param <T> the object type.
 	 * @return a typecast object on the application scope, or null if it doesn't exist and wasn't created.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getApplicationBean(ServletContext context, Class<T> clazz, String name, boolean create)
 	{
@@ -868,12 +868,23 @@ public final class SmallUtil
 				{
 					if ((obj = context.getAttribute(name)) == null)
 					{
-						obj = clazz.getDeclaredConstructor().newInstance();
+						try {
+							obj = clazz.getDeclaredConstructor().newInstance();
+						} catch (
+							InstantiationException 
+							| IllegalAccessException
+							| IllegalArgumentException
+							| InvocationTargetException 
+							| NoSuchMethodException
+							| SecurityException e
+						) {
+							throw new BeanCreationException("Applcation bean could not be created.", e);
+						}
 						context.setAttribute(name, obj);
 					}
 				}
 			} catch (Exception e) {
-				throw new SmallFrameworkException(e);
+				throw new BeanCreationException("Applcation bean could not be created.", e);
 			}
 		}
 	
@@ -938,36 +949,6 @@ public final class SmallUtil
 	public static boolean getAttributeExist(ServletContext context, String attribName)
 	{
 		return context.getAttribute(attribName) != null;
-	}
-
-	/**
-	 * Includes the output of a view in the response handled by a request dispatcher.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @param path target view path relative to the application context.
-	 */
-	public static void includeView(HttpServletRequest request, HttpServletResponse response, String path)
-	{
-		try{
-			request.getRequestDispatcher(path).include(request, response);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
-	 * Surreptitiously forwards the request to a view handled by a request dispatcher.
-	 * @param request servlet request object.
-	 * @param response servlet response object.
-	 * @param path target view path relative to the application context.
-	 */
-	public static void sendToView(HttpServletRequest request, HttpServletResponse response, String path)
-	{
-		try{
-			request.getRequestDispatcher(path).forward(request, response);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
 	}
 
 	/**

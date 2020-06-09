@@ -7,13 +7,20 @@
  ******************************************************************************/
 package com.blackrook.small.dispatch;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.enums.RequestMethod;
+import com.blackrook.small.exception.request.BeanCreationException;
+import com.blackrook.small.exception.request.NoConverterException;
+import com.blackrook.small.exception.request.NotFoundException;
+import com.blackrook.small.exception.request.UnsupportedMediaTypeException;
 import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
 
@@ -33,6 +40,13 @@ public interface DispatchMVCEntryPoint<R>
 	 * @param cookieMap the cookie map.
 	 * @param partMap the map of name to multipart parts.
 	 * @return the return value.
+	 * @throws NotFoundException if a file that was going to be sent does not exist.
+	 * @throws UnsupportedMediaTypeException if an incoming or outgoing type is unsupported.
+	 * @throws NoConverterException if an object could not be converted to a serializable format for transmission.
+	 * @throws ClassCastException if a value could not be converted to another type.
+	 * @throws BeanCreationException if a bean cannot be instantiated for any reason on the application, session, or request scope.
+	 * @throws UnsupportedEncodingException if an encoding type is not supported by this server.
+	 * @throws IOException if an IO Error occurs.
 	 */
 	R handleCall(
 		RequestMethod requestMethod, 
@@ -41,5 +55,5 @@ public interface DispatchMVCEntryPoint<R>
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	);
+	) throws ServletException, IOException;
 }

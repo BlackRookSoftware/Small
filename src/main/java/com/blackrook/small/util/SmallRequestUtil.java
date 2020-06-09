@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.blackrook.small.exception.SmallFrameworkException;
+import com.blackrook.small.exception.request.BeanCreationException;
 import com.blackrook.small.multipart.MultipartFormDataParser;
 import com.blackrook.small.multipart.MultipartParser;
 import com.blackrook.small.parser.RFCParser;
@@ -89,8 +91,6 @@ public final class SmallRequestUtil
 	public static MultipartParser getMultipartParser(HttpServletRequest request)
 	{
 		String contentType = request.getContentType();
-		if (Utils.isEmpty(contentType))
-			return null;
 		if (contentType.startsWith("multipart/form-data"))
 			return new MultipartFormDataParser();
 		else
@@ -153,7 +153,7 @@ public final class SmallRequestUtil
 	 * @param <T> the object type.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz)
 	{
@@ -171,7 +171,7 @@ public final class SmallRequestUtil
 	 * @param clazz the class type of the object that should be returned.
 	 * @param <T> the object type.
 	 * @return a typecast object on the request, or <code>null</code>, if the session is null or the attribute does not exist.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
@@ -186,7 +186,7 @@ public final class SmallRequestUtil
 	 * @param create if true, instantiate this class in the request (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @param <T> the object type.
 	 * @return a typecast object on the request.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getRequestBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
 	{
@@ -195,10 +195,17 @@ public final class SmallRequestUtil
 		{
 			try {
 				obj = clazz.getDeclaredConstructor().newInstance();
-				request.setAttribute(name, obj);
-		} catch (Exception e) {
-				throw new SmallFrameworkException(e);
+			} catch (
+				InstantiationException 
+				| IllegalAccessException
+				| IllegalArgumentException
+				| InvocationTargetException 
+				| NoSuchMethodException
+				| SecurityException e
+			) {
+				throw new BeanCreationException("Request bean could not be created.", e);
 			}
+			request.setAttribute(name, obj);
 		}
 	
 		if (obj == null)
@@ -215,7 +222,7 @@ public final class SmallRequestUtil
 	 * @param <T> the object type.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
 	 * @throws IllegalArgumentException if the class provided in an anonymous class or array without a component type.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz)
 	{
@@ -233,7 +240,7 @@ public final class SmallRequestUtil
 	 * @param name the attribute name.
 	 * @param <T> the object type.
 	 * @return a typecast object on the session, or <code>null</code>, if the session is null.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name)
 	{
@@ -248,7 +255,7 @@ public final class SmallRequestUtil
 	 * @param create if true, instantiate this class in the session (via {@link Class#newInstance()}) if it doesn't exist.
 	 * @param <T> the object type.
 	 * @return a typecast object on the session, a new instance if it doesn't exist, or null if the session is null.
-	 * @throws SmallFrameworkException if the object cannot be instantiated for any reason.
+	 * @throws BeanCreationException if the object cannot be instantiated for any reason.
 	 */
 	public static <T> T getSessionBean(HttpServletRequest request, Class<T> clazz, String name, boolean create)
 	{
@@ -259,17 +266,24 @@ public final class SmallRequestUtil
 		Object obj = session.getAttribute(name);
 		if (obj == null && create)
 		{
-			try {
-				synchronized (session)
+			synchronized (session)
+			{
+				if ((obj = session.getAttribute(name)) == null)
 				{
-					if ((obj = session.getAttribute(name)) == null)
-					{
+					try {
 						obj = clazz.getDeclaredConstructor().newInstance();
-						session.setAttribute(name, obj);
+					} catch (
+						InstantiationException 
+						| IllegalAccessException
+						| IllegalArgumentException
+						| InvocationTargetException 
+						| NoSuchMethodException
+						| SecurityException e
+					) {
+						throw new BeanCreationException("Session bean could not be created.", e);
 					}
+					session.setAttribute(name, obj);
 				}
-			} catch (Exception e) {
-				throw new SmallFrameworkException(e);
 			}
 		}
 	
@@ -322,6 +336,7 @@ public final class SmallRequestUtil
 	 * @param request the request to read from.
 	 * @param type the type to convert to.
 	 * @return the data returned as the requested type.
+	 * @throws ClassCastException if a type conversion could not be performed.
 	 * @throws UnsupportedEncodingException if the incoming request is not a recognized charset.
 	 * @throws IOException if a read error occurs.
 	 */

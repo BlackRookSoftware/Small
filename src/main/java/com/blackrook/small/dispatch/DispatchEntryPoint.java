@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Queue;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,14 +42,15 @@ import com.blackrook.small.annotation.parameters.PathQuery;
 import com.blackrook.small.annotation.parameters.PathVariable;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.enums.ScopeType;
-import com.blackrook.small.exception.SmallFrameworkException;
+import com.blackrook.small.exception.request.BeanCreationException;
+import com.blackrook.small.exception.request.NoConverterException;
+import com.blackrook.small.exception.request.UnsupportedMediaTypeException;
 import com.blackrook.small.multipart.Part;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.util.SmallRequestUtil;
-import com.blackrook.small.util.SmallResponseUtil;
 import com.blackrook.small.util.SmallUtil;
 
 /**
@@ -273,6 +275,12 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 	 * @param cookieMap the cookie map.
 	 * @param partMap the map of name to multipart parts.
 	 * @return the function's return value.
+	 * @throws UnsupportedMediaTypeException if an incoming or outgoing type is unsupported.
+	 * @throws NoConverterException if an object could not be converted to a serializable format for transmission.
+	 * @throws ClassCastException if a value could not be converted to another type.
+	 * @throws BeanCreationException if a bean cannot be instantiated for any reason on the application, session, or request scope.
+	 * @throws UnsupportedEncodingException if an encoding type is not supported by this server.
+	 * @throws IOException if an IO Error occurs.
 	 */
 	protected Object invoke(
 		RequestMethod requestMethod, 
@@ -281,7 +289,8 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	) {
+	) throws ServletException, IOException 
+	{
 		Object[] invokeParams = new Object[parameters.length];
 	
 		String path = null;
@@ -345,7 +354,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					}
 					else
 					{
-						throw new SmallFrameworkException("Parameter " + i + " is not a type that can store a key-value structure.");
+						throw new ClassCastException("Parameter " + i + " is not a type that can store a key-value structure.");
 					}
 					break;
 				}
@@ -387,7 +396,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					}
 					else
 					{
-						throw new SmallFrameworkException("Parameter " + i + " is not a type that can store a key-value structure.");
+						throw new ClassCastException("Parameter " + i + " is not a type that can store a key-value structure.");
 					}
 					break;
 				}
@@ -466,7 +475,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
 					else
+					{
 						request.setAttribute(pinfo.getName(), invokeParams[i] = SmallRequestUtil.setModelFields(request, pinfo.getType()));
+					}
 					break;
 				}
 				case CONTENT:
@@ -478,53 +489,31 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 							try (Reader r = request.getReader()) 
 							{
 								JSONDriver json = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver();
-								if (json != null)
-									invokeParams[i] = json.fromJSON(request.getReader(), type);
-								else
-									SmallResponseUtil.sendError(response, 415, "Unsupported Media Type - JSON");
+								if (json == null)
+									throw new UnsupportedMediaTypeException("JSON decoding not supported.");
+								invokeParams[i] = json.fromJSON(request.getReader(), type);
 							} 
-							catch (IOException e) 
-							{
-								SmallResponseUtil.sendError(response, 500, "Server could not read request.");
-								throw new SmallFrameworkException(e);
-							}
 						} 
 						else if (SmallRequestUtil.isXML(request)) 
 						{ 
 							try (Reader r = request.getReader()) 
 							{
 								XMLDriver xml = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver();
-								if (xml != null)
-									invokeParams[i] = xml.fromXML(request.getReader(), type);
-								else
-									SmallResponseUtil.sendError(response, 415, "Unsupported Media Type - XML");
-							} 
-							catch (IOException e) 
-							{
-								SmallResponseUtil.sendError(response, 500, "Server could not read request.");
-								throw new SmallFrameworkException(e);
+								if (xml == null)
+									throw new UnsupportedMediaTypeException("XML decoding not supported.");
+								invokeParams[i] = xml.fromXML(request.getReader(), type);
 							}
 						} 
 						else 
 						{ 
-							try 
-							{
-								content = content != null ? content : SmallRequestUtil.getContentData(request, pinfo.getType());
-								invokeParams[i] = content;
-							} 
-							catch (UnsupportedEncodingException e) 
-							{
-								SmallResponseUtil.sendError(response, 400, "The encoding type for the " + requestMethod.name() + " request is not supported.");
-							} 
-							catch (IOException e) 
-							{
-								SmallResponseUtil.sendError(response, 500, "Server could not read request.");
-								throw new SmallFrameworkException(e);
-							}
+							content = content != null ? content : SmallRequestUtil.getContentData(request, pinfo.getType());
+							invokeParams[i] = content;
 						}
 					}
 					else
+					{
 						invokeParams[i] = null;
+					}
 					break;
 				}
 			}

@@ -22,6 +22,5 @@ public enum RequestMethod
 	/** Standard PATCH request. */
 	PATCH,
 	/** Standard DELETE request. */
-	DELETE,
-	;
+	DELETE;
 }

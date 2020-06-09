@@ -17,6 +17,14 @@ public interface SmallConfiguration
 	String getContextPath();
 
 	/**
+	 * Provides the path to the temporary directory.
+	 * If this returns null, it will defer to the context attribute <code>"javax.servlet.context.tempdir"</code>,
+	 * and if that isn't set, the <code>"java.io.tmpdir"</code> system property is used.
+	 * @return the path for temporary files (usually multipart form files), or null.
+	 */
+	String getTempPath();
+
+	/**
 	 * @return the path patterns for the application's servlet entrypoint.
 	 */
 	String[] getServletPaths();

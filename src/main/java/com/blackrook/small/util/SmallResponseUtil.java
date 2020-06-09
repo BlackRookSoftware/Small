@@ -110,8 +110,7 @@ public final class SmallResponseUtil
 	 * The "Content-Length" portion of the header is changed to <code>length</code>, if positive.
 	 * @param response servlet response object.
 	 * @param mimeType the MIME-Type of the stream.
-	 * @param contentName the name of the data to send (file name). Can be null - leaving it out
-	 * 	does not send "Content-Disposition" headers.
+	 * @param contentName the name of the data to send (file name). Can be null - leaving it out does not send "Content-Disposition" headers.
 	 * @param encoding if not null, adds a "Content-Encoding" header.
 	 * @param inStream the input stream to read.
 	 * @param length the length of data in bytes to send.
@@ -142,24 +141,9 @@ public final class SmallResponseUtil
 	}
 
 	/**
-	 * Sends request to the error page with a status code.
-	 * @param response servlet response object.
-	 * @param statusCode the status code to use.
-	 * @param message the status message.
-	 */
-	public static void sendCode(HttpServletResponse response, int statusCode, String message)
-	{
-		try{
-			response.sendError(statusCode, message);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
-	/**
 	 * Forwards the client abruptly to another document or servlet (new client request). 
-	 * @param response	servlet response object.
-	 * @param url		target URL.
+	 * @param response servlet response object.
+	 * @param url target URL.
 	 */
 	public static void sendRedirect(HttpServletResponse response, String url)
 	{

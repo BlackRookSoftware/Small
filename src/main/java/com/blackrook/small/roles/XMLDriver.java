@@ -27,6 +27,14 @@ import com.blackrook.small.annotation.controller.ControllerEntry;
 public interface XMLDriver
 {
 	/**
+	 * Called when an object needs to be converted to XML from an object.
+	 * @param writer the writer to write to.
+	 * @param object the object to convert and write.
+	 * @throws IOException if an error occurs during the write.
+	 */
+	void toXML(Writer writer, Object object) throws IOException;
+
+	/**
 	 * Called when an object needs to be converted to an object from XML.
 	 * @param <T> the return type.
 	 * @param reader the provided reader to read XML from.
@@ -36,27 +44,6 @@ public interface XMLDriver
 	 */
 	<T> T fromXML(Reader reader, Class<T> type) throws IOException;
 
-	/**
-	 * Called when an object needs to be converted to XML from an object.
-	 * @param writer the writer to write to.
-	 * @param object the object to convert and write.
-	 * @throws IOException if an error occurs during the write.
-	 */
-	void toXML(Writer writer, Object object) throws IOException;
-
-	/**
-	 * Converts an object to a XML string from an object.
-	 * @param <T> the return type.
-	 * @param xml the input XML string.
-	 * @param type the incoming type.
-	 * @return the resultant XML string.
-	 * @throws IOException if an error occurs during the write.
-	 */
-	default <T> T fromXMLString(String xml, Class<T> type) throws IOException
-	{
-		return fromXML(new StringReader(xml), type);
-	}
-	
 	/**
 	 * Converts an object to a XML string from an object.
 	 * @param retval the object to convert and write.
@@ -68,6 +55,19 @@ public interface XMLDriver
 		StringWriter sw = new StringWriter(2048);
 		toXML(sw, retval);
 		return sw.toString();
+	}
+	
+	/**
+	 * Converts an object to a XML string from an object.
+	 * @param <T> the return type.
+	 * @param xml the input XML string.
+	 * @param type the incoming type.
+	 * @return the resultant XML string.
+	 * @throws IOException if an error occurs during the write.
+	 */
+	default <T> T fromXMLString(String xml, Class<T> type) throws IOException
+	{
+		return fromXML(new StringReader(xml), type);
 	}
 	
 }
