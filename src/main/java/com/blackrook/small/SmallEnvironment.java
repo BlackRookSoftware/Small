@@ -199,11 +199,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 			initComponents(context, controllerRootPackages, ClassLoader.getSystemClassLoader());
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
 		}
-		for (Map.Entry<RequestMethod, URITrie<ControllerEntryPoint>> entry : controllerEntries.entrySet())
-		{
-			System.out.print(entry.getKey() + " ");
-			entry.getValue().printTo(System.out);
-		}
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
 			entry.getValue().invokeAfterInitializeMethods();
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : controllerComponents.entrySet())
