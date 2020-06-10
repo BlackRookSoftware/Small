@@ -12,6 +12,13 @@ public interface SmallConfiguration
 	int getServerPort();
 
 	/**
+	 * Gets the port to use for secure connections.
+	 * Can be null for no secure connections.
+	 * @return the secure server port, or null for no secure sockets.
+	 */
+	Integer getSecureServerPort();
+
+	/**
 	 * @return the context path for the application.
 	 */
 	String getContextPath();
