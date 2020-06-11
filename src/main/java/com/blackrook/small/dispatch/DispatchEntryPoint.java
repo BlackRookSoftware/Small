@@ -280,6 +280,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 	 * @throws ClassCastException if a value could not be converted to another type.
 	 * @throws BeanCreationException if a bean cannot be instantiated for any reason on the application, session, or request scope.
 	 * @throws UnsupportedEncodingException if an encoding type is not supported by this server.
+	 * @throws ServletException if any other servlet exception happens. 
 	 * @throws IOException if an IO Error occurs.
 	 */
 	protected Object invoke(
