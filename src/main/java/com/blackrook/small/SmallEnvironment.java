@@ -195,10 +195,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.viewDriverList = new ArrayList<>();
 		
 		if (!Utils.isEmpty(controllerRootPackages))
-		{
-			initComponents(context, controllerRootPackages, ClassLoader.getSystemClassLoader());
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
-		}
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
 			entry.getValue().invokeAfterInitializeMethods();
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : controllerComponents.entrySet())
@@ -268,7 +265,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					throw new SmallFrameworkSetupException("Could not load class "+className+" from classpath.");
 				}
 				
-				if (isComponentClass(componentClass))
+				if (componentClass.isAnnotationPresent(Component.class))
 				{
 					Object componentInstance = createOrGetComponent(componentClass);
 		
@@ -369,6 +366,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
 					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, "/" + componentClass.getName()).build();
+					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
 					try {
 						websocketServerContainer.addEndpoint(config);
 					} catch (DeploymentException e) {
@@ -377,19 +375,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				}
 			}
 		}
-	}
-
-	/**
-	 * Checks if a class is a component class.
-	 * @param componentClass
-	 * @return
-	 */
-	private boolean isComponentClass(Class<?> componentClass)
-	{
-		return 
-			componentClass.isAnnotationPresent(Component.class) 
-			|| componentClass.isAnnotationPresent(Controller.class) 
-			|| componentClass.isAnnotationPresent(Filter.class);
 	}
 
 	/**
