@@ -13,7 +13,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Map;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
@@ -21,7 +21,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * <p>
  * Turns the parameters on the request into a {@link Map}.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)

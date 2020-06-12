@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.annotation.controller.Attachment;
 import com.blackrook.small.annotation.controller.Content;
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.controller.FilterChain;
 import com.blackrook.small.annotation.controller.HTTPMethod;
 import com.blackrook.small.annotation.controller.NoCache;
@@ -82,7 +82,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 		this.noCache = method.isAnnotationPresent(NoCache.class);
 		this.filterChain = NO_FILTERS;
 
-		ControllerEntry controllerEntry = method.getAnnotation(ControllerEntry.class);
+		EntryPath controllerEntry = method.getAnnotation(EntryPath.class);
 		
 		LinkedList<RequestMethod> requestMethodsFound = new LinkedList<>();
 
@@ -117,7 +117,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 			this.filterChain = controllerProfile.getFilterChain();
 		}
 		
-		if (method.isAnnotationPresent(ControllerEntry.class))
+		if (method.isAnnotationPresent(EntryPath.class))
 		{
 			Class<?> type = getType();
 			

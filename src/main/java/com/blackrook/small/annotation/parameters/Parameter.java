@@ -13,7 +13,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
@@ -23,7 +23,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * If the request body type is <code>multipart/**</code>, the parameter type can be {@link File},
  * which matches an uploaded file.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)

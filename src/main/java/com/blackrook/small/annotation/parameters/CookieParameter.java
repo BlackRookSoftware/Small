@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 
 import javax.servlet.http.Cookie;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
@@ -23,7 +23,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * Matched type must be {@link Cookie}, and if the Cookie name does not exist,
  * it is created for the response.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)

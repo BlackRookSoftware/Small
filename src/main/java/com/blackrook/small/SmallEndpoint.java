@@ -15,24 +15,28 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
-import javax.websocket.Endpoint;
+import javax.websocket.CloseReason;
 import javax.websocket.EndpointConfig;
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import com.blackrook.small.annotation.Component;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.roles.JSONDriver;
+import com.blackrook.small.roles.XMLDriver;
 
 /**
- * A base Endpoint that contains useful stuff for instantiated endpoints.
+ * A base websocket endpoint that automatically has a connection to the Small application environment.
  * Endpoints that extend this class should use the {@link ServerEndpoint} annotation to declare itself.
  * <p>
  * You should use this class for finding components created in Small, as this provides access for retrieving
  * those components once this class is instantiated by the Servlet Container (see {@link #getComponent(Class)}. 
  * @author Matthew Tropiano
  */
-public abstract class SmallEndpoint extends Endpoint
+public abstract class SmallEndpoint
 {
 	/** This endpoint's session. */
 	private Session session;
@@ -52,11 +56,68 @@ public abstract class SmallEndpoint extends Endpoint
 	 * When this is called, this gets the {@link SmallEnvironment} from the config
 	 * and saves the session on this class.
 	 */
-	@Override
-	public void onOpen(Session session, EndpointConfig config)
+	@OnOpen
+	public final void onOpen(Session session, EndpointConfig config)
 	{
 		this.session = session;
 		this.environment = (SmallEnvironment)config.getUserProperties().get(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
+		afterOpen(config);
+	}
+	
+	/**
+	 * From Endpoint:
+	 * <p>This method is called immediately prior to the session with the remote peer being closed. 
+	 * It is called whether the session is being closed because the remote peer initiated a close 
+	 * and sent a close frame, or whether the local websocket container or this endpoint requests 
+	 * to close the session. The developer may take this last opportunity to retrieve session 
+	 * attributes such as the ID, or any application data it holds before it becomes unavailable 
+	 * after the completion of the method. Developers should not attempt to modify the session 
+	 * from within this method, or send new messages from this call as the underlying connection 
+	 * will not be able to send them at this stage.
+	 * @param session the session about to be closed.
+	 * @param reason the reason the session was closed.
+	 */
+	@OnClose
+	public void beforeClose(Session session, CloseReason reason)
+	{
+		// Do nothing, by default.
+	}
+
+	/**
+	 * Called when an error happens on this session.
+	 * @param session the session connection.
+	 * @param thowable the error.
+	 */
+	@OnError
+	public abstract void onError(Session session, Throwable thowable);
+	
+	/**
+	 * Called after the session and environment setup in the 
+	 * {@link #onOpen(Session, EndpointConfig)} method happens.
+	 * Does nothing by default.
+	 * See {@link #getSession()} for getting the socket session.
+	 * See {@link #getEnvironment()} for setting up references to components.
+	 * @param config the endpoint configuration.
+	 */
+	protected void afterOpen(EndpointConfig config)
+	{
+		// Do nothing, by default.
+	}
+
+	/**
+	 * @return gets the session for this websocket.
+	 */
+	protected Session getSession()
+	{
+		return session;
+	}
+	
+	/**
+	 * @return the Small environment.
+	 */
+	protected SmallEnvironment getEnvironment()
+	{
+		return environment;
 	}
 
 	/**
@@ -66,6 +127,15 @@ public abstract class SmallEndpoint extends Endpoint
 	protected JSONDriver getJSONDriver()
 	{
 		return environment.getJSONDriver();
+	}
+
+	/**
+	 * Gets this application's XML converter driver.
+	 * @return the instantiated driver.
+	 */
+	protected XMLDriver getXMLDriver()
+	{
+		return environment.getXMLDriver();
 	}
 
 	/**
@@ -85,14 +155,6 @@ public abstract class SmallEndpoint extends Endpoint
 	protected <T> T getComponent(Class<T> componentClass)
 	{
 		return getEnvironment().getComponent(componentClass);
-	}
-
-	/**
-	 * @return the Small environment.
-	 */
-	protected SmallEnvironment getEnvironment()
-	{
-		return environment;
 	}
 
 	/**
@@ -130,13 +192,28 @@ public abstract class SmallEndpoint extends Endpoint
 	/**
 	 * Sends a JSON Object, synchronously, to the client.
 	 * Execution halts until the client socket acknowledges receipt. 
-	 * @param object the object to pass back to the connected client.
+	 * @param object the object to pass back to the connected client (converted to JSON via the {@link JSONDriver}).
 	 * @throws SmallFrameworkException on a send error.
 	 */
 	public void sendJSON(Object object)
 	{
 		try {
 			session.getBasicRemote().sendText(getJSONDriver().toJSONString(object));
+		} catch (Exception e) {
+			throw new SmallFrameworkException(e);
+		}
+	}
+
+	/**
+	 * Sends an XML Document, synchronously, to the client.
+	 * Execution halts until the client socket acknowledges receipt. 
+	 * @param object the object to pass back to the connected client (converted to XML via the {@link XMLDriver}).
+	 * @throws SmallFrameworkException on a send error.
+	 */
+	public void sendXML(Object object)
+	{
+		try {
+			session.getBasicRemote().sendText(getXMLDriver().toXMLString(object));
 		} catch (Exception e) {
 			throw new SmallFrameworkException(e);
 		}
@@ -273,6 +350,21 @@ public abstract class SmallEndpoint extends Endpoint
 	{
 		try {
 			return sendAsyncText(getJSONDriver().toJSONString(object));
+		} catch (Exception e) {
+			throw new SmallFrameworkException(e);
+		}
+	}
+
+	/**
+	 * Sends a JSON Object, asynchronously, to the client.
+	 * @param object the object to pass back to the connected client (converted to XML via the {@link XMLDriver}).
+	 * @return the {@link Future} object to monitor the sent request after the call.
+	 * @throws SmallFrameworkException on a send error.
+	 */
+	public Future<Void> sendAsyncXML(Object object)
+	{
+		try {
+			return sendAsyncText(getXMLDriver().toXMLString(object));
 		} catch (Exception e) {
 			throw new SmallFrameworkException(e);
 		}

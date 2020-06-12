@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.blackrook.small.annotation.Controller;
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.controller.FilterChain;
 import com.blackrook.small.dispatch.DispatchComponent;
 import com.blackrook.small.exception.SmallFrameworkException;
@@ -55,11 +55,11 @@ public class ControllerComponent extends DispatchComponent
 		super(instance);
 
 		Class<?> clazz = instance.getClass();
-		Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
-		if (controllerAnnotation == null)
+		EntryPath pathAnnotation = clazz.getAnnotation(EntryPath.class);
+		if (pathAnnotation == null)
 			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 
-		this.path = SmallUtil.pathify(controllerAnnotation.value());
+		this.path = SmallUtil.pathify(pathAnnotation.value());
 		this.entryMethods = new ArrayList<>();
 		
 		// accumulate filter chains.
@@ -119,7 +119,7 @@ public class ControllerComponent extends DispatchComponent
 	{
 		if (isValidEntryMethod(method))
 			entryMethods.add(new ControllerEntryPoint(this, method));
-		else if (method.isAnnotationPresent(ControllerEntry.class))
+		else if (method.isAnnotationPresent(EntryPath.class))
 			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @ControllerEntry, but must be public.");
 		super.scanMethod(method);
 	}
@@ -128,7 +128,7 @@ public class ControllerComponent extends DispatchComponent
 	private boolean isValidEntryMethod(Method method)
 	{
 		return
-			method.isAnnotationPresent(ControllerEntry.class) 
+			method.isAnnotationPresent(EntryPath.class) 
 			&& (method.getModifiers() & Modifier.PUBLIC) != 0
 			;
 	}

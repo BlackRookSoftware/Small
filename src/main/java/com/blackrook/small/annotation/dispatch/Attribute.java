@@ -12,7 +12,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 import com.blackrook.small.enums.ScopeType;
 
@@ -22,7 +22,7 @@ import com.blackrook.small.enums.ScopeType;
  * Matched type is NOT converted. Any value created by this parameter is persisted to the scope declared.
  * Any value that does not already exist is created (via default constructor or matching annotated method in the same class).
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)

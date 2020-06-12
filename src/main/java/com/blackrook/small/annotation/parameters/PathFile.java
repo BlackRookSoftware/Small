@@ -12,7 +12,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
@@ -20,7 +20,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * <p>
  * Parameter type must be String, and will be set to the "filename" portion of the request path.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  */
 @Target(ElementType.PARAMETER)

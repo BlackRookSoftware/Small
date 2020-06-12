@@ -18,7 +18,7 @@ import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 
 /**
- * Should be used on {@link ControllerEntry}-annotated methods on {@link Controller}-annotated classes.
+ * Should be used on {@link EntryPath}-annotated methods on {@link Controller}-annotated classes.
  * <p>
  * This turns the method return body content into an "attachment" via <code>Content-Disposition</code> headers (file downloads).
  * <p>Most effective on {@link File} return types.
@@ -35,7 +35,7 @@ import com.blackrook.small.roles.XMLDriver;
  * </ul>
  * If a String value is given on this annotation, it is interpreted as the forced MIME-Type to use, but only for File, String and binary output.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see Content
  * @see View
  */

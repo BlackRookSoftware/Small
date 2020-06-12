@@ -13,7 +13,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The request methods that a {@link ControllerEntry} uses. 
+ * The request methods that a {@link EntryPath} uses. 
  * @author Matthew Tropiano
  */
 public final class HTTPMethod

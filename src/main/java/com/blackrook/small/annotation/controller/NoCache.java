@@ -18,7 +18,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * If placed on a Controller method, headers are written in the response for
  * hinting at the fact that the returned content should not be cached by the browser.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  */
 @Target(ElementType.METHOD)

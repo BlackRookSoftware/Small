@@ -38,6 +38,7 @@ import com.blackrook.small.annotation.Component;
 import com.blackrook.small.annotation.ComponentConstructor;
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.Filter;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.dispatch.controller.ControllerComponent;
 import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
 import com.blackrook.small.dispatch.filter.FilterComponent;
@@ -296,8 +297,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						if (componentClass.isAnnotationPresent(Filter.class))
 							throw new SmallFrameworkSetupException("Class " + componentClass+ " is already a Controller. Can't annotate with @Filter!");
 						
-						Controller controllerAnnotation = componentClass.getAnnotation(Controller.class);
-		
 						// check for double-include. Skip.
 						if (controllerComponents.containsKey(componentClass))
 							continue;
@@ -307,7 +306,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						component.scanMethods();
 						component.invokeAfterConstructionMethods();
 						
-						String path = SmallUtil.trimSlashes(controllerAnnotation.value());
+						EntryPath entryPathAnno = componentClass.getAnnotation(EntryPath.class);
+						
+						String path = SmallUtil.trimSlashes(entryPathAnno != null ? entryPathAnno.value() + '/' : "");
 						for (ControllerEntryPoint entryPoint : ((ControllerComponent)component).getEntryMethods())
 						{
 							String uri = path + '/' + SmallUtil.trimSlashes(entryPoint.getPath());
@@ -344,13 +345,13 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						component.invokeAfterConstructionMethods();
 					}
 				}
-				else if (componentClass.isAnnotationPresent(ServerEndpoint.class))
+				else if (SmallEndpoint.class.isAssignableFrom(componentClass))
 				{
 					ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
 					if (websocketServerContainer == null)
 						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
-					ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
+					EntryPath anno = componentClass.getAnnotation(EntryPath.class);
 					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
 					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
 					try {
@@ -365,7 +366,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					if (websocketServerContainer == null)
 						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 					
-					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, "/" + componentClass.getName()).build();
+					ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
+					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
 					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
 					try {
 						websocketServerContainer.addEndpoint(config);

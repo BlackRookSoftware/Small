@@ -17,7 +17,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 import com.blackrook.small.roles.ViewDriver;
 
 /**
- * Should be used on {@link ControllerEntry}-annotated methods on {@link Controller}-annotated classes.
+ * Should be used on {@link EntryPath}-annotated methods on {@link Controller}-annotated classes.
  * <p>
  * Designates that the return value is the name of a view to be handled by {@link ViewDriver}s. 
  * If not String, the returned object's {@link String#valueOf(Object)} return value is used.
@@ -26,7 +26,7 @@ import com.blackrook.small.roles.ViewDriver;
  * <p>
  * If no {@link ViewDriver} handles the view, a 501 error is sent back.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  * @see FilterEntry
  * @see Attachment
  * @see Content

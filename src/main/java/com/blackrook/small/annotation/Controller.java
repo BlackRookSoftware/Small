@@ -12,27 +12,23 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 
 /**
  * Annotation that is used to signify that this object is a Controller with entry points.
- * Must be on a class also annotated with {@link Component}.
+ * Must be on a class also annotated with {@link Component}. An {@link EntryPath} annotation on the
+ * controller class specifies the base path for the endpoints.
  * <p>All HTTP calls find their way here, and these objects handle the incoming request.
- * <p>Requests are handled via {@link ControllerEntry}-annotated methods.
+ * <p>Requests are handled via {@link EntryPath}-annotated methods.
  * <p>
  * This object may have dependency singleton {@link Component} objects
  * injected into them via {@link ComponentConstructor}-annotated constructors. 
- * Only one constructor can be annotated with one.
+ * Only one constructor can be annotated with {@link ComponentConstructor}.
  * @author Matthew Tropiano
- * @see ControllerEntry
+ * @see EntryPath
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Controller
 {
-	/**
-	 * @return the "directory" path to use for the controller.
-	 */
-	String value() default "";
-	
 }

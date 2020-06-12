@@ -10,13 +10,13 @@ package com.blackrook.small.roles;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.small.annotation.controller.ControllerEntry;
+import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.controller.View;
 
 /**
  * Describes a view resolution driver for Small.
  * <p>
- * When a {@link ControllerEntry} method returns a {@link View}, it is passed to one of these components to render.
+ * When a {@link EntryPath} method returns a {@link View}, it is passed to one of these components to render.
  * <p>
  * There can be many components with this role - the {@link #handleView(HttpServletRequest, HttpServletResponse, String)}.
  * @author Matthew Tropiano
