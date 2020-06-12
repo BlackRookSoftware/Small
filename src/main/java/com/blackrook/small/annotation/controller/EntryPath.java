@@ -14,12 +14,12 @@ import java.lang.annotation.Target;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.blackrook.small.SmallEndpoint;
 import com.blackrook.small.annotation.Controller;
 
 /**
- * Public methods with this annotation in {@link Controller}-annotated objects and {@link SmallEndpoint} 
+ * Public methods with this annotation in {@link Controller}-annotated
  * classes are considered entry points via HTTP requests. 
+ * Can also be on the controller class itself to declare a base path for all of the described endpoints. 
  * <p>The method return type influences what gets sent back as content. 
  * If the method returns <code>void</code>, then responding
  * must be handled some other way (via {@link HttpServletResponse}).

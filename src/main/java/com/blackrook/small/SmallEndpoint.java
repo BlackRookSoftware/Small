@@ -15,10 +15,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
-import javax.websocket.CloseReason;
+import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
@@ -36,7 +34,7 @@ import com.blackrook.small.roles.XMLDriver;
  * those components once this class is instantiated by the Servlet Container (see {@link #getComponent(Class)}. 
  * @author Matthew Tropiano
  */
-public abstract class SmallEndpoint
+public abstract class SmallEndpoint extends Endpoint
 {
 	/** This endpoint's session. */
 	private Session session;
@@ -63,33 +61,6 @@ public abstract class SmallEndpoint
 		this.environment = (SmallEnvironment)config.getUserProperties().get(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
 		afterOpen(config);
 	}
-	
-	/**
-	 * From Endpoint:
-	 * <p>This method is called immediately prior to the session with the remote peer being closed. 
-	 * It is called whether the session is being closed because the remote peer initiated a close 
-	 * and sent a close frame, or whether the local websocket container or this endpoint requests 
-	 * to close the session. The developer may take this last opportunity to retrieve session 
-	 * attributes such as the ID, or any application data it holds before it becomes unavailable 
-	 * after the completion of the method. Developers should not attempt to modify the session 
-	 * from within this method, or send new messages from this call as the underlying connection 
-	 * will not be able to send them at this stage.
-	 * @param session the session about to be closed.
-	 * @param reason the reason the session was closed.
-	 */
-	@OnClose
-	public void beforeClose(Session session, CloseReason reason)
-	{
-		// Do nothing, by default.
-	}
-
-	/**
-	 * Called when an error happens on this session.
-	 * @param session the session connection.
-	 * @param thowable the error.
-	 */
-	@OnError
-	public abstract void onError(Session session, Throwable thowable);
 	
 	/**
 	 * Called after the session and environment setup in the 

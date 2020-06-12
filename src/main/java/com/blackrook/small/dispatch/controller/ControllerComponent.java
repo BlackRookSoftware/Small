@@ -55,11 +55,12 @@ public class ControllerComponent extends DispatchComponent
 		super(instance);
 
 		Class<?> clazz = instance.getClass();
-		EntryPath pathAnnotation = clazz.getAnnotation(EntryPath.class);
-		if (pathAnnotation == null)
+		Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
+		if (controllerAnnotation == null)
 			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 
-		this.path = SmallUtil.pathify(pathAnnotation.value());
+		EntryPath pathAnnotation = clazz.getAnnotation(EntryPath.class);
+		this.path = SmallUtil.pathify(pathAnnotation != null ? pathAnnotation.value() : "");
 		this.entryMethods = new ArrayList<>();
 		
 		// accumulate filter chains.
