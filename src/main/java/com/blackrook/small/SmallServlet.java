@@ -41,6 +41,7 @@ import com.blackrook.small.multipart.MultipartFormDataParser;
 import com.blackrook.small.multipart.MultipartParser;
 import com.blackrook.small.multipart.Part;
 import com.blackrook.small.struct.HashDequeMap;
+import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.struct.URITrie.Result;
 import com.blackrook.small.util.SmallRequestUtil;
@@ -241,8 +242,11 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	{
 		Set<RequestMethod> out = new HashSet<>();
 		for (RequestMethod m : RequestMethod.values())
-			if (environment.getControllerEntryPoint(m, path) != null)
+		{
+			URITrie.Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(m, path);
+			if (result != null && result.hasValue())
 				out.add(m);
+		}
 		return out;
 	}
     
