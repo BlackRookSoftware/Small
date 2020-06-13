@@ -188,10 +188,12 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
         }
         catch (IOException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtil.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
         }
         catch (Exception e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtil.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
         }
     }
