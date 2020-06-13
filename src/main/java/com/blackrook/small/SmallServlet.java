@@ -149,27 +149,14 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	@Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
     {
-        String method = request.getMethod();
         try 
         {
-            if (method.equals(METHOD_GET))
-        		callControllerEntry(request, response, RequestMethod.GET, null);
-            else if (method.equals(METHOD_POST))
-            	callPost(request, response);
-            else if (method.equals(METHOD_PUT))
-            	callPut(request, response);
-            else if (method.equals(METHOD_DELETE))
-        		callControllerEntry(request, response, RequestMethod.DELETE, null);
-            else if (method.equals(METHOD_PATCH))
-    			callControllerEntry(request, response, RequestMethod.PATCH, null);
-            else if (method.equals(METHOD_HEAD))
-            	callHead(request, response);
-            else if (SmallUtil.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
-            	callOptions(request, response);
-            else if (SmallUtil.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
-        		doTrace(request, response);
-            else
-    			throw new MethodNotAllowedException("Method " + method + " not allowed.");
+        	try {
+        		callMethod(request, response);
+        	} catch (Throwable t) {
+        		if (!environment.handleException(request, response, t))
+        			throw t;
+        	}
         }
         catch (NotFoundException e) 
         {
@@ -209,6 +196,42 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
         }
     }
 
+	private Set<RequestMethod> getMethodsForPath(String path)
+	{
+		Set<RequestMethod> out = new HashSet<>();
+		for (RequestMethod m : RequestMethod.values())
+		{
+			URITrie.Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(m, path);
+			if (result != null && result.hasValue())
+				out.add(m);
+		}
+		return out;
+	}
+
+	private void callMethod(HttpServletRequest request, HttpServletResponse response)
+		throws ServletException, IOException, MethodNotAllowedException
+	{
+		String method = request.getMethod();
+		if (method.equals(METHOD_GET))
+			callControllerEntry(request, response, RequestMethod.GET, null);
+		else if (method.equals(METHOD_POST))
+			callPost(request, response);
+		else if (method.equals(METHOD_PUT))
+			callPut(request, response);
+		else if (method.equals(METHOD_DELETE))
+			callControllerEntry(request, response, RequestMethod.DELETE, null);
+		else if (method.equals(METHOD_PATCH))
+			callControllerEntry(request, response, RequestMethod.PATCH, null);
+		else if (method.equals(METHOD_HEAD))
+			callHead(request, response);
+		else if (SmallUtil.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
+			callOptions(request, response);
+		else if (SmallUtil.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
+			doTrace(request, response);
+		else
+			throw new MethodNotAllowedException("Method " + method + " not allowed.");
+	}
+
 	private void callHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		// HEAD is a GET with no body.
@@ -238,18 +261,6 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 			response.setHeader("Allow", sb.toString());
 	}
 	
-	private Set<RequestMethod> getMethodsForPath(String path)
-	{
-		Set<RequestMethod> out = new HashSet<>();
-		for (RequestMethod m : RequestMethod.values())
-		{
-			URITrie.Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(m, path);
-			if (result != null && result.hasValue())
-				out.add(m);
-		}
-		return out;
-	}
-    
 	private void callPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		if (MultipartFormDataParser.isMultipart(request))

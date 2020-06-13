@@ -11,7 +11,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.Map;
@@ -32,7 +31,6 @@ import com.blackrook.small.dispatch.DispatchEntryPoint;
 import com.blackrook.small.dispatch.DispatchMVCEntryPoint;
 import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
-import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.exception.request.NoConverterException;
 import com.blackrook.small.exception.request.NoViewHandlerException;
@@ -254,19 +252,19 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					else if (StringBuffer.class.isAssignableFrom(returnType))
 					{
 						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
+						SmallResponseUtil.sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
 					}
 					// StringBuilder data output.
 					else if (StringBuilder.class.isAssignableFrom(returnType))
 					{
 						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
+						SmallResponseUtil.sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
 					}
 					// String data output.
 					else if (String.class.isAssignableFrom(returnType))
 					{
 						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						sendStringData(response, mimeType, fname, (String)retval);
+						SmallResponseUtil.sendStringData(response, mimeType, fname, (String)retval);
 					}
 					// binary output.
 					else if (byte[].class.isAssignableFrom(returnType))
@@ -326,33 +324,5 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 		return null;
 	}
 	
-	/**
-	 * Writes string data to the response.
-	 * @param response the response object.
-	 * @param mimeType the response MIME-Type.
-	 * @param fileName the file name.
-	 * @param data the string data to send.
-	 */
-	private void sendStringData(HttpServletResponse response, String mimeType, String fileName, String data)
-	{
-		byte[] bytedata = getStringData(data, "UTF-8");
-		if (!Utils.isEmpty(mimeType))
-			SmallResponseUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
-		else
-			SmallResponseUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
-	}
-
-	/**
-	 * Converts a string to byte data.
-	 */
-	private byte[] getStringData(String data, String encoding)
-	{
-		try {
-			return data.getBytes(encoding);
-		} catch (UnsupportedEncodingException e) {
-			throw new SmallFrameworkException(e);
-		}
-	}
-
 }
 

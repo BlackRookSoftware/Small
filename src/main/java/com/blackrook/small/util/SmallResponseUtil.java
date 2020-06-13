@@ -8,10 +8,12 @@
 package com.blackrook.small.util;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,6 +26,8 @@ import com.blackrook.small.struct.Utils;
  */
 public final class SmallResponseUtil
 {
+	private static final Charset UTF8 = Charset.forName("UTF-8");
+	
 	private SmallResponseUtil() {}
 
 	/**
@@ -69,6 +73,43 @@ public final class SmallResponseUtil
 		} catch (IOException e) {
 			throw new SmallFrameworkException(e);
 		}
+	}
+
+	/**
+	 * Writes string data to the response as "text/plain".
+	 * @param response the response object.
+	 * @param data the string data to send.
+	 */
+	public static void sendStringData(HttpServletResponse response, String data)
+	{
+		sendStringData(response, null, null, data);
+	}
+
+	/**
+	 * Writes string data to the response.
+	 * @param response the response object.
+	 * @param mimeType the response MIME-Type.
+	 * @param data the string data to send.
+	 */
+	public static void sendStringData(HttpServletResponse response, String mimeType, String data)
+	{
+		sendStringData(response, mimeType, null, data);
+	}
+
+	/**
+	 * Writes string data to the response.
+	 * @param response the response object.
+	 * @param mimeType the response MIME-Type.
+	 * @param fileName the file name (if not null, this sends an attachment).
+	 * @param data the string data to send.
+	 */
+	public static void sendStringData(HttpServletResponse response, String mimeType, String fileName, String data)
+	{
+		byte[] bytedata = data.getBytes(UTF8);
+		if (!Utils.isEmpty(mimeType))
+			SmallResponseUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
+		else
+			SmallResponseUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 	}
 
 	/**
@@ -168,5 +209,5 @@ public final class SmallResponseUtil
 			throw new SmallFrameworkException(e);
 		}
 	}
-
+	
 }

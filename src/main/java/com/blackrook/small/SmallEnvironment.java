@@ -9,6 +9,7 @@ package com.blackrook.small;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.roles.DefaultMIMETypeDriver;
+import com.blackrook.small.roles.ExceptionHandler;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.MIMETypeDriver;
 import com.blackrook.small.roles.ViewDriver;
@@ -65,8 +67,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 */
 	private static final MIMETypeDriver DEFAULT_MIME = new DefaultMIMETypeDriver();
 	
-	// =======================================================================
-	
 	/** Tempdir root. */
 	private File tempDir;
 	/** JSON driver. */
@@ -77,6 +77,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private MIMETypeDriver mimeTypeDriver;
 	/** View driver list. */
 	private List<ViewDriver> viewDriverList;
+	/** Exception handler map. */
+	private Map<Class<?>, Object> exceptionHandlerMap;
 	
 	/** Components-in-construction set. */
 	private Set<Class<?>> componentsConstructing;
@@ -108,12 +110,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.xmlDriver = null;
 		this.mimeTypeDriver = null;
 		this.viewDriverList = null;
+		this.exceptionHandlerMap = null;
 
 		this.componentsConstructing = new HashSet<>();
 		
-		this.controllerEntries = new HashMap<>(8);
-
 		this.componentInstances = new HashMap<>();
+		this.controllerEntries = new HashMap<>(8);
 		this.controllerComponents = new HashMap<>(16);
 		this.filterComponents = new HashMap<>(16);
 		
@@ -169,7 +171,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
-	 * Goes through the list of 
+	 * Goes through the list of views attempting to 
+	 * find a view handler suitable for rendering the provided view.
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
 	 * @param viewName the name of the view to handle.
@@ -184,6 +187,25 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
+	 * Attempts to find a handler for an uncaught exception.
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param throwable the throwable to handle.
+	 * @return true if the exception was handled by this method, false if not.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Throwable> boolean handleException(HttpServletRequest request, HttpServletResponse response, T throwable)
+	{
+		ExceptionHandler<T> handler;
+		if ((handler = (ExceptionHandler<T>)exceptionHandlerMap.get(throwable.getClass())) != null)
+		{
+			handler.handleException(request, response, throwable);
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Initializes the environment.
 	 * @param servletContext the servler context to use.
 	 */
@@ -194,6 +216,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.xmlDriver = null;
 		this.mimeTypeDriver = DEFAULT_MIME;
 		this.viewDriverList = new ArrayList<>();
+		this.exceptionHandlerMap = new HashMap<>();
 		
 		if (!Utils.isEmpty(controllerRootPackages))
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
@@ -215,6 +238,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		xmlDriver = null;
 		mimeTypeDriver = null;
 		viewDriverList = null;
+		exceptionHandlerMap = null;
 		componentsConstructing.clear();
 		controllerEntries.clear();
 		componentInstances.clear();
@@ -290,7 +314,26 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 					if (ViewDriver.class.isAssignableFrom(componentClass))
 						viewDriverList.add((ViewDriver)componentInstance);
-
+					
+					if (ExceptionHandler.class.isAssignableFrom(componentClass))
+					{
+						Class<?> throwableType = null;
+						// search for a specific implemented method on this interface.
+						for (Method m : componentClass.getMethods())
+						{
+							if (m.getName().equals("handleException"))
+							{
+								// third parameter is generic, but the implementation has a reified type.
+								throwableType = (Class<?>)m.getParameters()[2].getType();
+								break;
+							}
+						}
+						if (throwableType == null)
+							throw new SmallFrameworkSetupException("Class " + componentClass + " is a child of ExceptionHandler, but it does not implement method handleException()!");
+						
+						exceptionHandlerMap.put(throwableType, componentInstance);
+					}
+					
 					SmallComponent component;
 					if (componentClass.isAnnotationPresent(Controller.class))
 					{
