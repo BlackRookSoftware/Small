@@ -105,7 +105,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 		if (method.isAnnotationPresent(FilterChain.class))
 		{
 			FilterChain fc = method.getAnnotation(FilterChain.class);
-			if (Utils.isEmpty(fc.value()))
+			if (!Utils.isEmpty(fc.value()))
 				this.filterChain = Utils.joinArrays(controllerProfile.getFilterChain(), fc.value());
 			else
 				this.filterChain = controllerProfile.getFilterChain();

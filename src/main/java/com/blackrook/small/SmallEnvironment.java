@@ -218,6 +218,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.viewDriverList = new ArrayList<>();
 		this.exceptionHandlerMap = new HashMap<>();
 		
+		componentInstances.put(ServletContext.class, new SmallComponent(context));
+		
+		SmallConfiguration config = SmallUtil.getConfiguration(context);
+		componentInstances.put(SmallConfiguration.class, new SmallComponent(config));
+		componentInstances.put(config.getClass(), new SmallComponent(config));
+
 		if (!Utils.isEmpty(controllerRootPackages))
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
 		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
@@ -470,9 +476,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				{
 					if (ServletContext.class.isAssignableFrom(types[i])) // should already exist
 						createOrGetComponent(types[i]);
-					else if (!types[i].isAnnotationPresent(Component.class))
-						throw new SmallFrameworkSetupException("Class "+types[i].getSimpleName()+" is not annotated with @Component.");
-					
 					params[i] = createOrGetComponent(types[i]);
 				}
 			}
