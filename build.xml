@@ -17,15 +17,13 @@
 	<!-- Project Libs -->
 	<property name="servlet.lib.version" value="3.0.1" />
 	<property name="servlet.jar" value="javax.servlet-api-${servlet.lib.version}.jar" />
-	<property name="jsp.lib.version" value="2.2" />
-	<property name="jsp.jar" value="jsp-api-${jsp.lib.version}.jar" />
 	<property name="websocket.lib.version" value="1.1" />
 	<property name="websocket.jar" value="javax.websocket-api-${websocket.lib.version}.jar" />
 	
 	<!-- Project Info -->
 	<property name="project.archive" value="blackrook-small" />
 	<property name="project.javadoc.title" value="Black Rook Small" />
-	<property name="project.classpath" value="${dev.base}/${servlet.jar}${S}${dev.base}/${jsp.jar}${S}${dev.base}/${websocket.jar}"/>
+	<property name="project.classpath" value="${dev.base}/${servlet.jar}${S}${dev.base}/${websocket.jar}"/>
 	<property name="project.compiler.bootclasspath" value="" />
 	<property name="project.testclass" value=""/>
 	<property name="project.testclass.main" value=""/>
@@ -59,25 +57,19 @@
 		<maven-jar-javadoc-dl group-path="javax/servlet" artifact="javax.servlet-api" version="${servlet.lib.version}" />
 	</target>
 
-	<target name="dependency.jsp">
-		<maven-jar-dl group-path="javax/servlet/jsp" artifact="jsp-api" version="${jsp.lib.version}" />
-		<maven-jar-sources-dl group-path="javax/servlet/jsp" artifact="jsp-api" version="${jsp.lib.version}" />
-		<maven-jar-javadoc-dl group-path="javax/servlet/jsp" artifact="jsp-api" version="${jsp.lib.version}" />
-	</target>
-
 	<target name="dependency.websocket">
 		<maven-jar-dl group-path="javax/websocket" artifact="javax.websocket-api" version="${websocket.lib.version}" />
 		<maven-jar-sources-dl group-path="javax/websocket" artifact="javax.websocket-api" version="${websocket.lib.version}" />
 		<maven-jar-javadoc-dl group-path="javax/websocket" artifact="javax.websocket-api" version="${websocket.lib.version}" />
 	</target>
 
-	<target name="dependencies" depends="init.dependencies, dependency.servlet, dependency.jsp, dependency.websocket, dependency.properties" description="Downloads and compiles the dependencies.">
+	<target name="dependencies" depends="init.dependencies, dependency.servlet, dependency.websocket, dependency.properties" description="Downloads and compiles the dependencies.">
 	</target>
 		
 	<target name="javadoc" depends="init.docs" description="Builds the documentation.">
         <javadoc access="protected" 
         	additionalparam="-J-Xmx512m  " author="true" 
-        	classpath="${bin.dir}${S}${dev.base}/${servlet.jar}${S}${dev.base}/${jsp.jar}${S}${dev.base}/${websocket.jar}" 
+        	classpath="${bin.dir}${S}${dev.base}/${servlet.jar}${S}${dev.base}/${websocket.jar}" 
         	doctitle="${project.javadoc.title}" 
         	sourcepath="${src.dir}" 
         	packagenames="${project.javadoc.packages}"
