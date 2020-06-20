@@ -53,4 +53,30 @@ public interface SmallConfiguration
 	 */
 	boolean allowTrace();
 
+	/**
+	 * Checks if the bootstrap should attempt to configure itself to support WebSockets.
+	 * @return true if so, false if not.
+	 */
+	boolean allowWebSockets();
+
+	/**
+	 * Fetches the value of an arbitrary attribute set that may be specific to the application.
+	 * Returns a default value if it is not set.
+	 * @param attributeName the attribute name.
+	 * @param def the default value to return if it is not set.
+	 * @return the corresponding attribute value, or <code>def</code> if not set.
+	 */
+	Object getAttribute(String attributeName, Object def);
+
+	/**
+	 * Fetches the value of an arbitrary attribute set that may be specific to the application.
+	 * Returns <code>null</code> if it is not set.
+	 * @param attributeName the attribute name.
+	 * @return the corresponding attribute value, or <code>null</code> if not set.
+	 */
+	default Object getAttribute(String attributeName)
+	{
+		return getAttribute(attributeName, null);
+	}
+
 }

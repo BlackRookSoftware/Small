@@ -284,6 +284,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 */
 	private void initComponents(ServletContext context, String[] packageNames, ClassLoader loader)
 	{
+		boolean allowWebSockets = SmallUtil.getConfiguration(context).allowWebSockets();
 		for (String packageName : packageNames)
 		{
 			for (String className : Utils.getClasses(packageName, loader))
@@ -394,38 +395,41 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						component.invokeAfterConstructionMethods();
 					}
 				}
-				else if (SmallEndpoint.class.isAssignableFrom(componentClass))
+				else if (allowWebSockets)
 				{
-					ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
-					if (websocketServerContainer == null)
-						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
-					
-					ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
-					if (anno == null)
-						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! No @ServerEndpoint path annotation.");
+					if (SmallEndpoint.class.isAssignableFrom(componentClass))
+					{
+						ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
+						if (websocketServerContainer == null)
+							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 						
-					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
-					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
-					try {
-						websocketServerContainer.addEndpoint(config);
-					} catch (DeploymentException e) {
-						throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"!", e);
+						ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
+						if (anno == null)
+							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! No @ServerEndpoint path annotation.");
+							
+						ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
+						config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
+						try {
+							websocketServerContainer.addEndpoint(config);
+						} catch (DeploymentException e) {
+							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"!", e);
+						}
 					}
-				}
-				else if (Endpoint.class.isAssignableFrom(componentClass))
-				{
-					ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
-					if (websocketServerContainer == null)
-						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
-					
-					ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
-					ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
-					config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
-					try {
-						websocketServerContainer.addEndpoint(config);
-					} catch (DeploymentException e) {
-						throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"!", e);
-					}
+					else if (Endpoint.class.isAssignableFrom(componentClass))
+					{
+						ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
+						if (websocketServerContainer == null)
+							throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
+						
+						ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
+						ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
+						config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
+						try {
+							websocketServerContainer.addEndpoint(config);
+						} catch (DeploymentException e) {
+							throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"!", e);
+						}
+					}				
 				}
 			}
 		}
