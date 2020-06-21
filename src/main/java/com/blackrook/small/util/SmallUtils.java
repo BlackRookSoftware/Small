@@ -30,7 +30,7 @@ import com.blackrook.small.struct.Utils;
  * Utility library for common or useful functions.
  * @author Matthew Tropiano
  */
-public final class SmallUtil
+public final class SmallUtils
 {
 	/** MIME type for JSON */
 	public static final String CONTENT_MIME_TYPE_JSON = "application/json";
@@ -560,7 +560,7 @@ public final class SmallUtil
 	/** Lag simulator seed. */
 	private static Random randomLagSimulator = new Random();
 
-	private SmallUtil() {}
+	private SmallUtils() {}
 	
 	/**
 	 * Checks if a MIME-Type is JSON-formatted.
@@ -923,7 +923,7 @@ public final class SmallUtil
 	 */
 	public static String getApplicationFilePath(ServletContext context, String relativePath)
 	{
-		return context.getRealPath("/") + "/" + SmallUtil.removeBeginningSlash(relativePath);
+		return context.getRealPath("/") + "/" + SmallUtils.removeBeginningSlash(relativePath);
 	}
 
 	/**

@@ -46,12 +46,12 @@ import com.blackrook.small.struct.TypeProfileFactory.Profile.MethodInfo;
  * Utility class for {@link HttpServletRequest} manipulation.
  * @author Matthew Tropiano
  */
-public final class SmallRequestUtil
+public final class SmallRequestUtils
 {
 	/** Date format parser map. */
 	private static final Map<String, SimpleDateFormat> DATE_PATTERN_MAP = new HashMap<String, SimpleDateFormat>();
 
-	private SmallRequestUtil() {}
+	private SmallRequestUtils() {}
 
 	/**
 	 * Checks if the request is JSON-formatted.
@@ -60,7 +60,7 @@ public final class SmallRequestUtil
 	 */
 	public static boolean isJSON(HttpServletRequest request)
 	{
-		return SmallUtil.isJSON(request.getContentType());
+		return SmallUtils.isJSON(request.getContentType());
 	}
 
 	/**
@@ -70,7 +70,7 @@ public final class SmallRequestUtil
 	 */
 	public static boolean isXML(HttpServletRequest request)
 	{
-		return SmallUtil.isXML(request.getContentType());
+		return SmallUtils.isXML(request.getContentType());
 	}
 
 	/**
@@ -735,7 +735,7 @@ public final class SmallRequestUtil
 				}
 				foundFields.add(fieldName);
 			}
-			else if (session != null && SmallUtil.getAttributeExist(session, fieldName))
+			else if (session != null && SmallUtils.getAttributeExist(session, fieldName))
 			{
 				Object objval = session.getAttribute(fieldName);
 				if (fieldInfo.getType() == objval.getClass())
@@ -744,7 +744,7 @@ public final class SmallRequestUtil
 					throw new SmallFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
 				foundFields.add(fieldName);
 			}
-			else if (context != null && SmallUtil.getAttributeExist(context, fieldName))
+			else if (context != null && SmallUtils.getAttributeExist(context, fieldName))
 			{
 				Object objval = context.getAttribute(fieldName);
 				if (fieldInfo.getType() == objval.getClass())
@@ -788,7 +788,7 @@ public final class SmallRequestUtil
 						Utils.invokeBlind(signature.getMethod(), target, getParameterString(request, fieldName));
 				}
 			}
-			else if (session != null && SmallUtil.getAttributeExist(session, fieldName))
+			else if (session != null && SmallUtils.getAttributeExist(session, fieldName))
 			{
 				Object objval = session.getAttribute(fieldName);
 				if (signature.getType() == objval.getClass())
@@ -796,7 +796,7 @@ public final class SmallRequestUtil
 				else
 					throw new SmallFrameworkException("Model and session attribute types for field \""+fieldName+"\" do not match.");
 			}
-			else if (context != null && SmallUtil.getAttributeExist(context, fieldName))
+			else if (context != null && SmallUtils.getAttributeExist(context, fieldName))
 			{
 				Object objval = context.getAttribute(fieldName);
 				if (signature.getType() == objval.getClass())

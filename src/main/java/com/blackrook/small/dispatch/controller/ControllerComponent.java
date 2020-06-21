@@ -20,7 +20,7 @@ import com.blackrook.small.dispatch.DispatchComponent;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.struct.Utils;
-import com.blackrook.small.util.SmallUtil;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * Creates a controller profile to assist in re-calling controllers by path and methods.
@@ -60,7 +60,7 @@ public class ControllerComponent extends DispatchComponent
 			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is not annotated with @Controller.");
 
 		EntryPath pathAnnotation = clazz.getAnnotation(EntryPath.class);
-		this.path = SmallUtil.pathify(pathAnnotation != null ? pathAnnotation.value() : "");
+		this.path = SmallUtils.pathify(pathAnnotation != null ? pathAnnotation.value() : "");
 		this.entryMethods = new ArrayList<>();
 		
 		// accumulate filter chains.

@@ -16,7 +16,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.blackrook.small.util.SmallUtil;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * A trie that organizes mapping URI patterns to values.
@@ -239,7 +239,7 @@ public class URITrie<V>
 				{
 					String[] ts = new String[pathTokens.size()];
 					pathTokens.toArray(ts);
-					out.remainder = out.remainder + SmallUtil.addBeginningSlash(SmallUtil.removeEndingSlash(Utils.join("/", ts)));
+					out.remainder = out.remainder + SmallUtils.addBeginningSlash(SmallUtils.removeEndingSlash(Utils.join("/", ts)));
 				}
 			}
 		}

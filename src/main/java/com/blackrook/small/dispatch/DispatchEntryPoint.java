@@ -52,8 +52,8 @@ import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
-import com.blackrook.small.util.SmallRequestUtil;
-import com.blackrook.small.util.SmallUtil;
+import com.blackrook.small.util.SmallRequestUtils;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * Entry method descriptor class.
@@ -309,11 +309,11 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 			switch (pinfo.getSourceType())
 			{
 				case PATH:
-					path = path != null ? path : request.getRequestURI().substring(1);
+					path = path != null ? path : request.getRequestURI();
 					invokeParams[i] = Utils.createForType("Parameter " + i, path, pinfo.getType());
 					break;
 				case PATH_FILE:
-					pathFile = pathFile != null ? pathFile : SmallRequestUtil.getFileName(request);
+					pathFile = pathFile != null ? pathFile : SmallRequestUtils.getFileName(request);
 					invokeParams[i] = Utils.createForType("Parameter " + i, pathFile, pinfo.getType());
 					break;
 				case PATH_QUERY:
@@ -463,13 +463,13 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					switch (scope)
 					{
 						case REQUEST:
-							invokeParams[i] = SmallRequestUtil.getRequestBean(request, pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallRequestUtils.getRequestBean(request, pinfo.getType(), pinfo.getName());
 							break;
 						case SESSION:
-							invokeParams[i] = SmallRequestUtil.getSessionBean(request, pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallRequestUtils.getSessionBean(request, pinfo.getType(), pinfo.getName());
 							break;
 						case APPLICATION:
-							invokeParams[i] = SmallUtil.getApplicationBean(request.getServletContext(), pinfo.getType(), pinfo.getName());
+							invokeParams[i] = SmallUtils.getApplicationBean(request.getServletContext(), pinfo.getType(), pinfo.getName());
 							break;
 					}
 					break;
@@ -480,12 +480,12 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					if (modelDescriptor != null)
 					{
 						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
-						SmallRequestUtil.setModelFields(request, model);
+						SmallRequestUtils.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
 					else
 					{
-						request.setAttribute(pinfo.getName(), invokeParams[i] = SmallRequestUtil.setModelFields(request, pinfo.getType()));
+						request.setAttribute(pinfo.getName(), invokeParams[i] = SmallRequestUtils.setModelFields(request, pinfo.getType()));
 					}
 					break;
 				}
@@ -493,21 +493,21 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				{
 					if (requestMethod == RequestMethod.POST || requestMethod == RequestMethod.PUT)
 					{
-						if (SmallRequestUtil.isJSON(request)) 
+						if (SmallRequestUtils.isJSON(request)) 
 						{ 
 							try (Reader r = request.getReader()) 
 							{
-								JSONDriver json = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver();
+								JSONDriver json = SmallUtils.getEnvironment(request.getServletContext()).getJSONDriver();
 								if (json == null)
 									throw new UnsupportedMediaTypeException("JSON decoding not supported.");
 								invokeParams[i] = json.fromJSON(request.getReader(), type);
 							} 
 						} 
-						else if (SmallRequestUtil.isXML(request)) 
+						else if (SmallRequestUtils.isXML(request)) 
 						{ 
 							try (Reader r = request.getReader()) 
 							{
-								XMLDriver xml = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver();
+								XMLDriver xml = SmallUtils.getEnvironment(request.getServletContext()).getXMLDriver();
 								if (xml == null)
 									throw new UnsupportedMediaTypeException("XML decoding not supported.");
 								invokeParams[i] = xml.fromXML(request.getReader(), type);
@@ -515,7 +515,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 						} 
 						else 
 						{ 
-							content = content != null ? content : SmallRequestUtil.getContentData(request, pinfo.getType());
+							content = content != null ? content : SmallRequestUtils.getContentData(request, pinfo.getType());
 							invokeParams[i] = content;
 						}
 					}

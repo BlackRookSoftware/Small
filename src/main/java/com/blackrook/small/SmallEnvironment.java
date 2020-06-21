@@ -54,7 +54,7 @@ import com.blackrook.small.roles.ViewDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
-import com.blackrook.small.util.SmallUtil;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * The component application environment.
@@ -221,7 +221,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		
 		componentInstances.put(ServletContext.class, new SmallComponent(context));
 		
-		SmallConfiguration config = SmallUtil.getConfiguration(context);
+		SmallConfiguration config = SmallUtils.getConfiguration(context);
 		componentInstances.put(SmallConfiguration.class, new SmallComponent(config));
 		componentInstances.put(config.getClass(), new SmallComponent(config));
 
@@ -276,7 +276,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	URITrie.Result<ControllerEntryPoint> getControllerEntryPoint(RequestMethod requestMethod, String path)
 	{
 		URITrie<ControllerEntryPoint> trie = controllerEntries.get(requestMethod);
-		return trie != null ? trie.resolve(SmallUtil.trimSlashes(path)) : null;
+		return trie != null ? trie.resolve(SmallUtils.trimSlashes(path)) : null;
 	}
 
 	/**
@@ -285,7 +285,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 */
 	private void initComponents(ServletContext context, String[] packageNames, ClassLoader loader)
 	{
-		boolean allowWebSockets = SmallUtil.getConfiguration(context).allowWebSockets();
+		boolean allowWebSockets = SmallUtils.getConfiguration(context).allowWebSockets();
 		for (String packageName : packageNames)
 		{
 			for (String className : Utils.getClasses(packageName, loader))
@@ -359,10 +359,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						
 						EntryPath entryPathAnno = componentClass.getAnnotation(EntryPath.class);
 						
-						String path = SmallUtil.trimSlashes(entryPathAnno != null ? entryPathAnno.value() + '/' : "");
+						String path = SmallUtils.trimSlashes(entryPathAnno != null ? entryPathAnno.value() + '/' : "");
 						for (ControllerEntryPoint entryPoint : ((ControllerComponent)component).getEntryMethods())
 						{
-							String uri = path + '/' + SmallUtil.trimSlashes(entryPoint.getPath());
+							String uri = path + '/' + SmallUtils.trimSlashes(entryPoint.getPath());
 							for (RequestMethod rm : entryPoint.getRequestMethods())
 							{
 								URITrie<ControllerEntryPoint> trie;
@@ -400,7 +400,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				{
 					if (SmallEndpoint.class.isAssignableFrom(componentClass))
 					{
-						ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
+						ServerContainer websocketServerContainer = SmallUtils.getWebsocketServerContainer(context);
 						if (websocketServerContainer == null)
 							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 						
@@ -418,7 +418,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					}
 					else if (Endpoint.class.isAssignableFrom(componentClass))
 					{
-						ServerContainer websocketServerContainer = SmallUtil.getWebsocketServerContainer(context);
+						ServerContainer websocketServerContainer = SmallUtils.getWebsocketServerContainer(context);
 						if (websocketServerContainer == null)
 							throw new SmallFrameworkException("Could not add Endpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 						

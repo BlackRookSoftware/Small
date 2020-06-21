@@ -24,11 +24,11 @@ import com.blackrook.small.struct.Utils;
  * Utility class for {@link HttpServletResponse} manipulation.
  * @author Matthew Tropiano
  */
-public final class SmallResponseUtil
+public final class SmallResponseUtils
 {
 	private static final Charset UTF8 = Charset.forName("UTF-8");
 	
-	private SmallResponseUtil() {}
+	private SmallResponseUtils() {}
 
 	/**
 	 * Sends a file to the client.
@@ -107,9 +107,9 @@ public final class SmallResponseUtil
 	{
 		byte[] bytedata = data.getBytes(UTF8);
 		if (!Utils.isEmpty(mimeType))
-			SmallResponseUtil.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
+			SmallResponseUtils.sendData(response, mimeType, fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 		else
-			SmallResponseUtil.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
+			SmallResponseUtils.sendData(response, "text/plain; charset=utf-8", fileName, new ByteArrayInputStream(bytedata), bytedata.length);
 	}
 
 	/**

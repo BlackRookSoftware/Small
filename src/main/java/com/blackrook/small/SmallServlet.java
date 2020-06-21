@@ -44,9 +44,9 @@ import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.struct.URITrie.Result;
-import com.blackrook.small.util.SmallRequestUtil;
-import com.blackrook.small.util.SmallResponseUtil;
-import com.blackrook.small.util.SmallUtil;
+import com.blackrook.small.util.SmallRequestUtils;
+import com.blackrook.small.util.SmallResponseUtils;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * The main dispatcher servlet for the controller portion of the framework.
@@ -85,7 +85,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	{
 		super.init();
 		ServletContext servletContext = getServletContext();
-		if ((environment = SmallUtil.getEnvironment(servletContext)) == null)
+		if ((environment = SmallUtils.getEnvironment(servletContext)) == null)
 		{
 			environment = createEnvironment(servletContext);
 			servletContext.setAttribute(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, environment);
@@ -162,41 +162,41 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
         }
         catch (NotFoundException e) 
         {
-            SmallResponseUtil.sendError(response, 404, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 404, e.getLocalizedMessage());
         }
         catch (MethodNotAllowedException e) 
         {
-            SmallResponseUtil.sendError(response, 405, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 405, e.getLocalizedMessage());
         }
         catch (BeanCreationException e) 
         {
-            SmallResponseUtil.sendError(response, 500, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
         }
         catch (MultipartParserException e) 
         {
-            SmallResponseUtil.sendError(response, 400, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 400, e.getLocalizedMessage());
         }
         catch (NoConverterException e) 
         {
-            SmallResponseUtil.sendError(response, 501, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
         }
         catch (UnsupportedMediaTypeException e) 
         {
-            SmallResponseUtil.sendError(response, 415, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 415, e.getLocalizedMessage());
         }
         catch (NoViewHandlerException e) 
         {
-            SmallResponseUtil.sendError(response, 500, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
         }
         catch (IOException e) 
         {
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtil.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
         }
         catch (Exception e) 
         {
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtil.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
         }
     }
 
@@ -228,9 +228,9 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else if (method.equals(METHOD_HEAD))
 			callHead(request, response);
-		else if (SmallUtil.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
+		else if (SmallUtils.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
 			callOptions(request, response);
-		else if (SmallUtil.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
+		else if (SmallUtils.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
 			doTrace(request, response);
 		else
 			throw new MethodNotAllowedException("Method " + method + " not allowed.");
@@ -247,8 +247,8 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	{
 		// OPTIONS sends back a header with allowed methods.
 		StringBuilder sb = new StringBuilder();
-		String path = SmallUtil.trimSlashes(SmallRequestUtil.getPath(request));
-		SmallConfiguration config = SmallUtil.getConfiguration(getServletContext());
+		String path = SmallUtils.trimSlashes(SmallRequestUtils.getPath(request));
+		SmallConfiguration config = SmallUtils.getConfiguration(getServletContext());
 		
 		for (RequestMethod m : getMethodsForPath(path))
 		{
@@ -287,7 +287,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 
 	private void callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
-		MultipartParser parser = SmallRequestUtil.getMultipartParser(request);
+		MultipartParser parser = SmallRequestUtils.getMultipartParser(request);
 		if (parser == null)
 			throw new UnsupportedMediaTypeException("The " + request.getContentType() + " request type is not supported for multipart requests.");
 		else
@@ -320,7 +320,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		HashDequeMap<String, Part> multiformPartMap
 	) throws ServletException, IOException
 	{
-		String path = SmallRequestUtil.getPath(request);
+		String path = SmallRequestUtils.getPath(request);
 		
 		Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(requestMethod, path);
 		

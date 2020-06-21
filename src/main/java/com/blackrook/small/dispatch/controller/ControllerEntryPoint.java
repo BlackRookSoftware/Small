@@ -41,9 +41,9 @@ import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
-import com.blackrook.small.util.SmallRequestUtil;
-import com.blackrook.small.util.SmallResponseUtil;
-import com.blackrook.small.util.SmallUtil;
+import com.blackrook.small.util.SmallRequestUtils;
+import com.blackrook.small.util.SmallResponseUtils;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * Method descriptor class, specifically for controllers.
@@ -101,7 +101,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 		else
 			requestMethodsFound.toArray(this.requestMethods = new RequestMethod[requestMethodsFound.size()]);
 		
-		this.path = SmallUtil.pathify(controllerEntry.value());
+		this.path = SmallUtils.pathify(controllerEntry.value());
 
 		if (method.isAnnotationPresent(FilterChain.class))
 		{
@@ -238,15 +238,15 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					}
 					
 					if (viewName.startsWith(PREFIX_REDIRECT))
-						SmallResponseUtil.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
-					else if (!SmallUtil.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
+						SmallResponseUtils.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
+					else if (!SmallUtils.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
 						throw new NoViewHandlerException("No view handler for \"" + viewName + "\".");
 
 					break;
 				}
 				case ATTACHMENT:
 				{
-					fname = SmallRequestUtil.getFileName(request);
+					fname = SmallRequestUtils.getFileName(request);
 					// fall through.
 				}
 				case CONTENT:
@@ -260,36 +260,36 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 						if (outfile == null || !outfile.exists())
 							throw new NotFoundException("File not found.");
 						else if (!Utils.isEmpty(mimeType))
-							SmallResponseUtil.sendFileContents(response, mimeType, outfile);
+							SmallResponseUtils.sendFileContents(response, mimeType, outfile);
 						else
-							SmallResponseUtil.sendFileContents(response, SmallUtil.getMIMEType(request.getServletContext(), outfile.getName()), outfile);
+							SmallResponseUtils.sendFileContents(response, SmallUtils.getMIMEType(request.getServletContext(), outfile.getName()), outfile);
 					}
 					// StringBuffer data output.
 					else if (StringBuffer.class.isAssignableFrom(returnType))
 					{
 						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						SmallResponseUtil.sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
+						SmallResponseUtils.sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
 					}
 					// StringBuilder data output.
 					else if (StringBuilder.class.isAssignableFrom(returnType))
 					{
 						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						SmallResponseUtil.sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
+						SmallResponseUtils.sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
 					}
 					// String data output.
 					else if (String.class.isAssignableFrom(returnType))
 					{
 						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						SmallResponseUtil.sendStringData(response, mimeType, fname, (String)retval);
+						SmallResponseUtils.sendStringData(response, mimeType, fname, (String)retval);
 					}
 					// binary output.
 					else if (byte[].class.isAssignableFrom(returnType))
 					{
 						byte[] data = (byte[])retval;
 						if (Utils.isEmpty(mimeType))
-							SmallResponseUtil.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
+							SmallResponseUtils.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
 						else
-							SmallResponseUtil.sendData(response, mimeType, null, new ByteArrayInputStream(data), data.length);
+							SmallResponseUtils.sendData(response, mimeType, null, new ByteArrayInputStream(data), data.length);
 					}
 					// InputStream
 					else if (InputStream.class.isAssignableFrom(returnType))
@@ -297,15 +297,15 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 						try (InputStream inStream = (InputStream)retval)
 						{
 							if (Utils.isEmpty(mimeType))
-								SmallResponseUtil.sendData(response, "application/octet-stream", null, inStream, -1);
+								SmallResponseUtils.sendData(response, "application/octet-stream", null, inStream, -1);
 							else
-								SmallResponseUtil.sendData(response, mimeType, null, inStream, -1);
+								SmallResponseUtils.sendData(response, mimeType, null, inStream, -1);
 						}
 					}
 					// Object output, XML.
-					else if (SmallUtil.isXML(mimeType))
+					else if (SmallUtils.isXML(mimeType))
 					{
-						XMLDriver driver = SmallUtil.getEnvironment(request.getServletContext()).getXMLDriver();
+						XMLDriver driver = SmallUtils.getEnvironment(request.getServletContext()).getXMLDriver();
 						if (driver == null)
 							throw new NoConverterException("XML encoding not supported.");
 						if (fname != null)
@@ -314,9 +314,9 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 						driver.toXML(response.getWriter(), retval);
 					}
 					// Object output, JSON.
-					else if (SmallUtil.isJSON(mimeType) || Utils.isEmpty(mimeType))
+					else if (SmallUtils.isJSON(mimeType) || Utils.isEmpty(mimeType))
 					{
-						JSONDriver driver = SmallUtil.getEnvironment(request.getServletContext()).getJSONDriver();
+						JSONDriver driver = SmallUtils.getEnvironment(request.getServletContext()).getJSONDriver();
 						if (driver == null)
 							throw new NoConverterException("JSON encoding not supported.");
 						if (fname != null)
