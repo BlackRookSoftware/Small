@@ -34,7 +34,6 @@ import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.exception.request.NoConverterException;
-import com.blackrook.small.exception.request.NoViewHandlerException;
 import com.blackrook.small.exception.request.NotFoundException;
 import com.blackrook.small.multipart.Part;
 import com.blackrook.small.roles.JSONDriver;
@@ -239,8 +238,8 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					
 					if (viewName.startsWith(PREFIX_REDIRECT))
 						SmallResponseUtils.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
-					else if (!SmallUtils.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
-						throw new NoViewHandlerException("No view handler for \"" + viewName + "\".");
+					else 
+						SmallUtils.handleView(request, response, model, viewName);
 
 					break;
 				}

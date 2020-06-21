@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Random;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.websocket.server.ServerContainer;
 
@@ -23,6 +25,7 @@ import com.blackrook.small.SmallConfiguration;
 import com.blackrook.small.SmallConstants;
 import com.blackrook.small.SmallEnvironment;
 import com.blackrook.small.exception.request.BeanCreationException;
+import com.blackrook.small.exception.request.NoViewHandlerException;
 import com.blackrook.small.roles.MIMETypeDriver;
 import com.blackrook.small.struct.Utils;
 
@@ -949,6 +952,36 @@ public final class SmallUtils
 	public static boolean getAttributeExist(ServletContext context, String attribName)
 	{
 		return context.getAttribute(attribName) != null;
+	}
+
+	/**
+	 * Convenience function for forwarding view handling to the Small Environment, 
+	 * throwing an exception if a suitable handler was not found nor invoked.
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param model the model to render using the view.
+	 * @param viewName the name of the view to handle.
+	 * @throws NoViewHandlerException if a suitable handler was not found nor invoked.
+	 */
+	public static void handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws NoViewHandlerException
+	{
+		if (!SmallUtils.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
+			throw new NoViewHandlerException("No view handler for \"" + viewName + "\".");
+	}
+
+	/**
+	 * Convenience function for forwarding exception handling to the Small Environment, 
+	 * re-throwing the provided if a suitable handler was not found nor invoked.
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param thr the throwable/exception to handle.
+	 * @throws T if a suitable handler was not found nor invoked.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends Throwable> void handleException(HttpServletRequest request, HttpServletResponse response, Throwable thr) throws T
+	{
+		if (!SmallUtils.getEnvironment(request.getServletContext()).handleException(request, response, thr))
+			throw (T)thr;
 	}
 
 	/**
