@@ -17,10 +17,14 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 import com.blackrook.small.roles.ViewDriver;
 
 /**
- * Should be used on {@link EntryPath}-annotated methods on {@link Controller}-annotated classes.
+ * Should be used on {@link EntryPath}-annotated methods on {@link Controller}-annotated components.
  * <p>
- * Designates that the return value is the name of a view to be handled by {@link ViewDriver}s. 
- * If not String, the returned object's {@link String#valueOf(Object)} return value is used.
+ * Designates that the return value is the name of a view to be handled by {@link ViewDriver}s.
+ * <p> 
+ * If the return type is... 
+ * <ul>
+ * <li>SmallModelView, it is used for both the model for the found view and view name to resolve.</li>
+ * <li>Anything else, the string value is considered to be the name of the view to resolve, no model.</li>
  * <p>
  * If the view starts with "<code>redirect:</code>", then a redirect request is sent to the browser (<code>Location</code> header).
  * <p>
@@ -33,6 +37,4 @@ import com.blackrook.small.roles.ViewDriver;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface View
-{
-}
+public @interface View {}

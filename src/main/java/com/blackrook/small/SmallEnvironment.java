@@ -175,13 +175,14 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * find a view handler suitable for rendering the provided view.
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
+	 * @param model the model to render using the view.
 	 * @param viewName the name of the view to handle.
 	 * @return true if the view was handled by this component, false if not.
 	 */
-	public boolean handleView(HttpServletRequest request, HttpServletResponse response, String viewName)
+	public boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName)
 	{
 		for (int i = 0; i < viewDriverList.size(); i++)
-			if (viewDriverList.get(i).handleView(request, response, viewName))
+			if (viewDriverList.get(i).handleView(request, response, model, viewName))
 				return true;
 		return false;
 	}

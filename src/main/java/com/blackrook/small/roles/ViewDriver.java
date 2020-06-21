@@ -18,7 +18,7 @@ import com.blackrook.small.annotation.controller.View;
  * <p>
  * When a {@link EntryPath} method returns a {@link View}, it is passed to one of these components to render.
  * <p>
- * There can be many components with this role - the {@link #handleView(HttpServletRequest, HttpServletResponse, String)}.
+ * There can be many components with this role - the {@link #handleView(HttpServletRequest, HttpServletResponse, Object, String)}.
  * @author Matthew Tropiano
  */
 public interface ViewDriver
@@ -29,8 +29,9 @@ public interface ViewDriver
 	 * <code>true</code> will stop the chain.
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
+	 * @param model the model to render using the view.
 	 * @param viewName the name of the view to handle.
 	 * @return true if the view was handled by this component, false if not.
 	 */
-	boolean handleView(HttpServletRequest request, HttpServletResponse response, String viewName);
+	boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName);
 }

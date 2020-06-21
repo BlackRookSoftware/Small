@@ -20,6 +20,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.small.SmallModelView;
 import com.blackrook.small.annotation.controller.Attachment;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.controller.EntryPath;
@@ -221,11 +222,26 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 			{
 				case VIEW:
 				{
-					String viewName = String.valueOf(retval);
+					Object model;
+					String viewName;
+					Class<?> returnType = getType();
+					if (SmallModelView.class.isAssignableFrom(returnType))
+					{
+						SmallModelView modelView = (SmallModelView)retval;
+						viewName = modelView.getViewName();
+						model = modelView.getModel();
+					}
+					else 
+					{
+						viewName = String.valueOf(retval);
+						model = null;
+					}
+					
 					if (viewName.startsWith(PREFIX_REDIRECT))
 						SmallResponseUtil.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
-					else if (!SmallUtil.getEnvironment(request.getServletContext()).handleView(request, response, viewName))
+					else if (!SmallUtil.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
 						throw new NoViewHandlerException("No view handler for \"" + viewName + "\".");
+
 					break;
 				}
 				case ATTACHMENT:

@@ -35,7 +35,4 @@ import javax.servlet.http.HttpSessionListener;
  */
 @Target({ElementType.TYPE, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Component
-{
-
-}
+public @interface Component {}

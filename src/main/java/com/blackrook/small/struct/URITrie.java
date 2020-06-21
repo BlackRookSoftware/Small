@@ -16,6 +16,8 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.blackrook.small.util.SmallUtil;
+
 /**
  * A trie that organizes mapping URI patterns to values.
  * @author Matthew Tropiano
@@ -195,9 +197,10 @@ public class URITrie<V>
 		for (String p : uri.split("\\/"))
 			pathTokens.add(p);
 
+		String pathPart = null;
 		while (next != null && next.type != NodeType.DEFAULT && !pathTokens.isEmpty())
 		{
-			String pathPart = pathTokens.poll();
+			pathPart = pathTokens.poll();
 			TreeSet<Node<V>> edgeList = next.edges;
 			boolean matched = false;
 			if (!edgeList.isEmpty()) 
@@ -227,7 +230,19 @@ public class URITrie<V>
 		}
 		
 		if (next != null)
+		{
 			out.value = next.value;
+			if (next.type == NodeType.DEFAULT)
+			{
+				out.remainder = '/' + pathPart;
+				if (!pathTokens.isEmpty())
+				{
+					String[] ts = new String[pathTokens.size()];
+					pathTokens.toArray(ts);
+					out.remainder = out.remainder + SmallUtil.addBeginningSlash(SmallUtil.removeEndingSlash(Utils.join("/", ts)));
+				}
+			}
+		}
 		
 		return out;
 	}
@@ -247,12 +262,14 @@ public class URITrie<V>
 	public static class Result<V>
 	{
 		private Map<String, String> pathVariables;
-		private V value; 
+		private V value;
+		private String remainder;
 		
 		private Result()
 		{
 			this.pathVariables = null;
 			this.value = null;
+			this.remainder = null;
 		}
 		
 		private void addVariable(String var, String value)
@@ -278,6 +295,15 @@ public class URITrie<V>
 		public V getValue() 
 		{
 			return value;
+		}
+		
+		/**
+		 * Gets the path remainder, if this is a "default" path.
+		 * @return the path remainder.
+		 */
+		public String getRemainder()
+		{
+			return remainder;
 		}
 		
 		/**

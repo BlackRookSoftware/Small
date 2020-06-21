@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.blackrook.small.SmallConstants;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.dispatch.Attribute;
 import com.blackrook.small.annotation.dispatch.Model;
@@ -39,6 +40,7 @@ import com.blackrook.small.annotation.parameters.ParameterMap;
 import com.blackrook.small.annotation.parameters.Path;
 import com.blackrook.small.annotation.parameters.PathFile;
 import com.blackrook.small.annotation.parameters.PathQuery;
+import com.blackrook.small.annotation.parameters.PathRemainder;
 import com.blackrook.small.annotation.parameters.PathVariable;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.enums.ScopeType;
@@ -67,6 +69,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 		PATH,
 		PATH_FILE,
 		PATH_QUERY,
+		PATH_REMAINDER,
 		PATH_VARIABLE,
 		SERVLET_REQUEST,
 		SERVLET_RESPONSE,
@@ -184,6 +187,8 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					source = Source.PATH_FILE;
 				else if (annotation.annotationType() == PathQuery.class)
 					source = Source.PATH_QUERY;
+				else if (annotation.annotationType() == PathRemainder.class)
+					source = Source.PATH_REMAINDER;
 				else if (annotation.annotationType() == PathVariable.class)
 				{
 					source = Source.PATH_VARIABLE;
@@ -313,6 +318,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					break;
 				case PATH_QUERY:
 					invokeParams[i] = Utils.createForType("Parameter " + i, request.getQueryString(), pinfo.getType());
+					break;
+				case PATH_REMAINDER:
+					invokeParams[i] = Utils.createForType("Parameter " + i, request.getAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER), pinfo.getType());
 					break;
 				case PATH_VARIABLE:
 					invokeParams[i] = Utils.createForType("Parameter " + i, pathVariableMap.get(pinfo.name), pinfo.getType());

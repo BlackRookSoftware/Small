@@ -25,7 +25,4 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PathFile
-{
-
-}
+public @interface PathFile {}

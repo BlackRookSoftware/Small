@@ -32,7 +32,4 @@ import javax.servlet.ServletContext;
  */
 @Target(ElementType.CONSTRUCTOR)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ComponentConstructor
-{
-
-}
+public @interface ComponentConstructor {}

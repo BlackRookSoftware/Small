@@ -66,6 +66,8 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
     private static final String METHOD_PATCH = "PATCH";
     private static final String METHOD_TRACE = "TRACE";
     private static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
+	private static final Map<String, Cookie> EMPTY_COOKIE_MAP = new HashMap<>(2);
+	private static final Map<String, String> EMPTY_PATH_VAR_MAP = new HashMap<>(2);
 
 	/** The application environment. */
 	private SmallEnvironment environment;
@@ -331,13 +333,21 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		}
 		
 		// get cookies from request.
-		Map<String, Cookie> cookieMap = new HashMap<String, Cookie>();
+		Map<String, Cookie> cookieMap = null;
 		Cookie[] cookies = request.getCookies();
-		if (cookies != null) for (Cookie c : cookies)
-			cookieMap.put(c.getName(), c);
+		if (cookies != null)
+		{
+			cookieMap = new HashMap<String, Cookie>();
+			for (Cookie c : cookies)
+				cookieMap.put(c.getName(), c);
+		}
+		else
+		{
+			cookieMap = EMPTY_COOKIE_MAP;
+		}
 		
 		// Get path variables.
-		Map<String, String> pathVariables = result.getPathVariables() != null ? result.getPathVariables() : (new HashMap<String, String>());
+		Map<String, String> pathVariables = result.getPathVariables() != null ? result.getPathVariables() : EMPTY_PATH_VAR_MAP;
 		
 		ControllerEntryPoint entryPoint = result.getValue();
 		
@@ -348,6 +358,9 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 				return;
 		}
 	
+		if (result.getRemainder() != null)
+			request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER, result.getRemainder());
+		
 		// Call Entry
 		entryPoint.handleCall(
 			requestMethod, 

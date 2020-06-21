@@ -12,6 +12,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
@@ -22,10 +24,8 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * @author Matthew Tropiano
  * @see EntryPath
  * @see FilterEntry
+ * @see HttpServletRequest#getQueryString()
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PathQuery
-{
-
-}
+public @interface PathQuery {}

@@ -29,6 +29,4 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Filter
-{
-}
+public @interface Filter {}

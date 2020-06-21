@@ -15,4 +15,5 @@ public interface SmallConstants
 {
 	String SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE = "small.application.environment";
 	String SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE = "small.application.configuration";
+	String SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER = "small.request.path.remainder";
 }

@@ -19,11 +19,13 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * Annotates a controller method or method parameter for sets of request parameters from the
  * request, session, and application (precedence is in that order).
  * <p>
- * On a method, it's the method to call to constructed the model.
+ * On a method, it's the method to call to construct the model.
  * <p>
  * On a parameter, it's the model itself.
  * <p>
- * The model is automatically persisted to the PAGE scope for the view.
+ * If the model is not
+ * <p>
+ * The model is automatically persisted to the request scope for the view.
  * Any model that is not constructed is created (via default constructor or matching annotated method in the same class).
  * @author Matthew Tropiano
  * @see EntryPath

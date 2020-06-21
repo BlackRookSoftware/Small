@@ -748,5 +748,23 @@ public final class Utils
 		
 		return out;
 	}
+
+	/**
+	 * Joins a list of values into one string, placing a joiner between all of them.
+	 * @param joiner the joining string.
+	 * @param values the values to join together.
+	 * @return the resultant string.
+	 */
+	public static String join(String joiner, String ... values)
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < values.length; i++)
+		{
+			sb.append(values[i]);
+			if (i < values.length - 1)
+				sb.append(joiner);
+		}
+		return sb.toString();
+	}
 	
 }
