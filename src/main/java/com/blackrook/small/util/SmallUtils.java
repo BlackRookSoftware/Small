@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -999,6 +1000,29 @@ public final class SmallUtils
 	}
 
 	/**
+	 * Finds a resource URL using the current thread's {@link ClassLoader}.
+	 * @param pathString the resource pathname.
+	 * @return a URL for the resource or null if not found.
+	 * @see ClassLoader#getResourceAsStream(String)
+	 */
+	public static URL getResource(String pathString)
+	{
+		return getResource(Thread.currentThread().getContextClassLoader(), pathString);
+	}
+
+	/**
+	 * Finds a resource URL using the current thread's {@link ClassLoader}.
+	 * @param classLoader the provided {@link ClassLoader} to use.
+	 * @param pathString the resource pathname.
+	 * @return a URL for the resource or null if not found.
+	 * @see ClassLoader#getResourceAsStream(String)
+	 */
+	public static URL getResource(ClassLoader classLoader, String pathString)
+	{
+		return classLoader.getResource(pathString);
+	}
+
+	/**
 	 * Opens an {@link InputStream} to a resource using the current thread's {@link ClassLoader}.
 	 * @param pathString the resource pathname.
 	 * @return an open {@link InputStream} for reading the resource or null if not found.
@@ -1006,7 +1030,7 @@ public final class SmallUtils
 	 */
 	public static InputStream openResource(String pathString)
 	{
-		return Thread.currentThread().getContextClassLoader().getResourceAsStream(pathString);
+		return openResource(Thread.currentThread().getContextClassLoader(), pathString);
 	}
 
 	/**
