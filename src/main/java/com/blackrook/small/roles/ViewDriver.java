@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.controller.View;
+import com.blackrook.small.exception.views.ViewProcessingException;
 
 /**
  * Describes a view resolution driver for Small.
@@ -32,6 +33,7 @@ public interface ViewDriver
 	 * @param model the model to render using the view.
 	 * @param viewName the name of the view to handle.
 	 * @return true if the view was handled by this component, false if not.
+	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
 	 */
-	boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName);
+	boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws ViewProcessingException;
 }

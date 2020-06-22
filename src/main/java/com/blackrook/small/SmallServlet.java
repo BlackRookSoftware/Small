@@ -37,6 +37,7 @@ import com.blackrook.small.exception.request.NoConverterException;
 import com.blackrook.small.exception.request.NoViewHandlerException;
 import com.blackrook.small.exception.request.NotFoundException;
 import com.blackrook.small.exception.request.UnsupportedMediaTypeException;
+import com.blackrook.small.exception.views.ViewProcessingException;
 import com.blackrook.small.multipart.MultipartFormDataParser;
 import com.blackrook.small.multipart.MultipartParser;
 import com.blackrook.small.multipart.Part;
@@ -185,6 +186,10 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
             SmallResponseUtils.sendError(response, 415, e.getLocalizedMessage());
         }
         catch (NoViewHandlerException e) 
+        {
+            SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
+        }
+        catch (ViewProcessingException e) 
         {
             SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
         }

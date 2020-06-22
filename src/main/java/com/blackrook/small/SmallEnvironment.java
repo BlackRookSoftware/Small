@@ -46,6 +46,7 @@ import com.blackrook.small.dispatch.filter.FilterComponent;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
+import com.blackrook.small.exception.views.ViewProcessingException;
 import com.blackrook.small.roles.DefaultMIMETypeDriver;
 import com.blackrook.small.roles.ExceptionHandler;
 import com.blackrook.small.roles.JSONDriver;
@@ -178,8 +179,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * @param model the model to render using the view.
 	 * @param viewName the name of the view to handle.
 	 * @return true if the view was handled by this component, false if not.
+	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
 	 */
-	public boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName)
+	public boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws ViewProcessingException
 	{
 		for (int i = 0; i < viewDriverList.size(); i++)
 			if (viewDriverList.get(i).handleView(request, response, model, viewName))

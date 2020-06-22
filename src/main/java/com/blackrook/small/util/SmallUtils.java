@@ -26,6 +26,7 @@ import com.blackrook.small.SmallConstants;
 import com.blackrook.small.SmallEnvironment;
 import com.blackrook.small.exception.request.BeanCreationException;
 import com.blackrook.small.exception.request.NoViewHandlerException;
+import com.blackrook.small.exception.views.ViewProcessingException;
 import com.blackrook.small.roles.MIMETypeDriver;
 import com.blackrook.small.struct.Utils;
 
@@ -962,8 +963,9 @@ public final class SmallUtils
 	 * @param model the model to render using the view.
 	 * @param viewName the name of the view to handle.
 	 * @throws NoViewHandlerException if a suitable handler was not found nor invoked.
+	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
 	 */
-	public static void handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws NoViewHandlerException
+	public static void handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws NoViewHandlerException, ViewProcessingException
 	{
 		if (!SmallUtils.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
 			throw new NoViewHandlerException("No view handler for \"" + viewName + "\".");
