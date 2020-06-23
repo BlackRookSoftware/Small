@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Describes a view resolution driver for Small.
  * @author Matthew Tropiano
+ * @param <E> the exception type.
  */
 public interface ExceptionHandler<E extends Throwable>
 {
