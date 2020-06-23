@@ -1,6 +1,6 @@
 # Black Rook Small
 
-Copyright (c) 2019-2020 Black Rook Software.  
+Copyright (c) 2020 Black Rook Software.  
 [https://github.com/BlackRookSoftware/Small](https://github.com/BlackRookSoftware/Small)
 
 [Latest Release](https://github.com/BlackRookSoftware/Small/releases/latest)    
@@ -21,13 +21,14 @@ Most servlet container servers will provide implementations of these.
 
 ### Introduction
 
-This library contains classes for J2EE application creation.
+This library contains classes for Java web application creation. For use with servlet containers.
 
 
 ### Why?
 
 The world needs a singleton management system for removing the tedium of writing servlet
 applications, and something less hefty than Spring that also doesn't need the Apache Commons bloat.
+Lots of flexible stubs, but enforces rigidity where it counts.
 
 
 ### Library
