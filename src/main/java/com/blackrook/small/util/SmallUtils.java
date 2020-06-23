@@ -975,6 +975,7 @@ public final class SmallUtils
 	/**
 	 * Convenience function for forwarding exception handling to the Small Environment, 
 	 * re-throwing the provided if a suitable handler was not found nor invoked.
+	 * @param <T> the exception type.
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
 	 * @param thr the throwable/exception to handle.

@@ -191,6 +191,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 	/**
 	 * Attempts to find a handler for an uncaught exception.
+	 * @param <T> the exception type.
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
 	 * @param throwable the throwable to handle.
