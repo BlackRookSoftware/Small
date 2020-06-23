@@ -6,6 +6,13 @@ Copyright (c) 2020 Black Rook Software.
 [Latest Release](https://github.com/BlackRookSoftware/Small/releases/latest)    
 [Online Javadoc](https://blackrooksoftware.github.io/Small/javadoc/)
 
+
+### NOTICE
+
+This library is currently in **EXPERIMENTAL** status. This library's API
+may change many times in different ways over the course of its development!
+
+
 ### Required Libraries
 
 Any servlet 2.X+ container implementation (javax.servlet-api.jar).  
