@@ -21,7 +21,7 @@ Most servlet container servers will provide implementations of these.
 
 ### Introduction
 
-This library contains classes for J2EE application creation and management.
+This library contains classes for J2EE application creation.
 
 
 ### Why?
