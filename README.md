@@ -4,7 +4,7 @@ Copyright (c) 2020 Black Rook Software.
 [https://github.com/BlackRookSoftware/Small](https://github.com/BlackRookSoftware/Small)
 
 [Latest Release](https://github.com/BlackRookSoftware/Small/releases/latest)    
-[Online Javadoc](https://blackrooksoftware.github.io/Small/javadoc/)
+[Online Javadoc](https://blackrooksoftware.github.io/Small/javadoc/Core/)
 
 
 ### NOTICE
@@ -80,7 +80,7 @@ To clean up everything:
 
 ### Javadocs
 
-Online Javadocs can be found at: [https://blackrooksoftware.github.io/Small/javadoc/](https://blackrooksoftware.github.io/Small/javadoc/)
+Online Javadocs can be found at: [https://blackrooksoftware.github.io/Small/javadoc/Core/](https://blackrooksoftware.github.io/Small/javadoc/Core/)
 
 
 ### Other
