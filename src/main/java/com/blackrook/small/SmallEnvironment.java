@@ -76,6 +76,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private XMLDriver xmlDriver;
 	/** MIME-Type driver. */
 	private MIMETypeDriver mimeTypeDriver;
+
 	/** View driver list. */
 	private List<ViewDriver> viewDriverList;
 	/** Exception handler map. */
@@ -110,8 +111,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.jsonDriver = null;
 		this.xmlDriver = null;
 		this.mimeTypeDriver = null;
-		this.viewDriverList = null;
-		this.exceptionHandlerMap = null;
+
+		this.viewDriverList = new ArrayList<>();
+		this.exceptionHandlerMap = new HashMap<>();
 
 		this.componentsConstructing = new HashSet<>();
 		
@@ -126,92 +128,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 	
 	/**
-	 * Gets this application's JSON converter driver.
-	 * @return the supplied driver, or null if none found.
-	 */
-	public JSONDriver getJSONDriver()
-	{
-		return jsonDriver;
-	}
-
-	/**
-	 * Gets this application's XML converter driver.
-	 * @return the supplied driver, or null if none found.
-	 */
-	public XMLDriver getXMLDriver()
-	{
-		return xmlDriver;
-	}
-	
-	/**
-	 * Gets this application's MIME-Type resolver driver.
-	 * @return the instantiated driver.
-	 */
-	public MIMETypeDriver getMIMETypeDriver()
-	{
-		return mimeTypeDriver;
-	}
-
-	/**
-	 * @return the temporary directory to use for multipart files.
-	 */
-	public File getTemporaryDirectory()
-	{
-		return tempDir;
-	}
-
-	/**
-	 * Returns a singleton component instantiated by Small or instantiates it and returns it.
-	 * @param clazz the class to fetch or instantiate.
-	 * @param <T> object type.
-	 * @return a singleton component annotated with {@link Component} by class.
-	 */
-	public <T> T getComponent(Class<T> clazz)
-	{
-		return createOrGetComponent(clazz);
-	}
-
-	/**
-	 * Goes through the list of views attempting to 
-	 * find a view handler suitable for rendering the provided view.
-	 * @param request the HTTP request object.
-	 * @param response the HTTP response object.
-	 * @param model the model to render using the view.
-	 * @param viewName the name of the view to handle.
-	 * @return true if the view was handled by this component, false if not.
-	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
-	 */
-	public boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws ViewProcessingException
-	{
-		for (int i = 0; i < viewDriverList.size(); i++)
-			if (viewDriverList.get(i).handleView(request, response, model, viewName))
-				return true;
-		return false;
-	}
-
-	/**
-	 * Attempts to find a handler for an uncaught exception.
-	 * @param <T> the exception type.
-	 * @param request the HTTP request object.
-	 * @param response the HTTP response object.
-	 * @param throwable the throwable to handle.
-	 * @return true if the exception was handled by this method, false if not.
-	 */
-	@SuppressWarnings("unchecked")
-	public <T extends Throwable> boolean handleException(HttpServletRequest request, HttpServletResponse response, T throwable)
-	{
-		ExceptionHandler<T> handler;
-		if ((handler = (ExceptionHandler<T>)exceptionHandlerMap.get(throwable.getClass())) != null)
-		{
-			handler.handleException(request, response, throwable);
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Initializes the environment.
-	 * @param servletContext the servler context to use.
+	 * @param context the servlet context to use.
+	 * @param controllerRootPackages the list of controller root packages.
+	 * @param tempDir the temporary directory.
 	 */
 	void init(ServletContext context, String[] controllerRootPackages, File tempDir)
 	{
@@ -219,8 +139,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.jsonDriver = null;
 		this.xmlDriver = null;
 		this.mimeTypeDriver = DEFAULT_MIME;
-		this.viewDriverList = new ArrayList<>();
-		this.exceptionHandlerMap = new HashMap<>();
 		
 		componentInstances.put(ServletContext.class, new SmallComponent(context));
 		
@@ -247,8 +165,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		jsonDriver = null;
 		xmlDriver = null;
 		mimeTypeDriver = null;
-		viewDriverList = null;
-		exceptionHandlerMap = null;
+		viewDriverList.clear();
+		exceptionHandlerMap.clear();
 		componentsConstructing.clear();
 		controllerEntries.clear();
 		componentInstances.clear();
@@ -524,6 +442,90 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		}
 		
 		return out;
+	}
+
+	/**
+	 * Gets this application's JSON converter driver.
+	 * @return the supplied driver, or null if none found.
+	 */
+	public JSONDriver getJSONDriver()
+	{
+		return jsonDriver;
+	}
+
+	/**
+	 * Gets this application's XML converter driver.
+	 * @return the supplied driver, or null if none found.
+	 */
+	public XMLDriver getXMLDriver()
+	{
+		return xmlDriver;
+	}
+
+	/**
+	 * Gets this application's MIME-Type resolver driver.
+	 * @return the instantiated driver.
+	 */
+	public MIMETypeDriver getMIMETypeDriver()
+	{
+		return mimeTypeDriver;
+	}
+
+	/**
+	 * @return the temporary directory to use for multipart files.
+	 */
+	public File getTemporaryDirectory()
+	{
+		return tempDir;
+	}
+
+	/**
+	 * Returns a singleton component instantiated by Small or instantiates it and returns it.
+	 * @param clazz the class to fetch or instantiate.
+	 * @param <T> object type.
+	 * @return a singleton component annotated with {@link Component} by class.
+	 */
+	public <T> T getComponent(Class<T> clazz)
+	{
+		return createOrGetComponent(clazz);
+	}
+
+	/**
+	 * Iterates through the list of views attempting to 
+	 * find a view handler suitable for rendering the provided view.
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param model the model to render using the view.
+	 * @param viewName the name of the view to handle.
+	 * @return true if the view was handled by this component, false if not.
+	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
+	 */
+	public boolean handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws ViewProcessingException
+	{
+		for (int i = 0; i < viewDriverList.size(); i++)
+			if (viewDriverList.get(i).handleView(request, response, model, viewName))
+				return true;
+		return false;
+	}
+
+	/**
+	 * Attempts to find a handler for an uncaught exception.
+	 * @param <T> the exception type.
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param throwable the throwable to handle.
+	 * @return true if the exception was handled by this method, false if not.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Throwable> boolean handleException(HttpServletRequest request, HttpServletResponse response, T throwable)
+	{
+		ExceptionHandler<T> handler;
+		if ((handler = (ExceptionHandler<T>)exceptionHandlerMap.get(throwable.getClass())) != null)
+		{
+			handler.handleException(request, response, throwable);
+			return true;
+		}
+		return false;
 	}
 
 	@Override

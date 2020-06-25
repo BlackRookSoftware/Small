@@ -13,7 +13,10 @@ package com.blackrook.small;
  */
 public interface SmallConstants
 {
+	/** The attribute name for the application environment on the servlet context. */
 	String SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE = "small.application.environment";
+	/** The attribute name for the application configuration object on the servlet context. */
 	String SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE = "small.application.configuration";
+	/** The attribute name for the path remainder that gets set on the request context on each request (default paths only). */
 	String SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER = "small.request.path.remainder";
 }

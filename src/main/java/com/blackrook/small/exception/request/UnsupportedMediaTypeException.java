@@ -10,7 +10,7 @@ package com.blackrook.small.exception.request;
 import javax.servlet.ServletException;
 
 /**
- * Exception thrown when a media type cannot be read or written.
+ * Exception thrown when a media type cannot be handled by the server.
  * @author Matthew Tropiano
  */
 public class UnsupportedMediaTypeException extends ServletException

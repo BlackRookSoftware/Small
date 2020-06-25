@@ -7,11 +7,12 @@
  ******************************************************************************/
 package com.blackrook.small;
 
+import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.controller.View;
 
 /**
  * A view model-and-view container.
- * @see View
+ * Can be returned on {@link View}-annotated {@link Controller} methods. 
  * @author Matthew Tropiano
  */
 public class SmallModelView
@@ -25,6 +26,12 @@ public class SmallModelView
 		this.viewName = null;
 	}
 	
+	/**
+	 * Creates a new model-view container.
+	 * @param model the model to render.
+	 * @param viewName the name of the view to resolve and use.
+	 * @return a new {@link SmallModelView}.
+	 */
 	public static SmallModelView create(Object model, String viewName)
 	{
 		SmallModelView out = new SmallModelView();

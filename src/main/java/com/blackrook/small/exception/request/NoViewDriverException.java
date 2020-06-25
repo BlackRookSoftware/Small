@@ -10,10 +10,10 @@ package com.blackrook.small.exception.request;
 import javax.servlet.ServletException;
 
 /**
- * Exception thrown when a converter for incoming/outgoing data cannot be read.
+ * Exception thrown when a suitable view driver for a view name could not be found.
  * @author Matthew Tropiano
  */
-public class NoViewHandlerException extends ServletException
+public class NoViewDriverException extends ServletException
 {
 	private static final long serialVersionUID = -4936691975471716617L;
 
@@ -21,7 +21,7 @@ public class NoViewHandlerException extends ServletException
 	 * Creates a new exception.
 	 * @param message the exception message.
 	 */
-	public NoViewHandlerException(String message)
+	public NoViewDriverException(String message)
 	{
 		super(message);
 	}
@@ -31,7 +31,7 @@ public class NoViewHandlerException extends ServletException
 	 * @param message the exception message.
 	 * @param exception the exception cause.
 	 */
-	public NoViewHandlerException(String message, Throwable exception)
+	public NoViewDriverException(String message, Throwable exception)
 	{
 		super(message, exception);
 	}

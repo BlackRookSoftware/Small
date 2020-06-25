@@ -15,11 +15,14 @@ import java.lang.annotation.Target;
 import com.blackrook.small.annotation.controller.EntryPath;
 
 /**
- * Annotation that is used to signify that this object is a Controller with entry points.
+ * This annotation is used to signify that this object is a Controller with entry points.
+ * <p>
  * Must be on a class also annotated with {@link Component}. An {@link EntryPath} annotation on the
- * controller class specifies the base path for the endpoints.
- * <p>All HTTP calls find their way here, and these objects handle the incoming request.
- * <p>Requests are handled via {@link EntryPath}-annotated methods.
+ * controller class specifies the base path for the entry points.
+ * <p>
+ * All HTTP calls find their way here, and these objects handle the incoming request.
+ * <p>
+ * Requests are handled via {@link EntryPath}-annotated methods.
  * <p>
  * This object may have dependency singleton {@link Component} objects
  * injected into them via {@link ComponentConstructor}-annotated constructors. 

@@ -14,11 +14,13 @@ import java.lang.annotation.Target;
 
 import javax.servlet.http.Cookie;
 
+import com.blackrook.small.annotation.Controller;
+import com.blackrook.small.annotation.Filter;
 import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
- * Annotates a method parameter for Cookie binding. Should be used in Controllers and Filters.
+ * Annotates a method parameter for Cookie binding. Should be used in {@link Controller}s and {@link Filter}s.
  * <p>
  * Matched type must be {@link Cookie}, and if the Cookie name does not exist,
  * it is created for the response.

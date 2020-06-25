@@ -212,18 +212,18 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					Model p = (Model)annotation;
 					name = p.value();
 				}
-				else if (annotation.annotationType() == Parameter.class)
-				{
-					source = Source.PARAMETER;
-					Parameter p = (Parameter)annotation;
-					name = p.value();
-				}
 				else if (annotation.annotationType() == Attribute.class)
 				{
 					source = Source.ATTRIBUTE;
 					Attribute p = (Attribute)annotation;
 					name = p.value();
 					scope = p.scope();
+				}
+				else if (annotation.annotationType() == Parameter.class)
+				{
+					source = Source.PARAMETER;
+					Parameter p = (Parameter)annotation;
+					name = p.value();
 				}
 				else if (annotation.annotationType() == CookieParameter.class)
 				{
@@ -480,7 +480,6 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					if (modelDescriptor != null)
 					{
 						Object model = modelDescriptor.invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
-						SmallRequestUtils.setModelFields(request, model);
 						request.setAttribute(pinfo.getName(), invokeParams[i] = model);
 					}
 					else

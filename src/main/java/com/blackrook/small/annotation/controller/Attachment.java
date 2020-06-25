@@ -21,7 +21,8 @@ import com.blackrook.small.roles.XMLDriver;
  * Should be used on {@link EntryPath}-annotated methods on {@link Controller}-annotated classes.
  * <p>
  * This turns the method return body content into an "attachment" via <code>Content-Disposition</code> headers (file downloads).
- * <p>Most effective on {@link File} return types.
+ * <p>
+ * Most effective on {@link File} return types.
  * <ul>
  * <li>If return type is a {@link File}, the content type is changed to the file's predicted MIME-type, the content is the file's content, verbatim, and the output filename is the file's name. If the file is null, this sends a 404.</li>
  * <li>If return type is a {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code>.</li>

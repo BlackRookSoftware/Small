@@ -18,9 +18,11 @@ import com.blackrook.small.annotation.controller.EntryPath;
 
 /**
  * Describes an XML conversion driver for Small.
- * <p>In order to return Objects from {@link Content}-annotated, {@link EntryPath}-annotated methods, a class 
+ * <p>
+ * In order to return Objects from {@link Content}-annotated, {@link EntryPath}-annotated methods, a class 
  * that implements this class needs to be in the component search.
- * <p>Only one component needs to have this role. This is used for conversion if the output content MIME-type
+ * <p>
+ * Only one component needs to have this role. This is used for conversion if the output content MIME-type
  * is <code>application/xml</code> (and its family types). Unspecified output types are passed to a {@link JSONDriver}. 
  * @author Matthew Tropiano
  */

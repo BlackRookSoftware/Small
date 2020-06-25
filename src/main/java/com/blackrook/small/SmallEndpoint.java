@@ -52,7 +52,9 @@ public abstract class SmallEndpoint extends Endpoint
 
 	/**
 	 * When this is called, this gets the {@link SmallEnvironment} from the config
-	 * and saves the session on this class.
+	 * and saves the session on this class. This method is already annotated with {@link OnOpen},
+	 * and calls {@link #afterOpen(EndpointConfig)} to set up configuration after the {@link Session}
+	 * and the {@link SmallEnvironment} is set on the endpoint.
 	 */
 	@OnOpen
 	public final void onOpen(Session session, EndpointConfig config)

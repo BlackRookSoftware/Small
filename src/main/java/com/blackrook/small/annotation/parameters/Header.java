@@ -12,11 +12,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.annotation.Controller;
+import com.blackrook.small.annotation.Filter;
 import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
- * Annotates a method parameter for request header value binding. Should be used in Controllers and Filters. 
+ * Annotates a method parameter for request header value binding. Should be used in {@link Controller}s and {@link Filter}s. 
  * @author Matthew Tropiano
  * @see EntryPath
  * @see FilterEntry

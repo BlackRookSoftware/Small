@@ -12,8 +12,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.annotation.Controller;
+
 /**
- * The request methods that a {@link EntryPath} uses. 
+ * The request methods that an {@link EntryPath} uses.
+ * Should annotate a method on a {@link Controller} that is an {@link EntryPath}. 
  * @author Matthew Tropiano
  */
 public final class HTTPMethod

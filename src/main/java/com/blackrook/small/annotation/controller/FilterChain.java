@@ -15,11 +15,11 @@ import java.lang.annotation.Target;
 import com.blackrook.small.annotation.Controller;
 
 /**
- * Annotation to specify a filter chain to call. 
+ * An annotation used to specify a filter chain to call before an {@link EntryPath} method is invoked on a {@link Controller}. 
  * <p>If on a package, all controllers in the package use this chain.
  * <p>If on a class with {@link Controller}, all entry points in the controller use this chain.
  * <p>If on a method in a class with {@link Controller}, this specific entry point in the controller uses this chain.
- * <p>All filters specified are additive to the whole chain, from packages down to controllers, then methods.
+ * <p>All filters specified are additive to the whole chain, from packages down to controllers, then methods, in the order specified.
  * @author Matthew Tropiano
  */
 @Target({ElementType.TYPE, ElementType.PACKAGE, ElementType.METHOD})

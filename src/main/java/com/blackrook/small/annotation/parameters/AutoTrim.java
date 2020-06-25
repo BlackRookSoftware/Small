@@ -12,8 +12,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.annotation.Controller;
+import com.blackrook.small.annotation.Filter;
+
 /**
- * Annotates a method parameter. Should be used in Controllers and Filters.
+ * Annotates a method parameter. Should be used in {@link Controller}s and {@link Filter}s.
  * <p>
  * Parameter type must be String. If a string is not null, 
  * it will be trimmed for whitespace before method invocation.

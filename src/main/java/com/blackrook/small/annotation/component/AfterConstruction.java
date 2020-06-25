@@ -12,11 +12,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.annotation.Component;
 import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
 
 /**
- * Annotates a component method to be called after this component is constructed and its components filled.
+ * Annotates a {@link Component} method to be called after this component is constructed and its components filled.
  * <p>
  * The annotated method must be publicly accessible, return void, and take no parameters.
  * @author Matthew Tropiano

@@ -14,16 +14,20 @@ import java.lang.annotation.Target;
 
 import javax.servlet.ServletContext;
 
+import com.blackrook.small.SmallConfiguration;
+
 /**
- * Annotation that specifies that the annotated constructor contains parameters
+ * This annotation specifies that the annotated constructor contains parameters
  * that should be filled with singleton instances.
  * <p>
- * All Controllers/Filters/Resource-annotated classes that have one of their
- * constructors annotated with this will have that constructor invoked on
- * instantiation and its parameters set to other {@link Component} objects.
+ * All {@link Controller}s/{@link Filter}s/{@link Component}-annotated classes that 
+ * have one of their constructors annotated with this will have that constructor 
+ * invoked on instantiation and its parameters set to other corresponding {@link Component} 
+ * objects of the same class.
  * <p>
  * One of the parameters of the constructor can be {@link ServletContext}, which passes
- * in the application's ServletContext. 
+ * in the application's ServletContext. Another can be {@link SmallConfiguration}, which passes
+ * in the configuration for bootstrapping/configuring the application.
  *  
  * @author Matthew Tropiano
  * @see Filter

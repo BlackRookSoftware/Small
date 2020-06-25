@@ -12,6 +12,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.SmallModelView;
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.filter.FilterEntry;
 import com.blackrook.small.roles.ViewDriver;
@@ -23,7 +24,7 @@ import com.blackrook.small.roles.ViewDriver;
  * <p> 
  * If the return type is... 
  * <ul>
- * <li>SmallModelView, it is used for both the model for the found view and view name to resolve.</li>
+ * <li>{@link SmallModelView}, it is used for both the model for the found view and view name to resolve.</li>
  * <li>Anything else, the string value is considered to be the name of the view to resolve, no model.</li>
  * </ul>
  * <p>

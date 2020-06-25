@@ -19,7 +19,8 @@ import com.blackrook.small.exception.views.ViewProcessingException;
  * <p>
  * When a {@link EntryPath} method returns a {@link View}, it is passed to one of these components to render.
  * <p>
- * There can be many components with this role - the {@link #handleView(HttpServletRequest, HttpServletResponse, Object, String)}.
+ * There can be many components with this role - the {@link #handleView(HttpServletRequest, HttpServletResponse, Object, String)} method
+ * is called and if it returns false, the next ViewDriver is called, and if it returns true, handling stops.
  * @author Matthew Tropiano
  */
 public interface ViewDriver

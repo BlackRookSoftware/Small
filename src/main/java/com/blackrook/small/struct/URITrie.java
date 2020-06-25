@@ -74,7 +74,7 @@ public class URITrie<V>
 						{
 							// Do nothing
 						}
-						else if (c == '{')
+						else if (c == '@')
 							state = STATE_VARIABLE;
 						else
 						{
@@ -113,7 +113,7 @@ public class URITrie<V>
 							sb.delete(0, sb.length());
 							state = STATE_REGEX;
 						}
-						else if (c == '}')
+						else if (c == '/')
 						{
 							if (sb.length() == 0)
 								throw new ParseException("Path variable in \"" + uri + "\" has a blank variable.");
@@ -130,7 +130,7 @@ public class URITrie<V>
 					
 					case STATE_REGEX:
 					{
-						if (c == '}')
+						if (c == '/')
 						{
 							endNode = nextAddNode(endNode, Node.createVariableNode(currentVariable, sb.toString()));
 							sb.delete(0, sb.length());
@@ -147,9 +147,17 @@ public class URITrie<V>
 			} // for
 			
 			if (state == STATE_VARIABLE)
-				throw new ParseException("Expected '}' to terminate variable segment.");
-			if (state == STATE_REGEX)
-				throw new ParseException("Expected '}' to terminate variable regex segment.");
+			{
+				if (sb.length() == 0)
+					throw new ParseException("Path variable in \"" + uri + "\" has a blank variable.");
+				endNode = nextAddNode(endNode, Node.createVariableNode(sb.toString().trim(), null));
+				sb.delete(0, sb.length());
+			}
+			else if (state == STATE_REGEX)
+			{
+				endNode = nextAddNode(endNode, Node.createVariableNode(currentVariable, sb.toString()));
+				sb.delete(0, sb.length());
+			}
 			
 			if (sb.length() > 0)
 			{

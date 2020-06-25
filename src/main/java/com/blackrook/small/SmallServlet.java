@@ -34,7 +34,7 @@ import com.blackrook.small.exception.request.BeanCreationException;
 import com.blackrook.small.exception.request.MethodNotAllowedException;
 import com.blackrook.small.exception.request.MultipartParserException;
 import com.blackrook.small.exception.request.NoConverterException;
-import com.blackrook.small.exception.request.NoViewHandlerException;
+import com.blackrook.small.exception.request.NoViewDriverException;
 import com.blackrook.small.exception.request.NotFoundException;
 import com.blackrook.small.exception.request.UnsupportedMediaTypeException;
 import com.blackrook.small.exception.views.ViewProcessingException;
@@ -100,25 +100,6 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		environment.destroy();
 	}
 
-	private SmallEnvironment createEnvironment(ServletContext servletContext)
-	{
-		SmallConfiguration smallConfig = (SmallConfiguration)servletContext.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
-		
-		File tempDir = null;
-
-		if (smallConfig.getTempPath() != null)
-			tempDir = new File(smallConfig.getTempPath());
-		else if ((tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir")) == null)
-			tempDir = new File(System.getProperty("java.io.tmpdir"));
-	
-		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
-			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
-	
-		SmallEnvironment env = new SmallEnvironment();
-		env.init(servletContext, smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
-		return env;
-	}
-
 	@Override
 	public void sessionCreated(HttpSessionEvent se)
 	{
@@ -147,6 +128,25 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	public void attributeReplaced(HttpSessionBindingEvent event)
 	{
 		environment.attributeReplaced(event);
+	}
+
+	private SmallEnvironment createEnvironment(ServletContext servletContext)
+	{
+		SmallConfiguration smallConfig = (SmallConfiguration)servletContext.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
+		
+		File tempDir = null;
+	
+		if (smallConfig.getTempPath() != null)
+			tempDir = new File(smallConfig.getTempPath());
+		else if ((tempDir = (File)servletContext.getAttribute("javax.servlet.context.tempdir")) == null)
+			tempDir = new File(System.getProperty("java.io.tmpdir"));
+	
+		if (!tempDir.exists() && !Utils.createPath(tempDir.getPath()))
+			throw new SmallFrameworkSetupException("The temp directory for uploaded files could not be created/found.");
+	
+		SmallEnvironment env = new SmallEnvironment();
+		env.init(servletContext, smallConfig != null ? smallConfig.getApplicationPackageRoots() : null, tempDir);			
+		return env;
 	}
 
 	@Override
@@ -185,9 +185,9 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
         {
             SmallResponseUtils.sendError(response, 415, e.getLocalizedMessage());
         }
-        catch (NoViewHandlerException e) 
+        catch (NoViewDriverException e) 
         {
-            SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
+            SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
         }
         catch (ViewProcessingException e) 
         {

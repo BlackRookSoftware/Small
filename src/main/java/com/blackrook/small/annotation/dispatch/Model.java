@@ -12,20 +12,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.annotation.controller.EntryPath;
 import com.blackrook.small.annotation.filter.FilterEntry;
+import com.blackrook.small.util.SmallRequestUtils;
 
 /**
- * Annotates a controller method or method parameter for sets of request parameters from the
- * request, session, and application (precedence is in that order).
+ * Annotates a {@link Controller} method or method parameter for constructing a model for 
+ * passing to a view or processing in a method.
  * <p>
- * On a method, it's the method to call to construct the model.
+ * On a method, it's the method to call to construct the model of a matching name.
  * <p>
  * On a parameter, it's the model itself.
  * <p>
- * If the model is not
+ * If the model is not constructed via a matching method, it will be constructed via {@link SmallRequestUtils#setModelFields(javax.servlet.http.HttpServletRequest, Class)}
  * <p>
- * The model is automatically persisted to the request scope for the view.
  * Any model that is not constructed is created (via default constructor or matching annotated method in the same class).
  * @author Matthew Tropiano
  * @see EntryPath
@@ -33,12 +34,12 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Model
+public @interface Model 
 {
 	/** 
-	 * Name of the model attribute to set. 
-	 * If no name is specified, the class name is used.
+	 * Name of the model. 
+	 * If no name is specified, "model" is used.
 	 * @return the name.
 	 */
-	String value() default "";
+	String value() default "model";
 }
