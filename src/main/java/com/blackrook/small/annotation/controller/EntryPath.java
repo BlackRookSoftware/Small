@@ -46,7 +46,9 @@ public @interface EntryPath
 	 * <li><code>/file/*</code> - a URI with an open-ended path after <code>/file/</code>.</li>
 	 * <li><code>/*</code> - all URIs.</li>
 	 * </ul>
-	 * If blank, this is the DEFAULT entry point, if no matching method is found.
+	 * URI path folder search is prioritized from most specific to least - static pattern, variable with RegEx, variable without, then default paths.
+	 * <p>
+	 * If unchanged, this is the DEFAULT entry point ("*"), if no matching method is found.
 	 * You may not specify more than one DEFAULT entry in a controller. Specified path is ignored.
 	 * @return the path.
 	 */
