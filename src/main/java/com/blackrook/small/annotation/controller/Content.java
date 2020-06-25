@@ -7,13 +7,20 @@
  ******************************************************************************/
 package com.blackrook.small.annotation.controller;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
+
+import javax.servlet.ServletInputStream;
 
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.enums.RequestMethod;
@@ -25,17 +32,19 @@ import com.blackrook.small.roles.XMLDriver;
  * <p>
  * On <b>parameters</b>, the request body content is passed in as the following: 
  * <ul>
- * 		<li>If the content type is <code>text/plain</code>, 
+ * 		<li>
+ * 			If the content type is any of the <code>application/xml</code> equivalents 
+ * 			and a {@link XMLDriver} component is found, the driver is used to convert to the target type.</li>
+ * 		<li>
+ * 			If the content type is <code>application/json</code> and a {@link JSONDriver} 
+ * 			is found, the driver is used to convert to the target type.</li>
+ * 		<li>Else, if the content is anything else, the following types are valid as a target type:
  * 			<ul>
- * 				<li>
- * 					...and the parameter type is a primitive value, boxed primitive value, 
- * 					primitive/boxed array, char[], byte[], or String, the content is parsed 
- * 					and cast to the appropriate type, if possible.
- * 				</li>
+ * 				<li>All primitives (if input is parseable text).</li>
+ * 				<li>All boxed primitives (if input is parseable text).</li>
+ * 				<li>byte[], {@link ByteArrayInputStream}, {@link ServletInputStream}, {@link InputStream} (for binary).</li>
+ * 				<li>{@link String}, {@link StringReader}, {@link BufferedReader}, {@link InputStreamReader}, {@link Reader} (for characters).</li>
  * 			</ul>
- * 		</li>
- * 		<li>If the content type is any of the <code>application/xml</code> equivalents and a {@link XMLDriver} component is found, the driver is used to convert to the target type.</li>
- * 		<li>If the content type is <code>application/json</code> and a {@link JSONDriver} is found, the driver is used to convert to the target type.</li>
  * 		<li>Otherwise, an error is thrown.</li>
  * </ul>
  * Note that its use on a parameter is worthless if the request method is not {@link RequestMethod#POST}, {@link RequestMethod#PUT}, or {@link RequestMethod#PATCH}.

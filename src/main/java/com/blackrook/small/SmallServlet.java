@@ -132,7 +132,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 
 	private SmallEnvironment createEnvironment(ServletContext servletContext)
 	{
-		SmallConfiguration smallConfig = (SmallConfiguration)servletContext.getAttribute(SmallConstants.SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE);
+		SmallConfiguration smallConfig = SmallUtils.getConfiguration(servletContext);
 		
 		File tempDir = null;
 	
@@ -230,7 +230,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		else if (method.equals(METHOD_DELETE))
 			callControllerEntry(request, response, RequestMethod.DELETE, null);
 		else if (method.equals(METHOD_PATCH))
-			callControllerEntry(request, response, RequestMethod.PATCH, null);
+			callPatch(request, response);
 		else if (method.equals(METHOD_HEAD))
 			callHead(request, response);
 		else if (SmallUtils.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
@@ -272,7 +272,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	
 	private void callPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
-		if (MultipartFormDataParser.isMultipart(request))
+		if (SmallUtils.getConfiguration(request.getServletContext()).autoParseMultipart() && MultipartFormDataParser.isMultipart(request))
 			callMultipart(RequestMethod.POST, request, response);
 		else if (METHOD_PATCH.equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
@@ -282,12 +282,20 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 
 	private void callPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
-		if (MultipartFormDataParser.isMultipart(request))
+		if (SmallUtils.getConfiguration(request.getServletContext()).autoParseMultipart() && MultipartFormDataParser.isMultipart(request))
 			callMultipart(RequestMethod.PUT, request, response);
 		else if (METHOD_PATCH.equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
 			callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
 			callControllerEntry(request, response, RequestMethod.PUT, null);
+	}
+
+	private void callPatch(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		if (SmallUtils.getConfiguration(request.getServletContext()).autoParseMultipart() && MultipartFormDataParser.isMultipart(request))
+			callMultipart(RequestMethod.PATCH, request, response);
+		else
+			callControllerEntry(request, response, RequestMethod.PATCH, null);
 	}
 
 	private void callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException

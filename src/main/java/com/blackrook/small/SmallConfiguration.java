@@ -67,6 +67,13 @@ public interface SmallConfiguration
 	boolean allowWebSockets();
 
 	/**
+	 * Checks if Multipart requests are auto-parsed if detected 
+	 * as "multipart" on POST, PUT, or PATCH requests.
+	 * @return true if so, false if not.
+	 */
+	boolean autoParseMultipart();
+
+	/**
 	 * Fetches the value of an arbitrary attribute set that may be specific to the application.
 	 * Returns a default value if it is not set.
 	 * @param attributeName the attribute name.
