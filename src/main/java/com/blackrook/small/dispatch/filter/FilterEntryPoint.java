@@ -16,6 +16,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.blackrook.small.SmallFilterResult;
 import com.blackrook.small.dispatch.DispatchEntryPoint;
 import com.blackrook.small.dispatch.DispatchMVCEntryPoint;
 import com.blackrook.small.enums.RequestMethod;
@@ -28,7 +29,7 @@ import com.blackrook.small.struct.HashDequeMap;
  * If true, continue to the next filter, if false, stop.
  * @author Matthew Tropiano
  */
-public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent> implements DispatchMVCEntryPoint<Boolean>
+public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent> implements DispatchMVCEntryPoint<SmallFilterResult>
 {
 	/**
 	 * Creates an entry method around a service profile instance.
@@ -41,7 +42,7 @@ public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent> implem
 	}
 
 	@Override
-	public Boolean handleCall(
+	public SmallFilterResult handleCall(
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
@@ -50,7 +51,7 @@ public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent> implem
 		HashDequeMap<String, Part> partMap
 	) throws ServletException, IOException 
 	{
-		return (Boolean)invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
+		return (SmallFilterResult)invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 	}
 
 }

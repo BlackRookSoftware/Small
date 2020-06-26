@@ -9,6 +9,7 @@ package com.blackrook.small;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,8 +70,8 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
     private static final String METHOD_PATCH = "PATCH";
     private static final String METHOD_TRACE = "TRACE";
     private static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
-	private static final Map<String, Cookie> EMPTY_COOKIE_MAP = new HashMap<>(2);
-	private static final Map<String, String> EMPTY_PATH_VAR_MAP = new HashMap<>(2);
+	private static final Map<String, Cookie> EMPTY_COOKIE_MAP = Collections.unmodifiableMap(new HashMap<>(2));
+	private static final Map<String, String> EMPTY_PATH_VAR_MAP = Collections.unmodifiableMap(new HashMap<>(2));
 
 	/** The application environment. */
 	private SmallEnvironment environment;
@@ -386,34 +387,50 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		ControllerEntryPoint entryPoint = result.getValue();
 		Class<?>[] filterChain = entryPoint.getFilterChain();
 
-		for (int i = 0; i < filterChain.length; i++)
+		if (result.getRemainder() != null)
+			request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER, result.getRemainder() + SmallRequestUtils.getPathExtension(request));
+
+		int f;
+		for (f = 0; f < filterChain.length; f++)
 		{
-			FilterComponent filterProfile = environment.getFilter(filterChain[i]);
+			FilterComponent filterProfile = environment.getFilter(filterChain[f]);
 			FilterEntryPoint entry = filterProfile.getEntryMethod();
-			if (entry != null && !entry.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap))
-				return;
+			if (entry != null)
+			{
+				SmallFilterResult filterResult = entry.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+				if (filterResult == null || !filterResult.isPassing())
+					break;
+				
+				HttpServletRequest newRequest = filterResult.getRequest();
+				if (newRequest != null)
+					request = newRequest;
+				HttpServletResponse newResponse = filterResult.getResponse();
+				if (newResponse != null)
+					response = newResponse;
+			}
 		}
 	
-		if (result.getRemainder() != null)
-			request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER, result.getRemainder());
-		
-		for (int i = filterChain.length - 1; i >= 0; i--)
+		// Call Entry if all filters passed.
+		if (f == filterChain.length)
 		{
-			FilterComponent filterProfile = environment.getFilter(filterChain[i]);
+			entryPoint.handleCall(
+				requestMethod, 
+				request, 
+				response, 
+				pathVariables, 
+				cookieMap, 
+				multiformPartMap
+			);
+		}
+		
+		for (f = (f == filterChain.length ? f - 1 : f); f >= 0; f--)
+		{
+			FilterComponent filterProfile = environment.getFilter(filterChain[f]);
 			FilterExitPoint exit = filterProfile.getExitMethod();
 			if (exit != null)
 				exit.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
 		}
 	
-		// Call Entry
-		entryPoint.handleCall(
-			requestMethod, 
-			request, 
-			response, 
-			pathVariables, 
-			cookieMap, 
-			multiformPartMap
-		);
 	}
 	
 }

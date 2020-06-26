@@ -10,6 +10,7 @@ package com.blackrook.small.dispatch.filter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import com.blackrook.small.SmallFilterResult;
 import com.blackrook.small.annotation.Filter;
 import com.blackrook.small.annotation.filter.FilterEntry;
 import com.blackrook.small.annotation.filter.FilterExit;
@@ -86,7 +87,7 @@ public class FilterComponent extends DispatchComponent
 	{
 		return
 			(method.getModifiers() & Modifier.PUBLIC) != 0
-			&& (method.getReturnType() == Boolean.TYPE || method.getReturnType() == Boolean.class) 
+			&& (method.getReturnType() == SmallFilterResult.class) 
 			;
 	}
 	

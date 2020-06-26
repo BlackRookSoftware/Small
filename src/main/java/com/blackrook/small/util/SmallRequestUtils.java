@@ -117,6 +117,30 @@ public final class SmallRequestUtils
 	}
 
 	/**
+	 * Get the path file extension parsed out of the request URI (includes the dot).
+	 * @param request the request.
+	 * @return the path extension string or the empty string if none exists.
+	 */
+	public static String getPathExtension(HttpServletRequest request)
+	{
+		String requestURI = request.getRequestURI();
+		int extIndex = requestURI.lastIndexOf('.');
+		int endIndex = requestURI.indexOf('?');
+		
+		if (extIndex >= 0)
+		{
+			if (endIndex >= 0)
+				return requestURI.substring(extIndex, endIndex);
+			else
+				return requestURI.substring(extIndex);
+		}
+		else
+		{
+			return "";
+		}
+	}
+
+	/**
 	 * Get the base file name parsed out of the request URI.
 	 * @param request the request.
 	 * @return the page.
