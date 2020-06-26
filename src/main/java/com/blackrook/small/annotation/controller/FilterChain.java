@@ -20,6 +20,7 @@ import com.blackrook.small.annotation.Controller;
  * <p>If on a class with {@link Controller}, all entry points in the controller use this chain.
  * <p>If on a method in a class with {@link Controller}, this specific entry point in the controller uses this chain.
  * <p>All filters specified are additive to the whole chain, from packages down to controllers, then methods, in the order specified.
+ * <p>Filter entry points are called in order, then the controller entry point, and then the filter exit points are called in the opposite specified. 
  * @author Matthew Tropiano
  */
 @Target({ElementType.TYPE, ElementType.PACKAGE, ElementType.METHOD})

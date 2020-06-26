@@ -19,8 +19,10 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * <p>
  * Must be on a class also annotated with {@link Component}.
  * <p>
- * Filters contain a single method that is called where some values are evaluated and then
+ * Filters can contain an entry method that is called where some values are evaluated and then
  * the filter makes a decision whether to continue with the rest of the request, or stop here.
+ * <p>
+ * Filters can also contain an exit method that is called if the controller method gets called.
  * <p>
  * Popular uses are secure protocol redirects, attribute and session setup, and authorization gateways.   
  * <p>

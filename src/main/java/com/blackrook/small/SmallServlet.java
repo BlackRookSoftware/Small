@@ -28,6 +28,8 @@ import javax.servlet.http.HttpSessionListener;
 
 import com.blackrook.small.dispatch.controller.ControllerEntryPoint;
 import com.blackrook.small.dispatch.filter.FilterComponent;
+import com.blackrook.small.dispatch.filter.FilterEntryPoint;
+import com.blackrook.small.dispatch.filter.FilterExitPoint;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.exception.request.BeanCreationException;
@@ -221,24 +223,41 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		throws ServletException, IOException, MethodNotAllowedException
 	{
 		String method = request.getMethod();
-		if (method.equals(METHOD_GET))
-			callControllerEntry(request, response, RequestMethod.GET, null);
-		else if (method.equals(METHOD_POST))
-			callPost(request, response);
-		else if (method.equals(METHOD_PUT))
-			callPut(request, response);
-		else if (method.equals(METHOD_DELETE))
-			callControllerEntry(request, response, RequestMethod.DELETE, null);
-		else if (method.equals(METHOD_PATCH))
-			callPatch(request, response);
-		else if (method.equals(METHOD_HEAD))
-			callHead(request, response);
-		else if (SmallUtils.getConfiguration(getServletContext()).allowOptions() && method.equals(METHOD_OPTIONS))
-			callOptions(request, response);
-		else if (SmallUtils.getConfiguration(getServletContext()).allowTrace() && method.equals(METHOD_TRACE))
-			doTrace(request, response);
-		else
-			throw new MethodNotAllowedException("Method " + method + " not allowed.");
+		switch (method)
+		{
+			case METHOD_GET:
+				callControllerEntry(request, response, RequestMethod.GET, null);
+				break;
+			case METHOD_POST:
+				callPost(request, response);
+				break;
+			case METHOD_PUT:
+				callPut(request, response);
+				break;
+			case METHOD_DELETE:
+				callControllerEntry(request, response, RequestMethod.DELETE, null);
+				break;
+			case METHOD_PATCH:
+				callPatch(request, response);
+				break;
+			case METHOD_HEAD:
+				callHead(request, response);
+				break;
+			case METHOD_OPTIONS:
+				if (!SmallUtils.getConfiguration(getServletContext()).allowOptions())
+					throw new MethodNotAllowedException("Method OPTIONS not allowed.");
+				else
+					callOptions(request, response);
+				break;
+			case METHOD_TRACE:
+				if (!SmallUtils.getConfiguration(getServletContext()).allowTrace())
+					throw new MethodNotAllowedException("Method TRACE not allowed.");
+				else
+					doTrace(request, response);
+				break;
+			default:
+				throw new MethodNotAllowedException("Method " + method + " not allowed.");
+		}
 	}
 
 	private void callHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
@@ -360,20 +379,32 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		}
 		
 		// Get path variables.
-		Map<String, String> pathVariables = result.getPathVariables() != null ? result.getPathVariables() : EMPTY_PATH_VAR_MAP;
+		Map<String, String> pathVariables = result.getPathVariables();
+		if (pathVariables == null)
+			pathVariables = EMPTY_PATH_VAR_MAP;
 		
 		ControllerEntryPoint entryPoint = result.getValue();
-		
-		for (Class<?> filterClass : entryPoint.getFilterChain())
+		Class<?>[] filterChain = entryPoint.getFilterChain();
+
+		for (int i = 0; i < filterChain.length; i++)
 		{
-			FilterComponent filterProfile = environment.getFilter(filterClass);
-			if (!filterProfile.getEntryMethod().handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap))
+			FilterComponent filterProfile = environment.getFilter(filterChain[i]);
+			FilterEntryPoint entry = filterProfile.getEntryMethod();
+			if (entry != null && !entry.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap))
 				return;
 		}
 	
 		if (result.getRemainder() != null)
 			request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER, result.getRemainder());
 		
+		for (int i = filterChain.length - 1; i >= 0; i--)
+		{
+			FilterComponent filterProfile = environment.getFilter(filterChain[i]);
+			FilterExitPoint exit = filterProfile.getExitMethod();
+			if (exit != null)
+				exit.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+		}
+	
 		// Call Entry
 		entryPoint.handleCall(
 			requestMethod, 

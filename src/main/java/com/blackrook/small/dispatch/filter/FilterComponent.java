@@ -12,6 +12,7 @@ import java.lang.reflect.Modifier;
 
 import com.blackrook.small.annotation.Filter;
 import com.blackrook.small.annotation.filter.FilterEntry;
+import com.blackrook.small.annotation.filter.FilterExit;
 import com.blackrook.small.dispatch.DispatchComponent;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
@@ -22,8 +23,10 @@ import com.blackrook.small.exception.SmallFrameworkSetupException;
  */
 public class FilterComponent extends DispatchComponent
 {
-	/** Method descriptor for filter. */
+	/** Entry method descriptor for filter. */
 	private FilterEntryPoint entryMethod;
+	/** Exit method descriptor for filter. */
+	private FilterExitPoint exitMethod;
 
 	/**
 	 * Creates the filter profile for a {@link Filter} class.
@@ -45,37 +48,73 @@ public class FilterComponent extends DispatchComponent
 	@Override
 	protected void scanMethod(Method method)
 	{
-		if (isValidEntryMethod(method))
+		if (method.isAnnotationPresent(FilterEntry.class))
 		{
-			if (this.entryMethod != null)
-				throw new SmallFrameworkSetupException("Filter already contains an entry point.");
-			entryMethod = new FilterEntryPoint(this, method);
+			if (isValidEntryMethod(method))
+			{
+				if (entryMethod != null)
+					throw new SmallFrameworkSetupException("Filter already contains an entry point.");
+				entryMethod = new FilterEntryPoint(this, method);
+			}
+			else 
+			{
+				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @FilterEntry, but must be public and return a boolean value.");
+			}
 		}
-		else if (method.isAnnotationPresent(FilterEntry.class))
+
+		if (method.isAnnotationPresent(FilterExit.class))
 		{
-			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @FilterEntry, but must be public and return a boolean value.");
+			if (isValidExitMethod(method))
+			{
+				if (exitMethod != null)
+					throw new SmallFrameworkSetupException("Filter already contains an exit point.");
+				exitMethod = new FilterExitPoint(this, method);
+			}
+			else if (method.isAnnotationPresent(FilterExit.class))
+			{
+				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @FilterExit, but must be public and return void.");
+			}
 		}
+		
 		super.scanMethod(method);
 	}
 
 	/** 
-	 * Checks if a method is a valid request entry. 
+	 * Checks if a method is a valid filter entry. 
 	 */
 	private boolean isValidEntryMethod(Method method)
 	{
 		return
-			method.isAnnotationPresent(FilterEntry.class) 
-			&& (method.getModifiers() & Modifier.PUBLIC) != 0
+			(method.getModifiers() & Modifier.PUBLIC) != 0
 			&& (method.getReturnType() == Boolean.TYPE || method.getReturnType() == Boolean.class) 
 			;
 	}
 	
+	/** 
+	 * Checks if a method is a valid filter exit. 
+	 */
+	private boolean isValidExitMethod(Method method)
+	{
+		return
+			(method.getModifiers() & Modifier.PUBLIC) != 0
+			&& (method.getReturnType() == Void.TYPE || method.getReturnType() == Void.class) 
+			;
+	}
+	
 	/**
-	 * @return this filter's sole entry method.
+	 * @return this filter's entry method.
 	 */
 	public FilterEntryPoint getEntryMethod() 
 	{
 		return entryMethod;
+	}
+	
+	/**
+	 * @return this filter's exit method.
+	 */
+	public FilterExitPoint getExitMethod()
+	{
+		return exitMethod;
 	}
 	
 }
