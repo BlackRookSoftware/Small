@@ -2,10 +2,10 @@ $Q1('body').onload = function()
 {
 	$Q1('#link-github-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[0]);
 	$Q1('#link-github-release-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[0]+'/releases');
-	$Q1('#link-github-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[1]);
-	$Q1('#link-github-release-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[1]+'/releases');
-	$Q1('#link-github-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[2]);
-	$Q1('#link-github-release-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[2]+'/releases');
+	$Q1('#link-github-jetty').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[1]);
+	$Q1('#link-github-release-jetty').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[1]+'/releases');
+	$Q1('#link-github-freemarker').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[2]);
+	$Q1('#link-github-release-freemarker').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[2]+'/releases');
 	$INC("https://api.github.com/?callback=github_api_start");
 	$IncludeHTML();
 };
