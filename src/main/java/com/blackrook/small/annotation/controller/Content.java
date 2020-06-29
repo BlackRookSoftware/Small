@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 
 import javax.servlet.ServletInputStream;
 
+import com.blackrook.small.SmallModelView;
+import com.blackrook.small.SmallResponse;
 import com.blackrook.small.annotation.Controller;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.roles.JSONDriver;
@@ -51,6 +53,8 @@ import com.blackrook.small.roles.XMLDriver;
  * <p>
  * If on a <b>method</b>, this converts the returned object after running the method into data that is put into the response body.
  * <ul>
+ * <li>If return type is a {@link SmallResponse}, its content is the object to convert (other headers and statuses are set on the response), and conversion continues below for the content...</li>
+ * <li>If return type is a {@link SmallModelView}, the view is resolved and written to the response.</li>
  * <li>If return type is a {@link File}, 
  * 		<ul>
  * 			<li>...the content type is changed to the file's predicted MIME-type and the content is the file's content, verbatim. Unknown type is <code>application/octet-stream</code>.</li> 

@@ -33,6 +33,7 @@ public class ControllerComponent extends DispatchComponent
 	 */
 	public static enum Output
 	{
+		AUTO,
 		CONTENT,
 		ATTACHMENT,
 		VIEW;

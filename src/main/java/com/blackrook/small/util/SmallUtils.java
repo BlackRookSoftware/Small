@@ -7,13 +7,18 @@
  ******************************************************************************/
 package com.blackrook.small.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import javax.servlet.ServletContext;
@@ -25,10 +30,16 @@ import javax.websocket.server.ServerContainer;
 import com.blackrook.small.SmallConfiguration;
 import com.blackrook.small.SmallConstants;
 import com.blackrook.small.SmallEnvironment;
+import com.blackrook.small.SmallModelView;
+import com.blackrook.small.SmallResponse;
 import com.blackrook.small.exception.request.BeanCreationException;
+import com.blackrook.small.exception.request.NoConverterException;
 import com.blackrook.small.exception.request.NoViewDriverException;
+import com.blackrook.small.exception.request.NotFoundException;
 import com.blackrook.small.exception.views.ViewProcessingException;
+import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.MIMETypeDriver;
+import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.Utils;
 
 /**
@@ -37,6 +48,8 @@ import com.blackrook.small.struct.Utils;
  */
 public final class SmallUtils
 {
+	/** View redirect prefix. */
+	public static final String VIEW_REDIRECT_PREFIX = "redirect:";
 	/** MIME type for JSON */
 	public static final String CONTENT_MIME_TYPE_JSON = "application/json";
 	/** MIME type for XML */
@@ -928,7 +941,7 @@ public final class SmallUtils
 	 */
 	public static String getApplicationFilePath(ServletContext context, String relativePath)
 	{
-		return context.getRealPath("/") + "/" + SmallUtils.removeBeginningSlash(relativePath);
+		return context.getRealPath("/") + "/" + removeBeginningSlash(relativePath);
 	}
 
 	/**
@@ -968,7 +981,7 @@ public final class SmallUtils
 	 */
 	public static void handleView(HttpServletRequest request, HttpServletResponse response, Object model, String viewName) throws NoViewDriverException, ViewProcessingException
 	{
-		if (!SmallUtils.getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
+		if (!getEnvironment(request.getServletContext()).handleView(request, response, model, viewName))
 			throw new NoViewDriverException("No view handler for \"" + viewName + "\".");
 	}
 
@@ -984,7 +997,7 @@ public final class SmallUtils
 	@SuppressWarnings("unchecked")
 	public static <T extends Throwable> void handleException(HttpServletRequest request, HttpServletResponse response, Throwable thr) throws T
 	{
-		if (!SmallUtils.getEnvironment(request.getServletContext()).handleException(request, response, thr))
+		if (!getEnvironment(request.getServletContext()).handleException(request, response, thr))
 			throw (T)thr;
 	}
 
@@ -1046,4 +1059,179 @@ public final class SmallUtils
 		return classLoader.getResourceAsStream(pathString);
 	}
 
+	/**
+	 * Writes a content object to the client.
+	 * <p>This converts an object into data that is put into the response body.
+	 * <ul>
+	 * <li>If return type is a {@link SmallResponse}, its content is the object to convert (other headers and statuses are set on the response), and conversion continues below for the content...</li>
+	 * <li>If return type is a {@link SmallModelView}, the view is resolved and written to the response.</li>
+	 * <li>If return type is a {@link File}, 
+	 * 		<ul>
+	 * 			<li>...the content type is changed to the file's predicted MIME-type and the content is the file's content, verbatim. Unknown type is <code>application/octet-stream</code>.</li> 
+	 * 			<li>...and is null, this sends a 404.</li>
+	 * 		</ul>
+	 * </li>
+	 * <li>If return type is a {@link Reader}, {@link CharSequence}, {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code> if unspecified.</li>
+	 * <li>If return type is byte[] or {@link ByteBuffer} binary data is sent back. Content type is <code>application/octet-stream</code> if unspecified.</li>
+	 * <li>If return type is any other object type,
+	 * 		<ul>
+	 * 			<li>...and a {@link XMLDriver} component is found, and the specified content type is <code>application/xml</code> or an XML subtype, the object is converted to XML.</li>
+	 * 			<li>...and a {@link JSONDriver} component is found, content type is <code>application/json</code> and the object is converted.</li>
+	 * 		</ul>
+	 * </li>
+	 * </ul>
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param attachmentFileName the name of the data to send (file name). If null, not sent as an attachment.
+	 * @param object the object to write.
+	 * @throws NotFoundException if a file is the content, and it was not found, or it's a directory.
+	 * @throws NoViewDriverException if a suitable handler was not found nor invoked.
+	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
+	 * @throws NoConverterException if the output object type could not be exported or converted to a suitable format.
+	 * @throws IOException if an I/O error occurs.
+	 * @since [NOW]
+	 */
+	public static void sendContent(HttpServletRequest request, HttpServletResponse response, String attachmentFileName, Object object) 
+		throws NoConverterException, IOException, NotFoundException, NoViewDriverException, ViewProcessingException
+	{
+		SmallResponse smallResponse;
+
+		Class<?> returnType = object != null ? object.getClass() : null;
+		
+		// SmallResponse type.
+		if (SmallResponse.class.isAssignableFrom(returnType))
+		{
+			smallResponse = (SmallResponse)object;
+			object = smallResponse.getContent();
+			returnType = object != null ? object.getClass() : null;
+		}
+		else
+		{
+			smallResponse = SmallResponse.create(200, object);
+		}
+		
+		if (attachmentFileName != null)
+			smallResponse.attachment(attachmentFileName);
+		
+		// Set default headers by SmallResponse.
+		response.setStatus(smallResponse.getStatus());
+		for (Map.Entry<String, Deque<String>> entry : smallResponse.getHeaders().entrySet())
+		{
+			String header = entry.getKey();
+			Deque<String> values = entry.getValue();
+			if (values.size() > 1) for (String v : values)
+				response.addHeader(header, v);
+			else if (!values.isEmpty())
+				response.setHeader(header, values.getFirst());
+		}
+
+		String mimeType = response.getHeader("Content-Type");
+		
+		if (returnType == null)
+		{
+			// Do nothing.
+		}
+		// SmallModelView output.
+		else if (SmallModelView.class.isAssignableFrom(returnType))
+		{
+			SmallModelView modelView = (SmallModelView)object;
+			String viewName = modelView.getViewName();
+			Object model = modelView.getModel();
+			if (viewName.startsWith(VIEW_REDIRECT_PREFIX))
+			{
+				SmallResponseUtils.sendRedirect(response, viewName.substring(VIEW_REDIRECT_PREFIX.length()));
+				return;
+			}
+			else 
+			{
+				SmallUtils.handleView(request, response, model, viewName);
+			}
+		}
+		// File output.
+		else if (File.class.isAssignableFrom(returnType))
+		{
+			File outFile = (File)object;
+			if (outFile == null || !outFile.exists())
+				throw new NotFoundException("File not found.");
+			else if (outFile.isDirectory())
+				throw new NotFoundException("File not found.");
+			else
+			{
+				SmallResponseUtils.sendFileContents(
+					response, 
+					mimeType != null ? mimeType : getMIMEType(request.getServletContext(), outFile.getName()), 
+					outFile
+				);
+			}
+		}
+		// StringBuffer data output.
+		else if (StringBuffer.class.isAssignableFrom(returnType))
+		{
+			SmallResponseUtils.sendStringData(
+				response, 
+				mimeType != null ? mimeType : "text/plain", 
+				((StringBuffer)object).toString()
+			);
+		}
+		// StringBuilder data output.
+		else if (StringBuilder.class.isAssignableFrom(returnType))
+		{
+			SmallResponseUtils.sendStringData(
+				response, 
+				mimeType != null ? mimeType : "text/plain", 
+				((StringBuilder)object).toString()
+			);
+		}
+		// String data output.
+		else if (String.class.isAssignableFrom(returnType))
+		{
+			SmallResponseUtils.sendStringData(
+				response, 
+				mimeType != null ? mimeType : "text/plain", 
+				(String)object
+			);
+		}
+		// binary output.
+		else if (byte[].class.isAssignableFrom(returnType))
+		{
+			byte[] data = (byte[])object;
+			SmallResponseUtils.sendData(
+				response,
+				mimeType != null ? mimeType : "application/octet-stream", 
+				new ByteArrayInputStream(data), 
+				(long)data.length
+			);
+		}
+		// InputStream
+		else if (InputStream.class.isAssignableFrom(returnType))
+		{
+			try (InputStream inStream = (InputStream)object)
+			{
+				SmallResponseUtils.sendData(response, inStream, -1L);
+			}
+		}
+		// Object output, XML.
+		else if (isXML(mimeType))
+		{
+			XMLDriver driver = getEnvironment(request.getServletContext()).getXMLDriver();
+			if (driver == null)
+				throw new NoConverterException("XML encoding not supported.");
+			response.setContentType("application/xml; charset=utf-8");
+			driver.toXML(response.getWriter(), object);
+		}
+		// Object output, JSON.
+		else if (isJSON(mimeType) || Utils.isEmpty(mimeType))
+		{
+			JSONDriver driver = getEnvironment(request.getServletContext()).getJSONDriver();
+			if (driver == null)
+				throw new NoConverterException("JSON encoding not supported.");
+			response.setContentType("application/json; charset=utf-8");
+			driver.toJSON(response.getWriter(), object);
+		}
+		else
+		{
+			throw new NoConverterException("No suitable converter found for " + object.getClass());
+		}
+	}
+	
 }

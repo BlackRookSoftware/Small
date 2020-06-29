@@ -7,10 +7,7 @@
  ******************************************************************************/
 package com.blackrook.small.dispatch.controller;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.Map;
@@ -21,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.SmallModelView;
+import com.blackrook.small.SmallResponse;
 import com.blackrook.small.annotation.controller.Attachment;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.controller.EntryPath;
@@ -32,16 +30,12 @@ import com.blackrook.small.dispatch.DispatchEntryPoint;
 import com.blackrook.small.dispatch.DispatchMVCEntryPoint;
 import com.blackrook.small.dispatch.controller.ControllerComponent.Output;
 import com.blackrook.small.enums.RequestMethod;
+import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
-import com.blackrook.small.exception.request.NoConverterException;
-import com.blackrook.small.exception.request.NotFoundException;
 import com.blackrook.small.multipart.Part;
-import com.blackrook.small.roles.JSONDriver;
-import com.blackrook.small.roles.XMLDriver;
 import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.util.SmallRequestUtils;
-import com.blackrook.small.util.SmallResponseUtils;
 import com.blackrook.small.util.SmallUtils;
 
 /**
@@ -50,7 +44,6 @@ import com.blackrook.small.util.SmallUtils;
  */
 public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent> implements DispatchMVCEntryPoint<Void>
 {
-	private static final String PREFIX_REDIRECT = "redirect:";
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
 	private static final RequestMethod[] REQUEST_METHODS_GET = new RequestMethod[]{RequestMethod.GET};
 
@@ -142,7 +135,11 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 				this.outputType = Output.VIEW;
 			}
 			else if (type != Void.class && type != Void.TYPE)
-				throw new SmallFrameworkSetupException("Entry methods that don't return void must be annotated with @Content, @Attachment, or @View.");
+			{
+				if (!SmallResponse.class.isAssignableFrom(type))
+					throw new SmallFrameworkSetupException("Entry methods that don't return void must return SmallResponse or it must be annotated with @Content, @Attachment, or @View.");
+				this.outputType = Output.AUTO;
+			}
 		}
 		
 	}
@@ -221,26 +218,14 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 			{
 				case VIEW:
 				{
-					Object model;
-					String viewName;
-					Class<?> returnType = getType();
+					SmallModelView modelView;
+					Class<?> returnType = retval != null ? retval.getClass() : getType();
 					if (SmallModelView.class.isAssignableFrom(returnType))
-					{
-						SmallModelView modelView = (SmallModelView)retval;
-						viewName = modelView.getViewName();
-						model = modelView.getModel();
-					}
+						modelView = (SmallModelView)retval;
 					else 
-					{
-						viewName = String.valueOf(retval);
-						model = null;
-					}
+						modelView = SmallModelView.create(null, String.valueOf(retval));
 					
-					if (viewName.startsWith(PREFIX_REDIRECT))
-						SmallResponseUtils.sendRedirect(response, viewName.substring(PREFIX_REDIRECT.length()));
-					else 
-						SmallUtils.handleView(request, response, model, viewName);
-
+					SmallUtils.sendContent(request, response, fname, modelView);
 					break;
 				}
 				case ATTACHMENT:
@@ -248,91 +233,15 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					fname = SmallRequestUtils.getFileName(request);
 					// fall through.
 				}
+				case AUTO:
 				case CONTENT:
 				{
-					Class<?> returnType = getType();
-					
-					// File output.
-					if (File.class.isAssignableFrom(returnType))
-					{
-						File outfile = (File)retval;
-						if (outfile == null || !outfile.exists())
-							throw new NotFoundException("File not found.");
-						else if (!Utils.isEmpty(mimeType))
-							SmallResponseUtils.sendFileContents(response, mimeType, outfile);
-						else
-							SmallResponseUtils.sendFileContents(response, SmallUtils.getMIMEType(request.getServletContext(), outfile.getName()), outfile);
-					}
-					// StringBuffer data output.
-					else if (StringBuffer.class.isAssignableFrom(returnType))
-					{
-						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						SmallResponseUtils.sendStringData(response, mimeType, fname, ((StringBuffer)retval).toString());
-					}
-					// StringBuilder data output.
-					else if (StringBuilder.class.isAssignableFrom(returnType))
-					{
-						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						SmallResponseUtils.sendStringData(response, mimeType, fname, ((StringBuilder)retval).toString());
-					}
-					// String data output.
-					else if (String.class.isAssignableFrom(returnType))
-					{
-						mimeType = Utils.isEmpty(mimeType) ? "text/plain" : mimeType;
-						SmallResponseUtils.sendStringData(response, mimeType, fname, (String)retval);
-					}
-					// binary output.
-					else if (byte[].class.isAssignableFrom(returnType))
-					{
-						byte[] data = (byte[])retval;
-						if (Utils.isEmpty(mimeType))
-							SmallResponseUtils.sendData(response, "application/octet-stream", null, new ByteArrayInputStream(data), data.length);
-						else
-							SmallResponseUtils.sendData(response, mimeType, null, new ByteArrayInputStream(data), data.length);
-					}
-					// InputStream
-					else if (InputStream.class.isAssignableFrom(returnType))
-					{
-						try (InputStream inStream = (InputStream)retval)
-						{
-							if (Utils.isEmpty(mimeType))
-								SmallResponseUtils.sendData(response, "application/octet-stream", null, inStream, -1);
-							else
-								SmallResponseUtils.sendData(response, mimeType, null, inStream, -1);
-						}
-					}
-					// Object output, XML.
-					else if (SmallUtils.isXML(mimeType))
-					{
-						XMLDriver driver = SmallUtils.getEnvironment(request.getServletContext()).getXMLDriver();
-						if (driver == null)
-							throw new NoConverterException("XML encoding not supported.");
-						if (fname != null)
-							response.setHeader("Content-Disposition", "attachment; filename=\"" + fname + "\"");
-						response.setContentType("application/xml; charset=utf-8");
-						driver.toXML(response.getWriter(), retval);
-					}
-					// Object output, JSON.
-					else if (SmallUtils.isJSON(mimeType) || Utils.isEmpty(mimeType))
-					{
-						JSONDriver driver = SmallUtils.getEnvironment(request.getServletContext()).getJSONDriver();
-						if (driver == null)
-							throw new NoConverterException("JSON encoding not supported.");
-						if (fname != null)
-							response.setHeader("Content-Disposition", "attachment; filename=\"" + fname + "\"");
-						response.setContentType("application/json; charset=utf-8");
-						driver.toJSON(response.getWriter(), retval);
-					}
-					else
-					{
-						throw new NoConverterException("No suitable converter found for " + retval.getClass());
-					}
+					SmallUtils.sendContent(request, response, fname, retval);
 					break;
 				}
 				default:
 				{
-					// Do nothing.
-					break;
+					throw new SmallFrameworkException("Unexpected Output Type - INTERNAL ERROR.");
 				}
 			}
 		}

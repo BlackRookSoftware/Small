@@ -27,6 +27,17 @@ public class SmallModelView
 	}
 	
 	/**
+	 * Creates a new model-view container. No model.
+	 * @param viewName the name of the view to resolve and use.
+	 * @return a new {@link SmallModelView}.
+	 * @since [NOW]
+	 */
+	public static SmallModelView create(String viewName)
+	{
+		return create(null, viewName);
+	}
+	
+	/**
 	 * Creates a new model-view container.
 	 * @param model the model to render.
 	 * @param viewName the name of the view to resolve and use.
