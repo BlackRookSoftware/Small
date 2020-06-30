@@ -10,7 +10,7 @@ import com.blackrook.small.struct.HashDequeMap;
 /**
  * Creates a generic response object for Small Responses.
  * @author Matthew Tropiano
- * @since [NOW]
+ * @since 1.1.0
  */
 public class SmallResponse
 {

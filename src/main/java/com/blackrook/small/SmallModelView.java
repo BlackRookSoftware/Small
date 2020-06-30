@@ -30,7 +30,7 @@ public class SmallModelView
 	 * Creates a new model-view container. No model.
 	 * @param viewName the name of the view to resolve and use.
 	 * @return a new {@link SmallModelView}.
-	 * @since [NOW]
+	 * @since 1.1.0
 	 */
 	public static SmallModelView create(String viewName)
 	{

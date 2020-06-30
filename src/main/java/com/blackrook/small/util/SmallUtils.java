@@ -1089,7 +1089,7 @@ public final class SmallUtils
 	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
 	 * @throws NoConverterException if the output object type could not be exported or converted to a suitable format.
 	 * @throws IOException if an I/O error occurs.
-	 * @since [NOW]
+	 * @since 1.1.0
 	 */
 	public static void sendContent(HttpServletRequest request, HttpServletResponse response, String attachmentFileName, Object object) 
 		throws NoConverterException, IOException, NotFoundException, NoViewDriverException, ViewProcessingException

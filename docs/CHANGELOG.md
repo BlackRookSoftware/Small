@@ -3,7 +3,7 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
-Changed in [NOW]
+Changed in 1.1.0
 ----------------
 
 - `Added` SmallResponse.
