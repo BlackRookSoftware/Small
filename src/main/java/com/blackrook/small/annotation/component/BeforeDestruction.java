@@ -23,7 +23,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * @author Matthew Tropiano
  * @see EntryPath
  * @see FilterEntry
- * @since [NOW]
+ * @since 1.3.0
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
