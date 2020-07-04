@@ -513,7 +513,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * @param <T> object type.
 	 * @return a singleton component annotated with {@link Component} by class, or null if not found.
 	 * @throws SmallFrameworkException if more than one component would be returned using this method.
-	 * @since 1.3.0, this does not instantiate components, only retrieves.
+	 * @since [NOW], this does not instantiate components, only retrieves.
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getComponent(Class<T> clazz)
@@ -537,7 +537,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * @param clazz the class type search for.
 	 * @param <T> object type.
 	 * @return all singleton component annotated with {@link Component} by class, or an empty list if not found.
-	 * @since 1.3.0
+	 * @since [NOW]
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> getComponentList(Class<T> clazz)
