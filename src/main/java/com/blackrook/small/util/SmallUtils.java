@@ -1063,7 +1063,7 @@ public final class SmallUtils
 	 * Encapsulates an object in a {@link SmallResponse} object.
 	 * If the object passed in is a {@link SmallResponse}, nothing is changed, and the same object is returned.
 	 * @return a SmallResponse object.
-	 * @since [NOW]
+	 * @since 1.2.0
 	 */
 	public static SmallResponse encapsulateResponseContent(Object content)
 	{

@@ -145,7 +145,7 @@ public class SmallResponse
 	 * @param headerName the header name.
 	 * @param value the corresponding date value.
 	 * @return itself, for call chaining.
-	 * @since [NOW]
+	 * @since 1.2.0
 	 */
 	public SmallResponse dateHeader(String headerName, Date value)
 	{
@@ -158,7 +158,7 @@ public class SmallResponse
 	 * @param headerName the header name.
 	 * @param value the corresponding value.
 	 * @return itself, for call chaining.
-	 * @since [NOW]
+	 * @since 1.2.0
 	 */
 	public SmallResponse dateHeader(String headerName, long value)
 	{
@@ -184,7 +184,7 @@ public class SmallResponse
 	 * @param headerName the header name.
 	 * @param value the corresponding date value.
 	 * @return itself, for call chaining.
-	 * @since [NOW]
+	 * @since 1.2.0
 	 */
 	public SmallResponse addDateHeader(String headerName, Date value)
 	{
@@ -196,7 +196,7 @@ public class SmallResponse
 	 * @param headerName the header name.
 	 * @param value the corresponding date value in milliseconds since the Epoch.
 	 * @return itself, for call chaining.
-	 * @since [NOW]
+	 * @since 1.2.0
 	 */
 	public SmallResponse addDateHeader(String headerName, long value)
 	{
