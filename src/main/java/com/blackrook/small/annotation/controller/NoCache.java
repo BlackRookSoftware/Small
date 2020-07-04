@@ -24,7 +24,4 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NoCache
-{
-
-}
+public @interface NoCache {}

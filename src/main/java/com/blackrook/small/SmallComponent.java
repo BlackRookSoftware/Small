@@ -13,6 +13,7 @@ import java.lang.reflect.Modifier;
 
 import com.blackrook.small.annotation.component.AfterConstruction;
 import com.blackrook.small.annotation.component.AfterInitialize;
+import com.blackrook.small.annotation.component.BeforeDestruction;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.struct.Utils;
 
@@ -28,8 +29,10 @@ public class SmallComponent
 	private Object instance;
 	/** Method to invoke after environment initialization. */
 	private Method afterInitialize;
-	/** Method to invoke after environment initialization. */
+	/** Method to invoke after component construction. */
 	private Method afterConstruction;
+	/** Method to invoke before environment destruction. */
+	private Method beforeDestruction;
 
 	/**
 	 * Creates an entry point descriptor around an object instance.
@@ -39,6 +42,8 @@ public class SmallComponent
 	{
 		this.instance = instance;
 		this.afterInitialize = null;
+		this.afterConstruction = null;
+		this.beforeDestruction = null;
 	}
 
 	/**
@@ -90,6 +95,21 @@ public class SmallComponent
 	}
 
 	/**
+	 * Invokes the {@link BeforeDestruction} annotated methods.
+	 */
+	void invokeBeforeDestructionMethods()
+	{
+		if (beforeDestruction != null)
+		{
+			try {
+				Utils.invoke(beforeDestruction, instance);
+			} catch (InvocationTargetException e) {
+				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @BeforeDestruction method!", e.getCause());
+			}
+		}
+	}
+
+	/**
 	 * Called to handle a single method scan for this component type.
 	 * If this method is overridden, it would be wise to call <code>super.scanMethod(m)</code>.
 	 * @param method the method to inspect.
@@ -117,7 +137,18 @@ public class SmallComponent
 		{
 			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @AfterConstruction, but must be public, return void, and have no parameters.");
 		}
-	}
+
+		if (isValidBeforeDestructionMethod(method))
+		{
+			if (beforeDestruction != null)
+				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @BeforeDestruction, but method " + beforeDestruction.toString() + " is already annotated with it.");
+			beforeDestruction = method;
+		}
+		else if (method.isAnnotationPresent(BeforeDestruction.class))
+		{
+			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @BeforeDestruction, but must be public, return void, and have no parameters.");
+		}
+}
 	
 	private boolean isValidAfterInitializeMethod(Method method)
 	{
@@ -133,6 +164,16 @@ public class SmallComponent
 	{
 		return
 			method.isAnnotationPresent(AfterConstruction.class)
+			&& (method.getModifiers() & Modifier.PUBLIC) != 0 
+			&& (method.getReturnType() == Void.TYPE || method.getReturnType() == Void.class)
+			&& (method.getParameterCount() == 0)
+			;
+	}
+	
+	private boolean isValidBeforeDestructionMethod(Method method)
+	{
+		return
+			method.isAnnotationPresent(BeforeDestruction.class)
 			&& (method.getModifiers() & Modifier.PUBLIC) != 0 
 			&& (method.getReturnType() == Void.TYPE || method.getReturnType() == Void.class)
 			&& (method.getParameterCount() == 0)

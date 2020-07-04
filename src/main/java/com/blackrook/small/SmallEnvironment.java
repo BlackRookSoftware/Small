@@ -12,6 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextListener;
@@ -53,6 +55,7 @@ import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.MIMETypeDriver;
 import com.blackrook.small.roles.ViewDriver;
 import com.blackrook.small.roles.XMLDriver;
+import com.blackrook.small.struct.HashDequeMap;
 import com.blackrook.small.struct.URITrie;
 import com.blackrook.small.struct.Utils;
 import com.blackrook.small.util.SmallUtils;
@@ -67,7 +70,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Default MIME-Type driver.
 	 */
 	private static final MIMETypeDriver DEFAULT_MIME = new DefaultMIMETypeDriver();
-	
+
 	/** Tempdir root. */
 	private File tempDir;
 	/** JSON driver. */
@@ -89,7 +92,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private Map<RequestMethod, URITrie<ControllerEntryPoint>> controllerEntries;
 
 	/** The components that are instantiated. */
-	private Map<Class<?>, SmallComponent> componentInstances;
+	private List<SmallComponent> componentList;
+	/** The components that are instantiated mapped by type. */
+	private HashDequeMap<Class<?>, SmallComponent> componentTypeMapping;
 	/** The controllers that were instantiated. */
 	private Map<Class<?>, ControllerComponent> controllerComponents;
 	/** The filters that were instantiated. */
@@ -117,7 +122,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 		this.componentsConstructing = new HashSet<>();
 		
-		this.componentInstances = new HashMap<>();
+		this.componentList = new LinkedList<>();
+		this.componentTypeMapping = new HashDequeMap<>();
 		this.controllerEntries = new HashMap<>(8);
 		this.controllerComponents = new HashMap<>(16);
 		this.filterComponents = new HashMap<>(16);
@@ -140,27 +146,30 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.xmlDriver = null;
 		this.mimeTypeDriver = DEFAULT_MIME;
 		
-		componentInstances.put(ServletContext.class, new SmallComponent(context));
-		
-		SmallConfiguration config = SmallUtils.getConfiguration(context);
-		componentInstances.put(SmallConfiguration.class, new SmallComponent(config));
-		componentInstances.put(config.getClass(), new SmallComponent(config));
+		registerComponent(new SmallComponent(context));
+		registerComponent(new SmallComponent(SmallUtils.getConfiguration(context)));
 
 		if (!Utils.isEmpty(controllerRootPackages))
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
-		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : componentInstances.entrySet())
-			entry.getValue().invokeAfterInitializeMethods();
-		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : controllerComponents.entrySet())
-			entry.getValue().invokeAfterInitializeMethods();
-		for (Map.Entry<Class<?>, ? extends SmallComponent> entry : filterComponents.entrySet())
-			entry.getValue().invokeAfterInitializeMethods();
+		for (SmallComponent sc : componentList)
+			sc.invokeAfterInitializeMethods();
 	}
 
 	/**
 	 * Destroys the environment.
 	 */
-	void destroy()
+	void destroy(ServletContext context)
 	{
+		// Destroy all components.
+		for (SmallComponent sc : componentList)
+		{
+			try {
+				sc.invokeBeforeDestructionMethods();
+			} catch (Exception e) {
+				context.log("Exception on destroy: ", e);
+			}
+		}
+
 		tempDir = null;
 		jsonDriver = null;
 		xmlDriver = null;
@@ -169,7 +178,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		exceptionHandlerMap.clear();
 		componentsConstructing.clear();
 		controllerEntries.clear();
-		componentInstances.clear();
+		componentList.clear();
+		componentTypeMapping.clear();
 		controllerComponents.clear();
 		filterComponents.clear();
 		contextListeners.clear();
@@ -221,7 +231,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				
 				if (componentClass.isAnnotationPresent(Component.class))
 				{
-					Object componentInstance = createOrGetComponent(componentClass);
+					Object componentInstance = createComponent(componentClass);
 		
 					if (ServletContextListener.class.isAssignableFrom(componentClass))
 						contextListeners.add((ServletContextListener)componentInstance);
@@ -275,6 +285,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 						component = new ControllerComponent(componentInstance);
 						controllerComponents.put(componentClass, (ControllerComponent)component);
+						registerComponent(component);
 						component.scanMethods();
 						component.invokeAfterConstructionMethods();
 						
@@ -306,13 +317,14 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						
 						component = new FilterComponent(componentInstance);
 						filterComponents.put(componentClass, (FilterComponent)component);
+						registerComponent(component);
 						component.scanMethods();
 						component.invokeAfterConstructionMethods();
 					}
 					else
 					{
 						component = new SmallComponent(componentInstance);
-						componentInstances.put(componentClass, component);
+						registerComponent(component);
 						component.scanMethods();
 						component.invokeAfterConstructionMethods();
 					}
@@ -361,27 +373,26 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Creates or gets an engine singleton component by class.
 	 * @param clazz the class to create/retrieve.
 	 */
-	@SuppressWarnings("unchecked")
 	private <T> T createOrGetComponent(Class<T> clazz)
 	{
-		SmallComponent component;
-		if ((component = componentInstances.get(clazz)) != null)
-			return (T)component.getInstance();
+		T out;
+		if ((out = getComponent(clazz)) != null)
+			return (T)out;
 		else
 		{
-			return createComponent(clazz, getAnnotatedConstructor(clazz));
+			return createComponent(clazz);
 		}
 	}
 
 	/**
 	 * Creates a new component for a class and using one of its constructors.
 	 * @param clazz the class to instantiate.
-	 * @param constructor the constructor to call for instantiation.
 	 * @return the new class instance.
 	 */
-	private <T> T createComponent(Class<T> clazz, Constructor<T> constructor)
+	private <T> T createComponent(Class<T> clazz)
 	{
 		T object = null;
+		Constructor<T> constructor = getAnnotatedConstructor(clazz);
 		
 		if (constructor == null)
 		{
@@ -412,6 +423,22 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		}
 	}
 
+	private void registerComponent(SmallComponent component)
+	{
+		componentList.add(component);
+		registerComponentTree(component.getInstance().getClass(), component);
+	}
+
+	private void registerComponentTree(Class<?> type, SmallComponent instance)
+	{
+		if (type == null)
+			return;
+		componentTypeMapping.add(type, instance);
+		for (Class<?> iface : type.getInterfaces())
+			registerComponentTree(iface, instance);
+		registerComponentTree(type.getSuperclass(), instance);
+	}
+	
 	/**
 	 * @param <T> object type.
 	 * @return the specific constructor to use for this class.
@@ -480,14 +507,51 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
-	 * Returns a singleton component instantiated by Small or instantiates it and returns it.
+	 * Returns a singleton component instantiated by Small of a particular type or subtype.
 	 * @param clazz the class to fetch or instantiate.
 	 * @param <T> object type.
 	 * @return a singleton component annotated with {@link Component} by class.
+	 * @throws SmallFrameworkException if more than one component would be returned using this method.
+	 * @since 1.3.0, this does not instantiate components, only retrieves.
 	 */
+	@SuppressWarnings("unchecked")
 	public <T> T getComponent(Class<T> clazz)
 	{
-		return createOrGetComponent(clazz);
+		Deque<SmallComponent> componentDeque;
+		if ((componentDeque = componentTypeMapping.get(clazz)) != null)
+		{
+			if (componentDeque.size() > 1)
+				throw new SmallFrameworkException("Too many components match class: " + clazz.getName());
+			else
+				return (T)(componentDeque.getFirst().getInstance());
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	/**
+	 * Returns all singleton components instantiated by Small of a particular type or subtype.
+	 * @param clazz the class type search for.
+	 * @param <T> object type.
+	 * @return all singleton component annotated with {@link Component} by class, or an empty list if not found.
+	 * @since 1.3.0
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> Iterable<T> getComponentList(Class<T> clazz)
+	{
+		Deque<SmallComponent> components;
+		if ((components = componentTypeMapping.get(clazz)) != null)
+		{
+			return (Iterable<T>)components.stream()
+				.map((oo)->oo.getInstance())
+				.collect(Collectors.toList());
+		}
+		else
+		{
+			return new LinkedList<T>();
+		}
 	}
 
 	/**

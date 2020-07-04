@@ -102,7 +102,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	public void destroy()
 	{
 		super.destroy();
-		environment.destroy();
+		environment.destroy(getServletContext());
 	}
 
 	@Override

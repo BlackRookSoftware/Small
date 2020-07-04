@@ -3,6 +3,13 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.3.0
+----------------
+
+- `Added` @BeforeDestruction on @Components for annotation methods to call on context destruction.
+- `Changed` All types on a component are associated with their instance.
+
+
 Changed in 1.2.1
 ----------------
 
