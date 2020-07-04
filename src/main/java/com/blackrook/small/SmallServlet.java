@@ -157,9 +157,9 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	@Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
     {
-        try 
+    	SmallResponse smallResponse = null;
+        try
         {
-        	SmallResponse smallResponse;
     		if ((smallResponse = callMethod(request, response)) != null)
     			SmallUtils.sendContent(request, response, null, smallResponse);
     		// if null, nothing is written to the response (in this method).
@@ -226,6 +226,9 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		} 
         finally 
         {
+        	// Close anything still open that the response may encapsulate.
+        	Utils.close(smallResponse);
+        	
 			// clean up files read in multipart parts.
 			@SuppressWarnings("unchecked")
 			List<Part> parts = (List<Part>)request.getAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_MULTIPART_LIST);

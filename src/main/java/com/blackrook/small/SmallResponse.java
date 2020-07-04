@@ -22,8 +22,10 @@ import com.blackrook.small.struct.HashDequeMap;
  * Creates a generic response object for Small Responses.
  * @author Matthew Tropiano
  * @since 1.1.0
+ * @since 1.2.1, implements AutoCloseable
  */
-public class SmallResponse
+@SuppressWarnings("resource")
+public class SmallResponse implements AutoCloseable
 {
 	private static final ThreadLocal<SimpleDateFormat> ISO_DATE = ThreadLocal.withInitial(()->
 	{
@@ -276,6 +278,13 @@ public class SmallResponse
 	public Object getContent()
 	{
 		return content;
+	}
+
+	@Override
+	public void close() throws Exception
+	{
+		if (content instanceof AutoCloseable)
+			((AutoCloseable)content).close();
 	}
 	
 }
