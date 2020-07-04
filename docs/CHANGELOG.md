@@ -8,7 +8,7 @@ Changed in [NOW]
 
 - `Added` @BeforeDestruction on @Components for annotation methods to call on context destruction.
 - `Changed` @AfterInitialize on @Components can have parameters that match singleton components.
-- `Changed` All types on a component are associated with their instance.
+- `Changed` All types on a component are associated with their instance (or many instances).
 - `Changed` The SmallEnvironment is now a singleton fetchable during singleton creation.
 
 
