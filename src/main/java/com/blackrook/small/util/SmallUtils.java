@@ -1062,6 +1062,7 @@ public final class SmallUtils
 	/**
 	 * Encapsulates an object in a {@link SmallResponse} object.
 	 * If the object passed in is a {@link SmallResponse}, nothing is changed, and the same object is returned.
+	 * @param content the content to encapsulate.
 	 * @return a SmallResponse object.
 	 * @since 1.2.0
 	 */
