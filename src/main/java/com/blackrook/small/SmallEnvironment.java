@@ -148,11 +148,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		
 		registerComponent(new SmallComponent(context));
 		registerComponent(new SmallComponent(SmallUtils.getConfiguration(context)));
+		registerComponent(new SmallComponent(this));
 
 		if (!Utils.isEmpty(controllerRootPackages))
 			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
 		for (SmallComponent sc : componentList)
-			sc.invokeAfterInitializeMethods();
+			sc.invokeAfterInitializeMethods(this);
 	}
 
 	/**
@@ -510,7 +511,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Returns a singleton component instantiated by Small of a particular type or subtype.
 	 * @param clazz the class to fetch or instantiate.
 	 * @param <T> object type.
-	 * @return a singleton component annotated with {@link Component} by class.
+	 * @return a singleton component annotated with {@link Component} by class, or null if not found.
 	 * @throws SmallFrameworkException if more than one component would be returned using this method.
 	 * @since 1.3.0, this does not instantiate components, only retrieves.
 	 */
@@ -552,6 +553,23 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		{
 			return new LinkedList<T>();
 		}
+	}
+	
+	/**
+	 * Returns a new array of objects that match the provided types in the order the types are provided.
+	 * If the component can't be found, <code>null</code> is set in that index.
+	 * @param types the requested types.
+	 * @return an array of matching singletons.
+	 * @throws SmallFrameworkException if more than one component would be returned for any one type using this method.
+	 * @since [NOW]
+	 * @see #getComponent(Class)
+	 */
+	public Object[] getComponents(Class<?> ... types)
+	{
+		Object[] out = new Object[types.length];
+		for (int i = 0; i < out.length; i++)
+			out[i] = getComponent(types[i]);
+		return out;
 	}
 
 	/**

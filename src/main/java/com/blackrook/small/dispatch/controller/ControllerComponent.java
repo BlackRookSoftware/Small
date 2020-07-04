@@ -28,6 +28,8 @@ import com.blackrook.small.util.SmallUtils;
  */
 public class ControllerComponent extends DispatchComponent
 {
+	protected static final Class<?>[] NO_FILTERS = new Class<?>[0];
+
 	/** 
 	 * Controller output handling types. 
 	 */

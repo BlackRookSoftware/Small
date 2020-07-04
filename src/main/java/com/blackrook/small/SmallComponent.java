@@ -23,14 +23,12 @@ import com.blackrook.small.struct.Utils;
  */
 public class SmallComponent
 {
-	protected static final Class<?>[] NO_FILTERS = new Class<?>[0];
-
 	/** Object handler instance. */
 	private Object instance;
-	/** Method to invoke after environment initialization. */
-	private Method afterInitialize;
 	/** Method to invoke after component construction. */
 	private Method afterConstruction;
+	/** Method to invoke after environment initialization. */
+	private Method afterInitialize;
 	/** Method to invoke before environment destruction. */
 	private Method beforeDestruction;
 
@@ -41,8 +39,8 @@ public class SmallComponent
 	protected SmallComponent(Object instance)
 	{
 		this.instance = instance;
-		this.afterInitialize = null;
 		this.afterConstruction = null;
+		this.afterInitialize = null;
 		this.beforeDestruction = null;
 	}
 
@@ -65,21 +63,6 @@ public class SmallComponent
 	}
 	
 	/**
-	 * Invokes the {@link AfterInitialize} annotated methods.
-	 */
-	void invokeAfterInitializeMethods()
-	{
-		if (afterInitialize != null)
-		{
-			try {
-				Utils.invoke(afterInitialize, instance);
-			} catch (InvocationTargetException e) {
-				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @AfterInitialize method!", e.getCause());
-			}
-		}
-	}
-
-	/**
 	 * Invokes the {@link AfterConstruction} annotated methods.
 	 */
 	void invokeAfterConstructionMethods()
@@ -90,6 +73,21 @@ public class SmallComponent
 				Utils.invoke(afterConstruction, instance);
 			} catch (InvocationTargetException e) {
 				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @AfterConstruction method!", e.getCause());
+			}
+		}
+	}
+
+	/**
+	 * Invokes the {@link AfterInitialize} annotated methods.
+	 */
+	void invokeAfterInitializeMethods(SmallEnvironment environment)
+	{
+		if (afterInitialize != null)
+		{
+			try {
+				Utils.invoke(afterInitialize, instance, environment.getComponents(afterInitialize.getParameterTypes()));
+			} catch (InvocationTargetException e) {
+				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @AfterInitialize method!", e.getCause());
 			}
 		}
 	}
@@ -116,17 +114,6 @@ public class SmallComponent
 	 */
 	protected void scanMethod(Method method)
 	{
-		if (isValidAfterInitializeMethod(method))
-		{
-			if (afterInitialize != null)
-				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @AfterInitialize, but method " + afterInitialize.toString() + " is already annotated with it.");
-			afterInitialize = method;
-		}
-		else if (method.isAnnotationPresent(AfterInitialize.class))
-		{
-			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @AfterInitialize, but must be public, return void, and have no parameters.");
-		}
-		
 		if (isValidAfterConstructionMethod(method))
 		{
 			if (afterConstruction != null)
@@ -138,6 +125,17 @@ public class SmallComponent
 			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @AfterConstruction, but must be public, return void, and have no parameters.");
 		}
 
+		if (isValidAfterInitializeMethod(method))
+		{
+			if (afterInitialize != null)
+				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @AfterInitialize, but method " + afterInitialize.toString() + " is already annotated with it.");
+			afterInitialize = method;
+		}
+		else if (method.isAnnotationPresent(AfterInitialize.class))
+		{
+			throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @AfterInitialize, but must be public and return void.");
+		}
+		
 		if (isValidBeforeDestructionMethod(method))
 		{
 			if (beforeDestruction != null)
@@ -150,16 +148,6 @@ public class SmallComponent
 		}
 }
 	
-	private boolean isValidAfterInitializeMethod(Method method)
-	{
-		return
-			method.isAnnotationPresent(AfterInitialize.class)
-			&& (method.getModifiers() & Modifier.PUBLIC) != 0 
-			&& (method.getReturnType() == Void.TYPE || method.getReturnType() == Void.class)
-			&& (method.getParameterCount() == 0)
-			;
-	}
-	
 	private boolean isValidAfterConstructionMethod(Method method)
 	{
 		return
@@ -170,6 +158,15 @@ public class SmallComponent
 			;
 	}
 	
+	private boolean isValidAfterInitializeMethod(Method method)
+	{
+		return
+			method.isAnnotationPresent(AfterInitialize.class)
+			&& (method.getModifiers() & Modifier.PUBLIC) != 0 
+			&& (method.getReturnType() == Void.TYPE || method.getReturnType() == Void.class)
+			;
+	}
+
 	private boolean isValidBeforeDestructionMethod(Method method)
 	{
 		return

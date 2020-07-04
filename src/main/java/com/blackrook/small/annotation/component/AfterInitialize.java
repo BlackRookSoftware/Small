@@ -19,7 +19,8 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 /**
  * Annotates a {@link Component} method to be called after all components are constructed.
  * <p>
- * The annotated method must be publicly accessible, return void, and take no parameters.
+ * The annotated method must be publicly accessible and return void.
+ * If the annotated method has parameters, they will be filled with matching components.
  * @author Matthew Tropiano
  * @see EntryPath
  * @see FilterEntry
