@@ -9,6 +9,7 @@ package com.blackrook.small;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import com.blackrook.small.dispatch.filter.FilterExitPoint;
 import com.blackrook.small.enums.RequestMethod;
 import com.blackrook.small.exception.SmallFrameworkSetupException;
 import com.blackrook.small.exception.request.BeanCreationException;
+import com.blackrook.small.exception.request.ManyRequestExceptionsException;
 import com.blackrook.small.exception.request.MethodNotAllowedException;
 import com.blackrook.small.exception.request.MultipartParserException;
 import com.blackrook.small.exception.request.NoConverterException;
@@ -157,55 +159,81 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
     {
         try 
         {
-        	try {
-        		callMethod(request, response);
-        	} catch (Throwable t) {
-        		if (!environment.handleException(request, response, t))
-        			throw t;
-        	}
+        	SmallResponse smallResponse;
+    		if ((smallResponse = callMethod(request, response)) != null)
+    			SmallUtils.sendContent(request, response, null, smallResponse);
+    		// if null, nothing is written to the response (in this method).
         }
+        // Servlet Exceptions
         catch (NotFoundException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 404, e.getLocalizedMessage());
         }
         catch (MethodNotAllowedException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 405, e.getLocalizedMessage());
         }
         catch (BeanCreationException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
         }
         catch (MultipartParserException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 400, e.getLocalizedMessage());
         }
         catch (NoConverterException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
         }
         catch (UnsupportedMediaTypeException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 415, e.getLocalizedMessage());
         }
         catch (NoViewDriverException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
         }
         catch (ViewProcessingException e) 
         {
+			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
         }
+        catch (ManyRequestExceptionsException e) 
+        {
+			getServletContext().log("Many exceptions were uncaught:");
+			for (Throwable t : e.getCauses())
+				getServletContext().log("From ManyRequestExceptionsException:", t);
+            SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+        }
+        // I/O Exceptions
         catch (IOException e) 
         {
 			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
         }
-        catch (Exception e) 
+        // Other Exceptions
+        catch (Throwable e) 
         {
 			getServletContext().log("An exception was uncaught: ", e);
             SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
-        }
+		} 
+        finally 
+        {
+			// clean up files read in multipart parts.
+			@SuppressWarnings("unchecked")
+			List<Part> parts = (List<Part>)request.getAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_MULTIPART_LIST);
+			if (parts != null) for (Part part : parts) if (part.isFile())
+			{
+				part.getFile().delete();
+			}
+		}
     }
 
 	private Set<RequestMethod> getMethodsForPath(String path)
@@ -220,48 +248,50 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		return out;
 	}
 
-	private void callMethod(HttpServletRequest request, HttpServletResponse response)
-		throws ServletException, IOException, MethodNotAllowedException
+	private SmallResponse callMethod(HttpServletRequest request, HttpServletResponse response) throws Throwable
 	{
-		String method = request.getMethod();
-		switch (method)
-		{
-			case METHOD_GET:
-				callControllerEntry(request, response, RequestMethod.GET, null);
-				break;
-			case METHOD_POST:
-				callPost(request, response);
-				break;
-			case METHOD_PUT:
-				callPut(request, response);
-				break;
-			case METHOD_DELETE:
-				callControllerEntry(request, response, RequestMethod.DELETE, null);
-				break;
-			case METHOD_PATCH:
-				callPatch(request, response);
-				break;
-			case METHOD_HEAD:
-				callHead(request, response);
-				break;
-			case METHOD_OPTIONS:
-				if (!SmallUtils.getConfiguration(getServletContext()).allowOptions())
-					throw new MethodNotAllowedException("Method OPTIONS not allowed.");
-				else
-					callOptions(request, response);
-				break;
-			case METHOD_TRACE:
-				if (!SmallUtils.getConfiguration(getServletContext()).allowTrace())
-					throw new MethodNotAllowedException("Method TRACE not allowed.");
-				else
-					doTrace(request, response);
-				break;
-			default:
-				throw new MethodNotAllowedException("Method " + method + " not allowed.");
+		try {
+			String method = request.getMethod();
+			switch (method)
+			{
+				case METHOD_GET:
+					return callControllerEntry(request, response, RequestMethod.GET, null);
+				case METHOD_DELETE:
+					return callControllerEntry(request, response, RequestMethod.DELETE, null);
+				case METHOD_POST:
+					return callPost(request, response);
+				case METHOD_PUT:
+					return callPut(request, response);
+				case METHOD_PATCH:
+					return callPatch(request, response);
+				case METHOD_HEAD:
+					callHead(request, response);
+					return null;
+				case METHOD_OPTIONS:
+					if (!SmallUtils.getConfiguration(getServletContext()).allowOptions())
+						throw new MethodNotAllowedException("HTTP method OPTIONS not allowed.");
+					else
+						callOptions(request, response);
+					return null;
+				case METHOD_TRACE:
+					if (!SmallUtils.getConfiguration(getServletContext()).allowTrace())
+						throw new MethodNotAllowedException("HTTP method TRACE not allowed.");
+					else
+						super.doTrace(request, response);
+					return null;
+				default:
+					throw new MethodNotAllowedException("HTTP method " + method + " not allowed.");
+			}
+		} catch (Throwable t) {
+			if (!environment.handleException(request, response, t))
+				throw t;
+			else
+				return null;
 		}
+
 	}
 
-	private void callHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	private void callHead(HttpServletRequest request, HttpServletResponse response) throws Throwable
 	{
 		// HEAD is a GET with no body.
 		callControllerEntry(request, response, RequestMethod.GET, null);
@@ -290,35 +320,35 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 			response.setHeader("Allow", sb.toString());
 	}
 	
-	private void callPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	private SmallResponse callPost(HttpServletRequest request, HttpServletResponse response) throws Throwable
 	{
 		if (SmallUtils.getConfiguration(request.getServletContext()).autoParseMultipart() && MultipartFormDataParser.isMultipart(request))
-			callMultipart(RequestMethod.POST, request, response);
+			return callMultipart(RequestMethod.POST, request, response);
 		else if (METHOD_PATCH.equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
-			callControllerEntry(request, response, RequestMethod.PATCH, null);
+			return callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
-			callControllerEntry(request, response, RequestMethod.POST, null);
+			return callControllerEntry(request, response, RequestMethod.POST, null);
 	}
 
-	private void callPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	private SmallResponse callPut(HttpServletRequest request, HttpServletResponse response) throws Throwable
 	{
 		if (SmallUtils.getConfiguration(request.getServletContext()).autoParseMultipart() && MultipartFormDataParser.isMultipart(request))
-			callMultipart(RequestMethod.PUT, request, response);
+			return callMultipart(RequestMethod.PUT, request, response);
 		else if (METHOD_PATCH.equalsIgnoreCase(request.getHeader(HEADER_METHOD_OVERRIDE)))
-			callControllerEntry(request, response, RequestMethod.PATCH, null);
+			return callControllerEntry(request, response, RequestMethod.PATCH, null);
 		else
-			callControllerEntry(request, response, RequestMethod.PUT, null);
+			return callControllerEntry(request, response, RequestMethod.PUT, null);
 	}
 
-	private void callPatch(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	private SmallResponse callPatch(HttpServletRequest request, HttpServletResponse response) throws Throwable
 	{
 		if (SmallUtils.getConfiguration(request.getServletContext()).autoParseMultipart() && MultipartFormDataParser.isMultipart(request))
-			callMultipart(RequestMethod.PATCH, request, response);
+			return callMultipart(RequestMethod.PATCH, request, response);
 		else
-			callControllerEntry(request, response, RequestMethod.PATCH, null);
+			return callControllerEntry(request, response, RequestMethod.PATCH, null);
 	}
 
-	private void callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	private SmallResponse callMultipart(RequestMethod method, HttpServletRequest request, HttpServletResponse response) throws Throwable
 	{
 		MultipartParser parser = SmallRequestUtils.getMultipartParser(request);
 		if (parser == null)
@@ -328,31 +358,21 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 			parser.parse(request, environment.getTemporaryDirectory());
 			
 			List<Part> parts = parser.getPartList();
+			request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_MULTIPART_LIST, parts);
 			
 			HashDequeMap<String, Part> partMap = new HashDequeMap<>();
 			for (Part part : parts)
 				partMap.addLast(part.getName(), part);
-			
-			try {
-				callControllerEntry(request, response, method, partMap);
-			} finally {
-				// clean up files.
-				for (Part part : parts) if (part.isFile())
-				{
-					File tempFile = part.getFile();
-					tempFile.delete();
-				}
-			}
+			return callControllerEntry(request, response, method, partMap);
 		}
 	}
 	
-	private void callControllerEntry(
+	private SmallResponse callControllerEntry(
 		HttpServletRequest request, 
 		HttpServletResponse response, 
 		RequestMethod requestMethod, 
 		HashDequeMap<String, Part> multiformPartMap
-	) throws ServletException, IOException
-	{
+	) throws Throwable {
 		String path = SmallRequestUtils.getPath(request);
 		
 		Result<ControllerEntryPoint> result = environment.getControllerEntryPoint(requestMethod, path);
@@ -390,47 +410,90 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 		if (result.getRemainder() != null)
 			request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER, result.getRemainder() + SmallRequestUtils.getPathExtension(request));
 
-		int f;
-		for (f = 0; f < filterChain.length; f++)
-		{
-			FilterComponent filterProfile = environment.getFilter(filterChain[f]);
-			FilterEntryPoint entry = filterProfile.getEntryMethod();
-			if (entry != null)
+		int f = 0;
+		Throwable exception = null;
+		SmallResponse smallResponse = null;
+		
+		// Forward filter chain.
+		try {
+			for (; f < filterChain.length; f++)
 			{
-				SmallFilterResult filterResult = entry.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
-				if (filterResult == null || !filterResult.isPassing())
-					break;
-				
-				HttpServletRequest newRequest = filterResult.getRequest();
-				if (newRequest != null)
-					request = newRequest;
-				HttpServletResponse newResponse = filterResult.getResponse();
-				if (newResponse != null)
-					response = newResponse;
+				FilterComponent filterProfile = environment.getFilter(filterChain[f]);
+				FilterEntryPoint entry = filterProfile.getEntryMethod();
+				if (entry != null)
+				{
+					SmallFilterResult filterResult = entry.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+					if (filterResult == null || !filterResult.isPassing())
+						break;
+					HttpServletRequest newRequest = filterResult.getRequest();
+					if (newRequest != null)
+						request = newRequest;
+					HttpServletResponse newResponse = filterResult.getResponse();
+					if (newResponse != null)
+						response = newResponse;
+				}
 			}
+		} catch (InvocationTargetException e) {
+			exception = accumExceptions(exception, e.getCause());
+		} catch (ServletException e) {
+			exception = accumExceptions(exception, e);
+		} catch (IOException e) {
+			exception = accumExceptions(exception, e);
 		}
 	
 		// Call Entry if all filters passed.
 		if (f == filterChain.length)
 		{
-			entryPoint.handleCall(
-				requestMethod, 
-				request, 
-				response, 
-				pathVariables, 
-				cookieMap, 
-				multiformPartMap
-			);
+			try {
+				smallResponse = entryPoint.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+			} catch (InvocationTargetException e) {
+				exception = accumExceptions(exception, e.getCause());
+			} catch (ServletException e) {
+				exception = accumExceptions(exception, e);
+			} catch (IOException e) {
+				exception = accumExceptions(exception, e);
+			}
 		}
 		
-		for (f = (f == filterChain.length ? f - 1 : f); f >= 0; f--)
+		// Backward filter chain.
+		for (f = f - 1; f >= 0; f--)
 		{
 			FilterComponent filterProfile = environment.getFilter(filterChain[f]);
 			FilterExitPoint exit = filterProfile.getExitMethod();
 			if (exit != null)
-				exit.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+			{
+				try {
+					exit.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+				} catch (InvocationTargetException e) {
+					exception = accumExceptions(exception, e.getCause());
+				}
+			}
 		}
+
+		if (exception != null)
+			throw exception;
+		else
+			return smallResponse;
+	}
 	
+	private Throwable accumExceptions(Throwable source, Throwable t)
+	{
+		if (source == null)
+		{
+			return t;
+		}
+		else if (source instanceof ManyRequestExceptionsException)
+		{
+			ManyRequestExceptionsException e = (ManyRequestExceptionsException)source;
+			e.addCause(t);
+			return e;
+		}
+		else
+		{
+			ManyRequestExceptionsException e = new ManyRequestExceptionsException("Many exceptions happened.", source);
+			e.addCause(t);
+			return e;
+		}
 	}
 	
 }

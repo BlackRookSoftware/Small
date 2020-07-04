@@ -59,7 +59,7 @@ public class FilterComponent extends DispatchComponent
 			}
 			else 
 			{
-				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @FilterEntry, but must be public and return a boolean value.");
+				throw new SmallFrameworkSetupException("Method " + method.toString() + " is annotated with @FilterEntry, but must be public and return a SmallFilterResult object.");
 			}
 		}
 

@@ -1060,6 +1060,22 @@ public final class SmallUtils
 	}
 
 	/**
+	 * Encapsulates an object in a {@link SmallResponse} object.
+	 * If the object passed in is a {@link SmallResponse}, nothing is changed, and the same object is returned.
+	 * @return a SmallResponse object.
+	 * @since [NOW]
+	 */
+	public static SmallResponse encapsulateResponseContent(Object content)
+	{
+		if (content == null)
+			return SmallResponse.create(200);
+		else if (content instanceof SmallResponse)
+			return (SmallResponse)content; 
+		else
+			return SmallResponse.create(200, content);
+	}
+	
+	/**
 	 * Writes a content object to the client.
 	 * <p>This converts an object into data that is put into the response body.
 	 * <ul>
@@ -1083,7 +1099,7 @@ public final class SmallUtils
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
 	 * @param attachmentFileName the name of the data to send (file name). If null, not sent as an attachment.
-	 * @param object the object to write.
+	 * @param content the object to write.
 	 * @throws NotFoundException if a file is the content, and it was not found, or it's a directory.
 	 * @throws NoViewDriverException if a suitable handler was not found nor invoked.
 	 * @throws ViewProcessingException if an error occurs on view processing of any kind.
@@ -1091,25 +1107,14 @@ public final class SmallUtils
 	 * @throws IOException if an I/O error occurs.
 	 * @since 1.1.0
 	 */
-	public static void sendContent(HttpServletRequest request, HttpServletResponse response, String attachmentFileName, Object object) 
-		throws NoConverterException, IOException, NotFoundException, NoViewDriverException, ViewProcessingException
+	public static void sendContent(HttpServletRequest request, HttpServletResponse response, String attachmentFileName, Object content) 
+		throws NotFoundException, NoViewDriverException, ViewProcessingException, NoConverterException, IOException
 	{
-		SmallResponse smallResponse;
+		SmallResponse smallResponse = encapsulateResponseContent(content);
+		content = smallResponse.getContent();
+		Class<?> returnType = content != null ? content.getClass() : null;
 
-		Class<?> returnType = object != null ? object.getClass() : null;
-		
-		// SmallResponse type.
-		if (SmallResponse.class.isAssignableFrom(returnType))
-		{
-			smallResponse = (SmallResponse)object;
-			object = smallResponse.getContent();
-			returnType = object != null ? object.getClass() : null;
-		}
-		else
-		{
-			smallResponse = SmallResponse.create(200, object);
-		}
-		
+		// attachment filename override
 		if (attachmentFileName != null)
 			smallResponse.attachment(attachmentFileName);
 		
@@ -1127,6 +1132,7 @@ public final class SmallUtils
 
 		String mimeType = response.getHeader("Content-Type");
 		
+		// Null output.
 		if (returnType == null)
 		{
 			// Do nothing.
@@ -1134,7 +1140,7 @@ public final class SmallUtils
 		// SmallModelView output.
 		else if (SmallModelView.class.isAssignableFrom(returnType))
 		{
-			SmallModelView modelView = (SmallModelView)object;
+			SmallModelView modelView = (SmallModelView)content;
 			String viewName = modelView.getViewName();
 			Object model = modelView.getModel();
 			if (viewName.startsWith(VIEW_REDIRECT_PREFIX))
@@ -1150,7 +1156,7 @@ public final class SmallUtils
 		// File output.
 		else if (File.class.isAssignableFrom(returnType))
 		{
-			File outFile = (File)object;
+			File outFile = (File)content;
 			if (outFile == null || !outFile.exists())
 				throw new NotFoundException("File not found.");
 			else if (outFile.isDirectory())
@@ -1170,7 +1176,7 @@ public final class SmallUtils
 			SmallResponseUtils.sendStringData(
 				response, 
 				mimeType != null ? mimeType : "text/plain", 
-				((StringBuffer)object).toString()
+				((StringBuffer)content).toString()
 			);
 		}
 		// StringBuilder data output.
@@ -1179,7 +1185,7 @@ public final class SmallUtils
 			SmallResponseUtils.sendStringData(
 				response, 
 				mimeType != null ? mimeType : "text/plain", 
-				((StringBuilder)object).toString()
+				((StringBuilder)content).toString()
 			);
 		}
 		// String data output.
@@ -1188,13 +1194,13 @@ public final class SmallUtils
 			SmallResponseUtils.sendStringData(
 				response, 
 				mimeType != null ? mimeType : "text/plain", 
-				(String)object
+				(String)content
 			);
 		}
 		// binary output.
 		else if (byte[].class.isAssignableFrom(returnType))
 		{
-			byte[] data = (byte[])object;
+			byte[] data = (byte[])content;
 			SmallResponseUtils.sendData(
 				response,
 				mimeType != null ? mimeType : "application/octet-stream", 
@@ -1205,7 +1211,7 @@ public final class SmallUtils
 		// InputStream
 		else if (InputStream.class.isAssignableFrom(returnType))
 		{
-			try (InputStream inStream = (InputStream)object)
+			try (InputStream inStream = (InputStream)content)
 			{
 				SmallResponseUtils.sendData(response, inStream, -1L);
 			}
@@ -1217,7 +1223,7 @@ public final class SmallUtils
 			if (driver == null)
 				throw new NoConverterException("XML encoding not supported.");
 			response.setContentType("application/xml; charset=utf-8");
-			driver.toXML(response.getWriter(), object);
+			driver.toXML(response.getWriter(), content);
 		}
 		// Object output, JSON.
 		else if (isJSON(mimeType) || Utils.isEmpty(mimeType))
@@ -1226,11 +1232,11 @@ public final class SmallUtils
 			if (driver == null)
 				throw new NoConverterException("JSON encoding not supported.");
 			response.setContentType("application/json; charset=utf-8");
-			driver.toJSON(response.getWriter(), object);
+			driver.toJSON(response.getWriter(), content);
 		}
 		else
 		{
-			throw new NoConverterException("No suitable converter found for " + object.getClass());
+			throw new NoConverterException("No suitable converter found for " + content.getClass());
 		}
 	}
 	

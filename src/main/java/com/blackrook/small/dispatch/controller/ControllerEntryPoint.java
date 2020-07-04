@@ -8,6 +8,7 @@
 package com.blackrook.small.dispatch.controller;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.Map;
@@ -42,7 +43,7 @@ import com.blackrook.small.util.SmallUtils;
  * Method descriptor class, specifically for controllers.
  * @author Matthew Tropiano
  */
-public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent> implements DispatchMVCEntryPoint<Void>
+public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent> implements DispatchMVCEntryPoint<SmallResponse>
 {
 	private static final Class<?>[] NO_FILTERS = new Class<?>[0];
 	private static final RequestMethod[] REQUEST_METHODS_GET = new RequestMethod[]{RequestMethod.GET};
@@ -69,7 +70,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	{
 		super(controllerProfile, method);
 		
-		this.outputType = null;
+		this.outputType = Output.AUTO;
 		this.noCache = method.isAnnotationPresent(NoCache.class);
 		this.filterChain = NO_FILTERS;
 
@@ -193,24 +194,18 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	}
 
 	@Override
-	public Void handleCall(
+	public SmallResponse handleCall(
 		RequestMethod requestMethod, 
 		HttpServletRequest request, 
 		HttpServletResponse response, 
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	) throws ServletException, IOException 
+	) throws InvocationTargetException, ServletException, IOException
 	{
 		Object retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 		
-		if (noCache)
-		{
-			response.setHeader("Cache-Control", "no-cache");
-			response.setHeader("Pragma", "no-cache");
-			response.setDateHeader("Expires", 0);
-		}
-		
+		SmallResponse smallResponse = null;
 		if (outputType != null)
 		{
 			String fname = null;
@@ -225,7 +220,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					else 
 						modelView = SmallModelView.create(null, String.valueOf(retval));
 					
-					SmallUtils.sendContent(request, response, fname, modelView);
+					smallResponse = SmallUtils.encapsulateResponseContent(modelView);
 					break;
 				}
 				case ATTACHMENT:
@@ -236,7 +231,9 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 				case AUTO:
 				case CONTENT:
 				{
-					SmallUtils.sendContent(request, response, fname, retval);
+					smallResponse = SmallUtils.encapsulateResponseContent(retval);
+					if (fname != null)
+						smallResponse.attachment(fname);
 					break;
 				}
 				default:
@@ -245,7 +242,15 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 				}
 			}
 		}
-		return null;
+		
+		if (noCache)
+		{
+			smallResponse.header("Cache-Control", "no-cache");
+			smallResponse.header("Pragma", "no-cache");
+			smallResponse.dateHeader("Expires", 0);
+		}
+		
+		return smallResponse;
 	}
 	
 }

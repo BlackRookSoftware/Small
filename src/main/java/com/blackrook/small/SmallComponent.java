@@ -7,6 +7,7 @@
  ******************************************************************************/
 package com.blackrook.small;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -64,7 +65,13 @@ public class SmallComponent
 	void invokeAfterInitializeMethods()
 	{
 		if (afterInitialize != null)
-			Utils.invokeBlind(afterInitialize, instance);
+		{
+			try {
+				Utils.invoke(afterInitialize, instance);
+			} catch (InvocationTargetException e) {
+				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @AfterInitialize method!", e.getCause());
+			}
+		}
 	}
 
 	/**
@@ -73,7 +80,13 @@ public class SmallComponent
 	void invokeAfterConstructionMethods()
 	{
 		if (afterConstruction != null)
-			Utils.invokeBlind(afterConstruction, instance);
+		{
+			try {
+				Utils.invoke(afterConstruction, instance);
+			} catch (InvocationTargetException e) {
+				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @AfterConstruction method!", e.getCause());
+			}
+		}
 	}
 
 	/**

@@ -692,7 +692,7 @@ public final class Utils
 	}
 
 	/**
-	 * Blindly invokes a method, only throwing a {@link RuntimeException} if
+	 * Invokes a method, only throwing a {@link RuntimeException} if
 	 * something goes wrong. Here for the convenience of not making a billion
 	 * try/catch clauses for a method invocation.
 	 * @param method the method to invoke.
@@ -700,7 +700,7 @@ public final class Utils
 	 * @param params the parameters to pass to the method.
 	 * @return the return value from the method invocation. If void, this is null.
 	 * @throws ClassCastException if one of the parameters could not be cast to the proper type.
-	 * @throws RuntimeException if anything goes wrong (bad target, bad argument, or can't access the method).
+	 * @throws RuntimeException if anything goes wrong (bad target, bad argument, exception thrown, or can't access the method).
 	 * @see Method#invoke(Object, Object...)
 	 */
 	public static Object invokeBlind(Method method, Object instance, Object ... params)
@@ -714,6 +714,32 @@ public final class Utils
 			throw new RuntimeException(ex);
 		} catch (IllegalArgumentException ex) {
 			throw new RuntimeException(ex);
+		} catch (IllegalAccessException ex) {
+			throw new RuntimeException(ex);
+		}
+		return out;
+	}
+
+	/**
+	 * Invokes a method, only throwing a {@link RuntimeException} if
+	 * something goes wrong (except for an actual exception thrown during execution). Here for the convenience of not making a billion
+	 * try/catch clauses for a method invocation.
+	 * @param method the method to invoke.
+	 * @param instance the object instance that is the method target.
+	 * @param params the parameters to pass to the method.
+	 * @return the return value from the method invocation. If void, this is null.
+	 * @throws InvocationTargetException if an exception happens during invocation.
+	 * @throws ClassCastException if one of the parameters could not be cast to the proper type.
+	 * @throws RuntimeException if anything goes wrong (can't access the method).
+	 * @see Method#invoke(Object, Object...)
+	 */
+	public static Object invoke(Method method, Object instance, Object ... params) throws InvocationTargetException
+	{
+		Object out = null;
+		try {
+			out = method.invoke(instance, params);
+		} catch (ClassCastException ex) {
+			throw ex;
 		} catch (IllegalAccessException ex) {
 			throw new RuntimeException(ex);
 		}

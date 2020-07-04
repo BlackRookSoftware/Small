@@ -13,6 +13,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.blackrook.small.annotation.filter.FilterEntry;
+import com.blackrook.small.dispatch.filter.FilterExitPoint;
 
 /**
  * Annotation that is used to signify that this object is a Filter with entry points.
@@ -25,6 +26,8 @@ import com.blackrook.small.annotation.filter.FilterEntry;
  * Filters can also contain an exit method that is called if the controller method gets called.
  * <p>
  * Popular uses are secure protocol redirects, attribute and session setup, and authorization gateways.   
+ * <p>
+ * Filter Exit points ({@link FilterExitPoint}) are executed in backwards order, starting with the last filter entry point that passed.
  * <p>
  * This object may have dependency singleton {@link Component} objects
  * injected into them via {@link ComponentConstructor}-annotated constructors. 

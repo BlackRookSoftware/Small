@@ -25,7 +25,7 @@ import com.blackrook.small.roles.ViewDriver;
  * If the return type is... 
  * <ul>
  * <li>{@link SmallModelView}, it is used for both the model for the found view and view name to resolve.</li>
- * <li>Anything else, the string value is considered to be the name of the view to resolve, no model.</li>
+ * <li>Anything else, the string-converted value is considered to be the name of the view to resolve, no model.</li>
  * </ul>
  * <p>
  * If the view name starts with "<code>redirect:</code>", then a redirect request is sent to the browser (<code>Location</code> header).

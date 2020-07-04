@@ -7,10 +7,14 @@
  ******************************************************************************/
 package com.blackrook.small;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.blackrook.small.struct.HashDequeMap;
 
@@ -21,6 +25,13 @@ import com.blackrook.small.struct.HashDequeMap;
  */
 public class SmallResponse
 {
+	private static final ThreadLocal<SimpleDateFormat> ISO_DATE = ThreadLocal.withInitial(()->
+	{
+		SimpleDateFormat out = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+		out.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return out;
+	});
+
 	private static final Map<String, Deque<String>> EMPTY_HEADER_MAP 
 		= Collections.unmodifiableMap(new HashMap<String, Deque<String>>(2));
 	
@@ -129,6 +140,32 @@ public class SmallResponse
 	}
 	
 	/**
+	 * Sets a header date value.
+	 * If this header was added more than once, it is cleared before the add.
+	 * @param headerName the header name.
+	 * @param value the corresponding date value.
+	 * @return itself, for call chaining.
+	 * @since [NOW]
+	 */
+	public SmallResponse dateHeader(String headerName, Date value)
+	{
+		return header(headerName, ISO_DATE.get().format(value));
+	}
+	
+	/**
+	 * Sets a header date value.
+	 * If this header was added more than once, it is cleared before the add.
+	 * @param headerName the header name.
+	 * @param value the corresponding value.
+	 * @return itself, for call chaining.
+	 * @since [NOW]
+	 */
+	public SmallResponse dateHeader(String headerName, long value)
+	{
+		return dateHeader(headerName, new Date(value));
+	}
+	
+	/**
 	 * Adds a header value.
 	 * @param headerName the header name.
 	 * @param value the corresponding value.
@@ -140,6 +177,30 @@ public class SmallResponse
 			this.headers = new HashDequeMap<String, String>();
 		this.headers.add(headerName, value);
 		return this;
+	}
+	
+	/**
+	 * Adds a header date value.
+	 * @param headerName the header name.
+	 * @param value the corresponding date value.
+	 * @return itself, for call chaining.
+	 * @since [NOW]
+	 */
+	public SmallResponse addDateHeader(String headerName, Date value)
+	{
+		return addHeader(headerName, ISO_DATE.get().format(value));
+	}
+	
+	/**
+	 * Adds a header date value.
+	 * @param headerName the header name.
+	 * @param value the corresponding date value in milliseconds since the Epoch.
+	 * @return itself, for call chaining.
+	 * @since [NOW]
+	 */
+	public SmallResponse addDateHeader(String headerName, long value)
+	{
+		return addDateHeader(headerName, new Date(value));
 	}
 	
 	/**

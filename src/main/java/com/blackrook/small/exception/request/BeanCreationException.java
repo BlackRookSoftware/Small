@@ -8,7 +8,7 @@
 package com.blackrook.small.exception.request;
 
 /**
- * Exception thrown when bean could not be created.
+ * Exception thrown when a bean could not be created.
  * @author Matthew Tropiano
  */
 public class BeanCreationException extends RuntimeException

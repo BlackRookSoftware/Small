@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Deque;
@@ -285,6 +286,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 	 * @throws ClassCastException if a value could not be converted to another type.
 	 * @throws BeanCreationException if a bean cannot be instantiated for any reason on the application, session, or request scope.
 	 * @throws UnsupportedEncodingException if an encoding type is not supported by this server.
+	 * @throws InvocationTargetException if the underlying call throws an exception.
 	 * @throws ServletException if any other servlet exception happens. 
 	 * @throws IOException if an IO Error occurs.
 	 */
@@ -295,7 +297,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	) throws ServletException, IOException 
+	) throws InvocationTargetException, ServletException, IOException 
 	{
 		Object[] invokeParams = new Object[parameters.length];
 	
@@ -531,7 +533,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				invokeParams[i] = ((String)invokeParams[i]).trim(); 
 		}
 		
-		return Utils.invokeBlind(method, componentInstance.getInstance(), invokeParams);
+		return Utils.invoke(method, componentInstance.getInstance(), invokeParams);
 	}
 	
 	@Override

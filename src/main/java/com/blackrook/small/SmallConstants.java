@@ -19,4 +19,6 @@ public interface SmallConstants
 	String SMALL_APPLICATION_CONFIGURATION_ATTRIBUTE = "small.application.configuration";
 	/** The attribute name for the path remainder that gets set on the request context on each request (default paths only). */
 	String SMALL_REQUEST_ATTRIBUTE_PATH_REMAINDER = "small.request.path.remainder";
+	/** The attribute name for the part list on multipart requests. */
+	String SMALL_REQUEST_ATTRIBUTE_MULTIPART_LIST = "small.request.part.list";
 }

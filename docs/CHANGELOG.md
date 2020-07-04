@@ -3,6 +3,14 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.2.0
+----------------
+
+- `Added` SmallResponse.dateHeader methods.
+- `Added` SmallUtils.encapsulateResponseContent(...)
+- `Changed` Handling of Small requests and the Filter/Controller request loop.
+
+
 Changed in 1.1.0
 ----------------
 

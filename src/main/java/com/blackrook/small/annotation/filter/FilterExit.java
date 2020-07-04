@@ -17,7 +17,7 @@ import com.blackrook.small.annotation.Filter;
 /**
  * Public methods with this annotation in {@link Filter}-annotated objects declare a method to invoke when. 
  * <p>The annotated method must return void.
- * <p>This is mostly used for any cleanup that a filter may need that calling the entry method would require on return.
+ * <p>This is mostly used for any cleanup that a filter may need that calling a passing entry method would require on return.
  * @author Matthew Tropiano
  * @see Filter
  */

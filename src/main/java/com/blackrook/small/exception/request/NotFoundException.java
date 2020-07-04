@@ -27,7 +27,7 @@ public class NotFoundException extends ServletException
 	}
 
 	/**
-	 * Creates a new exception with a message.
+	 * Creates a new exception with a message and cause.
 	 * @param message the exception message.
 	 * @param exception the exception cause.
 	 */

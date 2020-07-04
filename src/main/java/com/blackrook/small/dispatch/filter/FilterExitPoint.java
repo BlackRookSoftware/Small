@@ -8,6 +8,7 @@
 package com.blackrook.small.dispatch.filter;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -47,7 +48,7 @@ public class FilterExitPoint extends DispatchEntryPoint<FilterComponent> impleme
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	) throws ServletException, IOException 
+	) throws InvocationTargetException, ServletException, IOException 
 	{
 		invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 		return (Void)null;

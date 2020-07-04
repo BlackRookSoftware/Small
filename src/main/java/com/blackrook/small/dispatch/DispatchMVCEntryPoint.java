@@ -9,6 +9,7 @@ package com.blackrook.small.dispatch;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -46,6 +47,7 @@ public interface DispatchMVCEntryPoint<R>
 	 * @throws ClassCastException if a value could not be converted to another type.
 	 * @throws BeanCreationException if a bean cannot be instantiated for any reason on the application, session, or request scope.
 	 * @throws UnsupportedEncodingException if an encoding type is not supported by this server.
+	 * @throws InvocationTargetException if the underlying call throws an exception.
 	 * @throws ServletException if any other servlet exception happens. 
 	 * @throws IOException if an IO Error occurs.
 	 */
@@ -56,5 +58,5 @@ public interface DispatchMVCEntryPoint<R>
 		Map<String, String> pathVariableMap, 
 		Map<String, Cookie> cookieMap, 
 		HashDequeMap<String, Part> partMap
-	) throws ServletException, IOException;
+	) throws InvocationTargetException, ServletException, IOException;
 }

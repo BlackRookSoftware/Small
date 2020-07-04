@@ -18,7 +18,7 @@ import com.blackrook.small.annotation.Filter;
 /**
  * Public methods with this annotation in {@link Filter}-annotated objects declare the filter entry point. 
  * <p>The annotated method must return a {@link SmallFilterResult}. if the result is passing, the filter chain continues.
- * If it is not, the chain is not continued.
+ * If it is not, the chain is not continued. Returning null is equivalent to sending <i>failure</i>.
  * @author Matthew Tropiano
  * @see Filter
  */
