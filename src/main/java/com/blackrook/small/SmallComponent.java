@@ -84,8 +84,10 @@ public class SmallComponent
 	{
 		if (afterInitialize != null)
 		{
+			// Don't catch the exception in the try if this fails.
+			Object[] params = environment.getComponents(afterInitialize.getParameterTypes());
 			try {
-				Utils.invoke(afterInitialize, instance, environment.getComponents(afterInitialize.getParameterTypes()));
+				Utils.invoke(afterInitialize, instance, params);
 			} catch (InvocationTargetException e) {
 				throw new SmallFrameworkSetupException("Exception thrown from component " + instance.getClass() + " @AfterInitialize method!", e.getCause());
 			}
