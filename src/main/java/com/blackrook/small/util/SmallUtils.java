@@ -1065,7 +1065,6 @@ public final class SmallUtils
 	 * @param content the content to encapsulate.
 	 * @return a SmallResponse object.
 	 * @since 1.2.0
-	 * @since [NOW], returns DefaultSmallResponse.
 	 */
 	public static SmallResponse encapsulateResponseContent(Object content)
 	{
