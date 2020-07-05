@@ -22,7 +22,7 @@ import java.util.TimeZone;
  * @author Matthew Tropiano
  * @since 1.1.0
  * @since 1.2.1, implements AutoCloseable
- * @since [NOW], is an interface. See {@link GenericSmallResponse} for implementation.
+ * @since 1.4.0, is an interface. See {@link GenericSmallResponse} for implementation.
  */
 public interface SmallResponse extends AutoCloseable
 {
@@ -140,7 +140,7 @@ public interface SmallResponse extends AutoCloseable
 	
 	/**
 	 * Creates a generic response object for Small Responses.
-	 * @since [NOW]
+	 * @since 1.4.0
 	 */
 	public class GenericSmallResponse implements SmallResponse
 	{
