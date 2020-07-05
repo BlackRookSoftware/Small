@@ -3,6 +3,12 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in [NOW]
+----------------
+
+- `Changed` SmallResponse is now an interface, but with a default builder for instances.
+
+
 Changed in 1.3.0
 ----------------
 

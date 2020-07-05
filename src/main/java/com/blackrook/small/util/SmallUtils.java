@@ -16,8 +16,8 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -1065,6 +1065,7 @@ public final class SmallUtils
 	 * @param content the content to encapsulate.
 	 * @return a SmallResponse object.
 	 * @since 1.2.0
+	 * @since [NOW], returns DefaultSmallResponse.
 	 */
 	public static SmallResponse encapsulateResponseContent(Object content)
 	{
@@ -1115,22 +1116,20 @@ public final class SmallUtils
 		content = smallResponse.getContent();
 		Class<?> returnType = content != null ? content.getClass() : null;
 
-		// attachment filename override
-		if (attachmentFileName != null)
-			smallResponse.attachment(attachmentFileName);
-		
 		// Set default headers by SmallResponse.
 		response.setStatus(smallResponse.getStatus());
-		for (Map.Entry<String, Deque<String>> entry : smallResponse.getHeaders().entrySet())
+		for (Map.Entry<String, List<String>> entry : smallResponse.getHeaders().entrySet())
 		{
 			String header = entry.getKey();
-			Deque<String> values = entry.getValue();
-			if (values.size() > 1) for (String v : values)
+			Iterable<String> values = entry.getValue();
+			for (String v : values)
 				response.addHeader(header, v);
-			else if (!values.isEmpty())
-				response.setHeader(header, values.getFirst());
 		}
 
+		// attachment filename override
+		if (attachmentFileName != null)
+			response.setHeader("Content-Disposition", "attachment; filename=\"" + attachmentFileName + "\"");		
+		
 		String mimeType = response.getHeader("Content-Type");
 		
 		// Null output.

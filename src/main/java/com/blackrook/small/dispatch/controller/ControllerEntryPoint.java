@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.blackrook.small.SmallModelView;
 import com.blackrook.small.SmallResponse;
+import com.blackrook.small.SmallResponse.GenericSmallResponse;
 import com.blackrook.small.annotation.controller.Attachment;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.controller.EntryPath;
@@ -205,7 +206,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 	{
 		Object retval = invoke(requestMethod, request, response, pathVariableMap, cookieMap, partMap);
 		
-		SmallResponse smallResponse = null;
+		GenericSmallResponse smallResponse = null;
 		if (outputType != null)
 		{
 			String fname = null;
@@ -220,7 +221,7 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 					else 
 						modelView = SmallModelView.create(null, String.valueOf(retval));
 					
-					smallResponse = SmallUtils.encapsulateResponseContent(modelView);
+					smallResponse = SmallResponse.create(modelView);
 					break;
 				}
 				case ATTACHMENT:
@@ -231,7 +232,11 @@ public class ControllerEntryPoint extends DispatchEntryPoint<ControllerComponent
 				case AUTO:
 				case CONTENT:
 				{
-					smallResponse = SmallUtils.encapsulateResponseContent(retval);
+					if (retval instanceof SmallResponse)
+						smallResponse = SmallResponse.create((SmallResponse)retval);
+					else
+						smallResponse = SmallResponse.create(retval);
+					
 					if (fname != null)
 						smallResponse.attachment(fname);
 					break;
