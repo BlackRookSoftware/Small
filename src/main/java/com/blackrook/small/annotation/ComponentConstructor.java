@@ -18,7 +18,8 @@ import com.blackrook.small.SmallConfiguration;
 
 /**
  * This annotation specifies that the annotated constructor contains parameters
- * that should be filled with singleton instances.
+ * that should be filled with singleton instances. At this stage, components are created
+ * as they are instantiated, so you can't fill components using non-instantiable class types.
  * <p>
  * All {@link Controller}s/{@link Filter}s/{@link Component}-annotated classes that 
  * have one of their constructors annotated with this will have that constructor 
@@ -26,8 +27,9 @@ import com.blackrook.small.SmallConfiguration;
  * objects of the same class.
  * <p>
  * One of the parameters of the constructor can be {@link ServletContext}, which passes
- * in the application's ServletContext. Another can be {@link SmallConfiguration}, which passes
- * in the configuration for bootstrapping/configuring the application.
+ * in the application's Servlet Context. Another can be {@link SmallConfiguration}, which passes
+ * in the configuration for bootstrapping/configuring the application. All other kinds of
+ * interface-based searching for components will fail, here.
  *  
  * @author Matthew Tropiano
  * @see Filter
