@@ -80,7 +80,7 @@ public interface SmallConfiguration
 	 * @param def the default value to return if it is not set.
 	 * @return the corresponding attribute value, or <code>def</code> if not set.
 	 */
-	Object getAttribute(String attributeName, Object def);
+	<T> T getAttribute(String attributeName, T def);
 
 	/**
 	 * Fetches the value of an arbitrary attribute set that may be specific to the application.

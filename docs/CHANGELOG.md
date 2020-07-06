@@ -7,6 +7,7 @@ Changed in 1.4.1
 ----------------
 
 - `Fixed` Attempting to instantiate an abstract class as a component yields a better exception. 
+- `Changed` SmallConfiguration.getAttribute(String, Object) is now type-parameterized. 
 
 
 Changed in 1.4.0
