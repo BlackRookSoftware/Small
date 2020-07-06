@@ -393,6 +393,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private <T> T createComponent(Class<T> clazz)
 	{
 		T object = null;
+		
+		if ((clazz.getModifiers() & Modifier.ABSTRACT) != 0)
+			throw new SmallFrameworkSetupException("Class "+clazz.getName()+" is abstract. Not instantiable.");
+		
 		Constructor<T> constructor = getAnnotatedConstructor(clazz);
 		
 		if (constructor == null)

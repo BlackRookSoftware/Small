@@ -3,6 +3,12 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.4.1
+----------------
+
+- `Fixed` Attempting to instantiate an abstract class as a component yields a better exception. 
+
+
 Changed in 1.4.0
 ----------------
 
