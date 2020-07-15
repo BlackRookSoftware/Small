@@ -1080,17 +1080,17 @@ public final class SmallUtils
 	 * Writes a content object to the client.
 	 * <p>This converts an object into data that is put into the response body.
 	 * <ul>
-	 * <li>If return type is a {@link SmallResponse}, its content is the object to convert (other headers and statuses are set on the response), and conversion continues below for the content...</li>
-	 * <li>If return type is a {@link SmallModelView}, the view is resolved and written to the response.</li>
-	 * <li>If return type is a {@link File}, 
+	 * <li>If content class is a {@link SmallResponse}, its content is the object to convert (other headers and statuses are set on the response), and conversion continues below for the content...</li>
+	 * <li>If content class is a {@link SmallModelView}, the view is resolved and written to the response.</li>
+	 * <li>If content class is a {@link File}, 
 	 * 		<ul>
 	 * 			<li>...the content type is changed to the file's predicted MIME-type and the content is the file's content, verbatim. Unknown type is <code>application/octet-stream</code>.</li> 
-	 * 			<li>...and is null, this sends a 404.</li>
+	 * 			<li>...and does not exist, a NotFoundException is thrown.</li> 
 	 * 		</ul>
 	 * </li>
-	 * <li>If return type is a {@link Reader}, {@link CharSequence}, {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code> if unspecified.</li>
-	 * <li>If return type is byte[] or {@link ByteBuffer} binary data is sent back. Content type is <code>application/octet-stream</code> if unspecified.</li>
-	 * <li>If return type is any other object type,
+	 * <li>If content class is a {@link Reader}, {@link CharSequence}, {@link String}, {@link StringBuilder}, or {@link StringBuffer}, plain text is sent back. Content type is <code>text/plain</code> if unspecified.</li>
+	 * <li>If content class is byte[] or {@link ByteBuffer} binary data is sent back. Content type is <code>application/octet-stream</code> if unspecified.</li>
+	 * <li>If content class is any other object type,
 	 * 		<ul>
 	 * 			<li>...and a {@link XMLDriver} component is found, and the specified content type is <code>application/xml</code> or an XML subtype, the object is converted to XML.</li>
 	 * 			<li>...and a {@link JSONDriver} component is found, content type is <code>application/json</code> and the object is converted.</li>
