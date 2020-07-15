@@ -76,6 +76,7 @@ public interface SmallConfiguration
 	/**
 	 * Fetches the value of an arbitrary attribute set that may be specific to the application.
 	 * Returns a default value if it is not set.
+	 * @param <T> the return type (should be attribute type).
 	 * @param attributeName the attribute name.
 	 * @param def the default value to return if it is not set.
 	 * @return the corresponding attribute value, or <code>def</code> if not set.

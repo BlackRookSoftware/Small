@@ -151,7 +151,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		registerComponent(new SmallComponent(this));
 
 		if (!Utils.isEmpty(controllerRootPackages))
-			initComponents(context, controllerRootPackages, Thread.currentThread().getContextClassLoader());
+			initComponents(context, controllerRootPackages, ClassLoader.getSystemClassLoader());
 		for (SmallComponent sc : componentList)
 			sc.invokeAfterInitializeMethods(this);
 	}

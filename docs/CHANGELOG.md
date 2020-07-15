@@ -7,7 +7,8 @@ Changed in 1.4.1
 ----------------
 
 - `Fixed` Attempting to instantiate an abstract class as a component yields a better exception. 
-- `Changed` SmallConfiguration.getAttribute(String, Object) is now type-parameterized. 
+- `Changed` SmallConfiguration.getAttribute(String, Object) is now type-parameterized.
+- `Changed` SmallEnvironment uses the system class loader for package scan. 
 
 
 Changed in 1.4.0
