@@ -3,6 +3,12 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.4.2
+----------------
+
+- `Fixed` Issue #1 - Classpath Scanning Does Not Work in Java 9 or Higher
+
+
 Changed in 1.4.1
 ----------------
 

@@ -181,7 +181,7 @@ public final class Utils
 			int classExtIndex = path.endsWith(".class") ? path.indexOf(".class") : -1;
 			if (classExtIndex >= 0 && !path.contains("$") && !path.endsWith("package-info.class") && !path.endsWith("module-info.class"))
 			{
-				String className = path.substring(startingPath.length(), classExtIndex).replaceAll("[\\/\\\\]", ".");
+				String className = path.substring(startingPath.length()+1, classExtIndex).replaceAll("[\\/\\\\]", ".");
 				if (className.startsWith(prefix))
 					outList.add(className);
 			}

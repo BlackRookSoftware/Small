@@ -91,6 +91,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	/** The method to path to controller trie. */
 	private Map<RequestMethod, URITrie<ControllerEntryPoint>> controllerEntries;
 
+	/** The components that are instantiated, class set. */
+	private Set<Class<?>> componentSet;
 	/** The components that are instantiated. */
 	private List<SmallComponent> componentList;
 	/** The components that are instantiated mapped by type. */
@@ -122,6 +124,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 		this.componentsConstructing = new HashSet<>();
 		
+		this.componentSet = new HashSet<>();
 		this.componentList = new LinkedList<>();
 		this.componentTypeMapping = new HashDequeMap<>();
 		this.controllerEntries = new HashMap<>(8);
@@ -151,7 +154,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		registerComponent(new SmallComponent(this));
 
 		if (!Utils.isEmpty(controllerRootPackages))
-			initComponents(context, controllerRootPackages, ClassLoader.getSystemClassLoader());
+			initComponents(context, controllerRootPackages);
 		for (SmallComponent sc : componentList)
 			sc.invokeAfterInitializeMethods(this);
 	}
@@ -215,12 +218,16 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	 * Init visible controllers using a class loader.
 	 * @param loader the {@link ClassLoader} to look in.
 	 */
-	private void initComponents(ServletContext context, String[] packageNames, ClassLoader loader)
+	private void initComponents(ServletContext context, String[] packageNames)
 	{
 		boolean allowWebSockets = SmallUtils.getConfiguration(context).allowWebSockets();
 		for (String packageName : packageNames)
 		{
-			for (String className : Utils.getClasses(packageName, loader))
+			String[] availableClasses = Utils.joinArrays(
+				Utils.getClasses(packageName, ClassLoader.getSystemClassLoader()), 
+				Utils.getClassesFromClasspath(packageName)
+			);
+			for (String className : availableClasses)
 			{
 				Class<?> componentClass = null;
 				
@@ -232,6 +239,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				
 				if (componentClass.isAnnotationPresent(Component.class))
 				{
+					// check for double-include. Skip.
+					if (componentSet.contains(componentClass))
+						continue;
+					
 					Object componentInstance = createComponent(componentClass);
 		
 					if (ServletContextListener.class.isAssignableFrom(componentClass))
@@ -280,10 +291,6 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						if (componentClass.isAnnotationPresent(Filter.class))
 							throw new SmallFrameworkSetupException("Class " + componentClass+ " is already a Controller. Can't annotate with @Filter!");
 						
-						// check for double-include. Skip.
-						if (controllerComponents.containsKey(componentClass))
-							continue;
-
 						component = new ControllerComponent(componentInstance);
 						controllerComponents.put(componentClass, (ControllerComponent)component);
 						registerComponent(component);
@@ -311,11 +318,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						}
 					}
 					else if (componentClass.isAnnotationPresent(Filter.class))
-					{
-						// check for double-include. Skip.
-						if (filterComponents.containsKey(componentClass))
-							continue;
-						
+					{						
 						component = new FilterComponent(componentInstance);
 						filterComponents.put(componentClass, (FilterComponent)component);
 						registerComponent(component);
@@ -431,7 +434,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	private void registerComponent(SmallComponent component)
 	{
 		componentList.add(component);
-		registerComponentTree(component.getInstance().getClass(), component);
+		Class<?> componentClass = component.getInstance().getClass();
+		componentSet.add(componentClass);
+		registerComponentTree(componentClass, component);
 	}
 
 	private void registerComponentTree(Class<?> type, SmallComponent instance)
