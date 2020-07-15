@@ -9,7 +9,6 @@ package com.blackrook.small;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -267,23 +266,7 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 						viewDriverList.add((ViewDriver)componentInstance);
 					
 					if (ExceptionHandler.class.isAssignableFrom(componentClass))
-					{
-						Class<?> throwableType = null;
-						// search for a specific implemented method on this interface.
-						for (Method m : componentClass.getMethods())
-						{
-							if (m.getName().equals("handleException"))
-							{
-								// third parameter is generic, but the implementation has a reified type.
-								throwableType = (Class<?>)m.getParameters()[2].getType();
-								break;
-							}
-						}
-						if (throwableType == null)
-							throw new SmallFrameworkSetupException("Class " + componentClass + " is a child of ExceptionHandler, but it does not implement method handleException()!");
-						
-						exceptionHandlerMap.put(throwableType, componentInstance);
-					}
+						exceptionHandlerMap.put(((ExceptionHandler<?>)componentInstance).getHandledClass(), componentInstance);
 					
 					SmallComponent component;
 					if (componentClass.isAnnotationPresent(Controller.class))
