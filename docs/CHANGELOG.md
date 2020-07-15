@@ -3,6 +3,12 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.5.0
+----------------
+
+- `Added` ExceptionHandler.getHandledClass().
+
+
 Changed in 1.4.2
 ----------------
 
