@@ -26,8 +26,8 @@ import com.blackrook.small.struct.HashDequeMap;
 
 /**
  * Filter entry method.
- * The {@link #handleCall(RequestMethod, HttpServletRequest, HttpServletResponse, Map, Map, HashDequeMap)} method returns a boolean.
- * If true, continue to the next filter, if false, stop.
+ * The {@link #handleCall(RequestMethod, HttpServletRequest, HttpServletResponse, Map, Map, HashDequeMap)} method returns a {@link SmallFilterResult}.
+ * If {@link SmallFilterResult#isPassing()}, continue to the next filter, if not, stop.
  * @author Matthew Tropiano
  */
 public class FilterEntryPoint extends DispatchEntryPoint<FilterComponent> implements DispatchMVCEntryPoint<SmallFilterResult>

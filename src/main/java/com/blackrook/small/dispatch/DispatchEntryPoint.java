@@ -371,6 +371,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				}
 				case COOKIE:
 				{
+					if (pinfo.getType() != Cookie.class)
+						throw new ClassCastException("Parameter " + i + " is not a Cookie type.");
+
 					String cookieName = pinfo.getName();
 					Cookie c = cookieMap.containsKey(cookieName) ? cookieMap.get(cookieName) : new Cookie(cookieName, "");
 					response.addCookie(c);

@@ -3,6 +3,13 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.5.1
+----------------
+
+- `Changed` CookieParameters throw a better exception if they are not Cookie-typed.
+- `Changed` Doc fixes.
+
+
 Changed in 1.5.0
 ----------------
 
