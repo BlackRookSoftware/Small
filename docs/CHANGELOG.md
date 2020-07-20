@@ -7,6 +7,7 @@ Changed in 1.5.1
 ----------------
 
 - `Changed` CookieParameters throw a better exception if they are not Cookie-typed.
+- `Changed` Cookies created via CookieParameter are not automatically added to the response.
 - `Changed` Doc fixes.
 
 

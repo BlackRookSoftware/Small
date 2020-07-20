@@ -22,8 +22,7 @@ import com.blackrook.small.annotation.filter.FilterEntry;
 /**
  * Annotates a method parameter for Cookie binding. Should be used in {@link Controller}s and {@link Filter}s.
  * <p>
- * Matched type must be {@link Cookie}, and if the Cookie name does not exist,
- * it is created for the response.
+ * Matched type must be {@link Cookie}.
  * @author Matthew Tropiano
  * @see EntryPath
  * @see FilterEntry
