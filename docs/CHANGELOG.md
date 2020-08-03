@@ -3,6 +3,12 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.5.2
+----------------
+
+- `Fixed` Duplicate singleton component issue. [Issue #2](https://github.com/BlackRookSoftware/Small/issues/2).
+
+
 Changed in 1.5.1
 ----------------
 

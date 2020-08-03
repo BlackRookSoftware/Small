@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
@@ -90,15 +91,14 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	/** The method to path to controller trie. */
 	private Map<RequestMethod, URITrie<ControllerEntryPoint>> controllerEntries;
 
-	/** The components that are instantiated, class set. */
-	private Set<Class<?>> componentSet;
-	/** The components that are instantiated. */
-	private List<SmallComponent> componentList;
-	/** The components that are instantiated mapped by type. */
+	/** The components that are instantiated mapped by type (super-types and specific). */
 	private HashDequeMap<Class<?>, SmallComponent> componentTypeMapping;
-	/** The controllers that were instantiated. */
+
+	/** All components that were instantiated (mapped by specific class type). */
+	private Map<Class<?>, SmallComponent> allComponents;
+	/** The controllers that were instantiated (mapped by specific class type). */
 	private Map<Class<?>, ControllerComponent> controllerComponents;
-	/** The filters that were instantiated. */
+	/** The filters that were instantiated (mapped by specific class type). */
 	private Map<Class<?>, FilterComponent> filterComponents;
 	
 	/** List of components that listen for session events. */
@@ -123,10 +123,9 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 
 		this.componentsConstructing = new HashSet<>();
 		
-		this.componentSet = new HashSet<>();
-		this.componentList = new LinkedList<>();
 		this.componentTypeMapping = new HashDequeMap<>();
 		this.controllerEntries = new HashMap<>(8);
+		this.allComponents = new HashMap<>(32);
 		this.controllerComponents = new HashMap<>(16);
 		this.filterComponents = new HashMap<>(16);
 		
@@ -148,14 +147,17 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		this.xmlDriver = null;
 		this.mimeTypeDriver = DEFAULT_MIME;
 		
-		registerComponent(new SmallComponent(context));
-		registerComponent(new SmallComponent(SmallUtils.getConfiguration(context)));
-		registerComponent(new SmallComponent(this));
+		// Pre-register some application-specific objects.
+		registerComponent(context.getClass(), new SmallComponent(context));
+		registerComponent(getClass(), new SmallComponent(this));
+		SmallComponent appConfigComponent = new SmallComponent(SmallUtils.getConfiguration(context));
+		registerComponent(appConfigComponent);
+		allComponents.put(SmallConfiguration.class, appConfigComponent);
 
 		if (!Utils.isEmpty(controllerRootPackages))
 			initComponents(context, controllerRootPackages);
-		for (SmallComponent sc : componentList)
-			sc.invokeAfterInitializeMethods(this);
+		for (Entry<Class<?>, SmallComponent> sc : allComponents.entrySet())
+			sc.getValue().invokeAfterInitializeMethods(this);
 	}
 
 	/**
@@ -164,10 +166,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	void destroy(ServletContext context)
 	{
 		// Destroy all components.
-		for (SmallComponent sc : componentList)
+		for (Entry<Class<?>, SmallComponent> sc : allComponents.entrySet())
 		{
 			try {
-				sc.invokeBeforeDestructionMethods();
+				sc.getValue().invokeBeforeDestructionMethods();
 			} catch (Exception e) {
 				context.log("Exception on destroy: ", e);
 			}
@@ -181,8 +183,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		exceptionHandlerMap.clear();
 		componentsConstructing.clear();
 		controllerEntries.clear();
-		componentList.clear();
 		componentTypeMapping.clear();
+		allComponents.clear();
 		controllerComponents.clear();
 		filterComponents.clear();
 		contextListeners.clear();
@@ -239,82 +241,10 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				if (componentClass.isAnnotationPresent(Component.class))
 				{
 					// check for double-include. Skip.
-					if (componentSet.contains(componentClass))
+					if (allComponents.containsKey(componentClass))
 						continue;
-					
-					Object componentInstance = createComponent(componentClass);
-		
-					if (ServletContextListener.class.isAssignableFrom(componentClass))
-						contextListeners.add((ServletContextListener)componentInstance);
-					
-					if (HttpSessionListener.class.isAssignableFrom(componentClass))
-						sessionListeners.add((HttpSessionListener)componentInstance);
-					
-					if (HttpSessionAttributeListener.class.isAssignableFrom(componentClass))
-						sessionAttributeListeners.add((HttpSessionAttributeListener)componentInstance);
-
-					if (JSONDriver.class.isAssignableFrom(componentClass))
-						jsonDriver = (JSONDriver)componentInstance;
-
-					if (XMLDriver.class.isAssignableFrom(componentClass))
-						xmlDriver = (XMLDriver)componentInstance;
-
-					if (MIMETypeDriver.class.isAssignableFrom(componentClass))
-						mimeTypeDriver = (MIMETypeDriver)componentInstance;
-
-					if (ViewDriver.class.isAssignableFrom(componentClass))
-						viewDriverList.add((ViewDriver)componentInstance);
-					
-					if (ExceptionHandler.class.isAssignableFrom(componentClass))
-						exceptionHandlerMap.put(((ExceptionHandler<?>)componentInstance).getHandledClass(), componentInstance);
-					
-					SmallComponent component;
-					if (componentClass.isAnnotationPresent(Controller.class))
-					{
-						if (componentClass.isAnnotationPresent(Filter.class))
-							throw new SmallFrameworkSetupException("Class " + componentClass+ " is already a Controller. Can't annotate with @Filter!");
-						
-						component = new ControllerComponent(componentInstance);
-						controllerComponents.put(componentClass, (ControllerComponent)component);
-						registerComponent(component);
-						component.scanMethods();
-						component.invokeAfterConstructionMethods();
-						
-						EntryPath entryPathAnno = componentClass.getAnnotation(EntryPath.class);
-						
-						String path = SmallUtils.trimSlashes(entryPathAnno != null ? entryPathAnno.value() + '/' : "");
-						for (ControllerEntryPoint entryPoint : ((ControllerComponent)component).getEntryMethods())
-						{
-							String uri = path + '/' + SmallUtils.trimSlashes(entryPoint.getPath());
-							for (RequestMethod rm : entryPoint.getRequestMethods())
-							{
-								URITrie<ControllerEntryPoint> trie;
-								if ((trie = controllerEntries.get(rm)) == null)
-									controllerEntries.put(rm, trie = new URITrie<>());
-								
-								try {
-									trie.add(uri, entryPoint);
-								} catch (PatternSyntaxException e) {
-									throw new SmallFrameworkSetupException("Could not set up controller "+componentClass+", method "+entryPoint.getMethod(), e);
-								}
-							}
-						}
-					}
-					else if (componentClass.isAnnotationPresent(Filter.class))
-					{						
-						component = new FilterComponent(componentInstance);
-						filterComponents.put(componentClass, (FilterComponent)component);
-						registerComponent(component);
-						component.scanMethods();
-						component.invokeAfterConstructionMethods();
-					}
 					else
-					{
-						component = new SmallComponent(componentInstance);
-						registerComponent(component);
-						component.scanMethods();
-						component.invokeAfterConstructionMethods();
-					}
+						createSmallComponent(componentClass);
 				}
 				else if (allowWebSockets)
 				{
@@ -357,26 +287,11 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	}
 
 	/**
-	 * Creates or gets an engine singleton component by class.
-	 * @param clazz the class to create/retrieve.
-	 */
-	private <T> T createOrGetComponent(Class<T> clazz)
-	{
-		T out;
-		if ((out = getComponent(clazz)) != null)
-			return (T)out;
-		else
-		{
-			return createComponent(clazz);
-		}
-	}
-
-	/**
 	 * Creates a new component for a class and using one of its constructors.
 	 * @param clazz the class to instantiate.
 	 * @return the new class instance.
 	 */
-	private <T> T createComponent(Class<T> clazz)
+	private <T> T createInstance(Class<T> clazz)
 	{
 		T object = null;
 		
@@ -403,8 +318,8 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 				else
 				{
 					if (ServletContext.class.isAssignableFrom(types[i])) // should already exist
-						createOrGetComponent(types[i]);
-					params[i] = createOrGetComponent(types[i]);
+						createOrGetSmallComponent(types[i]);
+					params[i] = createOrGetSmallComponent(types[i]).getInstance();
 				}
 			}
 			
@@ -414,11 +329,110 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 		}
 	}
 
+	private <T> SmallComponent createSmallComponent(Class<T> componentClass)
+	{
+		Object componentInstance = createInstance(componentClass);
+
+		if (ServletContextListener.class.isAssignableFrom(componentClass))
+			contextListeners.add((ServletContextListener)componentInstance);
+		
+		if (HttpSessionListener.class.isAssignableFrom(componentClass))
+			sessionListeners.add((HttpSessionListener)componentInstance);
+		
+		if (HttpSessionAttributeListener.class.isAssignableFrom(componentClass))
+			sessionAttributeListeners.add((HttpSessionAttributeListener)componentInstance);
+
+		if (JSONDriver.class.isAssignableFrom(componentClass))
+			jsonDriver = (JSONDriver)componentInstance;
+
+		if (XMLDriver.class.isAssignableFrom(componentClass))
+			xmlDriver = (XMLDriver)componentInstance;
+
+		if (MIMETypeDriver.class.isAssignableFrom(componentClass))
+			mimeTypeDriver = (MIMETypeDriver)componentInstance;
+
+		if (ViewDriver.class.isAssignableFrom(componentClass))
+			viewDriverList.add((ViewDriver)componentInstance);
+		
+		if (ExceptionHandler.class.isAssignableFrom(componentClass))
+			exceptionHandlerMap.put(((ExceptionHandler<?>)componentInstance).getHandledClass(), componentInstance);
+		
+		SmallComponent component;
+		if (componentClass.isAnnotationPresent(Controller.class))
+		{
+			if (componentClass.isAnnotationPresent(Filter.class))
+				throw new SmallFrameworkSetupException("Class " + componentClass+ " is already a Controller. Can't annotate with @Filter!");
+			
+			component = new ControllerComponent(componentInstance);
+			controllerComponents.put(componentClass, (ControllerComponent)component);
+			registerComponent(component);
+			component.scanMethods();
+			component.invokeAfterConstructionMethods();
+			
+			EntryPath entryPathAnno = componentClass.getAnnotation(EntryPath.class);
+			
+			String path = SmallUtils.trimSlashes(entryPathAnno != null ? entryPathAnno.value() + '/' : "");
+			for (ControllerEntryPoint entryPoint : ((ControllerComponent)component).getEntryMethods())
+			{
+				String uri = path + '/' + SmallUtils.trimSlashes(entryPoint.getPath());
+				for (RequestMethod rm : entryPoint.getRequestMethods())
+				{
+					URITrie<ControllerEntryPoint> trie;
+					if ((trie = controllerEntries.get(rm)) == null)
+						controllerEntries.put(rm, trie = new URITrie<>());
+					
+					try {
+						trie.add(uri, entryPoint);
+					} catch (PatternSyntaxException e) {
+						throw new SmallFrameworkSetupException("Could not set up controller "+componentClass+", method "+entryPoint.getMethod(), e);
+					}
+				}
+			}
+		}
+		else if (componentClass.isAnnotationPresent(Filter.class))
+		{						
+			component = new FilterComponent(componentInstance);
+			filterComponents.put(componentClass, (FilterComponent)component);
+			registerComponent(component);
+			component.scanMethods();
+			component.invokeAfterConstructionMethods();
+		}
+		else
+		{
+			component = new SmallComponent(componentInstance);
+			registerComponent(component);
+			component.scanMethods();
+			component.invokeAfterConstructionMethods();
+		}
+		return component;
+	}
+	
+	/**
+	 * Creates or gets an engine singleton component by class.
+	 * @param clazz the class to create/retrieve.
+	 */
+	private <T> SmallComponent createOrGetSmallComponent(Class<T> clazz)
+	{
+		SmallComponent out;
+		if ((out = allComponents.get(clazz)) != null)
+			return out;
+		else
+		{
+			return createSmallComponent(clazz);
+		}
+	}
+
+	// Register under a component's class mapping.
 	private void registerComponent(SmallComponent component)
 	{
-		componentList.add(component);
+		registerComponent(component.getInstance().getClass(), component);
+	}
+
+	// Register under a specific class mapping.
+	private void registerComponent(Class<?> clazz, SmallComponent component)
+	{
 		Class<?> componentClass = component.getInstance().getClass();
-		componentSet.add(componentClass);
+		allComponents.put(componentClass, component);
 		registerComponentTree(componentClass, component);
 	}
 

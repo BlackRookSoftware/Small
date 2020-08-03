@@ -179,4 +179,10 @@ public class SmallComponent
 			;
 	}
 	
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + ": " + instance.getClass().toString();
+	}
+	
 }
