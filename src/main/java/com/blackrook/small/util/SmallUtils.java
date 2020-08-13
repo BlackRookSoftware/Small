@@ -1212,7 +1212,7 @@ public final class SmallUtils
 		{
 			try (InputStream inStream = (InputStream)content)
 			{
-				SmallResponseUtils.sendData(response, inStream, -1L);
+				SmallResponseUtils.sendData(response, inStream);
 			}
 		}
 		// Object output, XML.

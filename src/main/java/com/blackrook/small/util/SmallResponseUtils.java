@@ -157,6 +157,21 @@ public final class SmallResponseUtils
 	}
 
 	/**
+	 * Sends the entire contents of a stream out through the response.
+	 * The input stream is not closed after the data is sent.
+	 * No content type is set.
+	 * <ul>
+	 * <li>The "Content-Length" portion of the header is set to <code>length</code>, if not null and positive.</li>
+	 * </ul>
+	 * @param response servlet response object.
+	 * @param inStream the input stream to read.
+	 */
+	public static void sendData(HttpServletResponse response, InputStream inStream)
+	{
+		sendData(response, null, null, null, inStream, null);
+	}
+
+	/**
 	 * Sends the contents of a stream out through the response.
 	 * The input stream is not closed after the data is sent.
 	 * No content type is set.
