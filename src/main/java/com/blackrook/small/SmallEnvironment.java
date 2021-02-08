@@ -608,7 +608,12 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 	public <T extends Throwable> boolean handleException(HttpServletRequest request, HttpServletResponse response, T throwable)
 	{
 		ExceptionHandler<T> handler;
-		if ((handler = (ExceptionHandler<T>)exceptionHandlerMap.get(throwable.getClass())) != null)
+		Class<?> exceptionClass = throwable.getClass();
+		
+		while ((handler = (ExceptionHandler<T>)exceptionHandlerMap.get(exceptionClass)) == null && exceptionClass != Object.class)
+			exceptionClass = exceptionClass.getSuperclass();
+		
+		if (handler != null)
 		{
 			handler.handleException(request, response, throwable);
 			return true;

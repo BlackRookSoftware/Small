@@ -3,6 +3,12 @@ Small (C) Black Rook Software 2020
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.5.4
+----------------
+
+- `Changed` Exception handlers now search through superclasses for matching handlers.
+
+
 Changed in 1.5.3
 ----------------
 
