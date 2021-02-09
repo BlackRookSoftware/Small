@@ -1,3 +1,22 @@
+function github_api_start(data)
+{
+	let repourl = null;
+	repourl = data.repository_url
+		.replace('{owner}', REPO_OWNER)
+		.replace('{repo}', REPO_NAME[0]);
+	$INC(repourl + "/releases?callback=display_release_core");
+	repourl = data.repository_url
+		.replace('{owner}', REPO_OWNER)
+		.replace('{repo}', REPO_NAME[1]);
+	$INC(repourl + "/releases?callback=display_release_jetty");
+	repourl = data.repository_url
+		.replace('{owner}', REPO_OWNER)
+		.replace('{repo}', REPO_NAME[2]);
+	$INC(repourl + "/releases?callback=display_release_freemarker");
+}
+
+// ================================================================================
+
 $Q1('body').onload = function()
 {
 	$Q1('#link-github-core').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[0]);
@@ -6,28 +25,11 @@ $Q1('body').onload = function()
 	$Q1('#link-github-release-jetty').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[1]+'/releases');
 	$Q1('#link-github-freemarker').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[2]);
 	$Q1('#link-github-release-freemarker').setAttribute('href', 'https://github.com/'+REPO_OWNER+'/'+REPO_NAME[2]+'/releases');
-	$INC("https://api.github.com/?callback=github_api_start");
+	$INCCALL("https://api.github.com/", github_api_start);
 	$IncludeHTML();
 };
 
 // ================================================================================
-
-function github_api_start(response)
-{
-	let repourl = null;
-	repourl = response.data.repository_url
-		.replace('{owner}', REPO_OWNER)
-		.replace('{repo}', REPO_NAME[0]);
-	$INC(repourl + "/releases?callback=display_release_core");
-	repourl = response.data.repository_url
-		.replace('{owner}', REPO_OWNER)
-		.replace('{repo}', REPO_NAME[1]);
-	$INC(repourl + "/releases?callback=display_release_jetty");
-	repourl = response.data.repository_url
-		.replace('{owner}', REPO_OWNER)
-		.replace('{repo}', REPO_NAME[2]);
-	$INC(repourl + "/releases?callback=display_release_freemarker");
-}
 
 function display_release_core(response)
 {
