@@ -1,6 +1,13 @@
-Small (C) Black Rook Software 2020
+Small (C) Black Rook Software 2021
 ==================================
 by Matt Tropiano et al. (see AUTHORS.txt)
+
+
+Changed in [NOW]
+----------------
+
+- `Added` SmallEndpoint data transfer methods.
+- `Added` SmallEndpoint session convenience methods.
 
 
 Changed in 1.5.4

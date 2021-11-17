@@ -8,11 +8,14 @@
 package com.blackrook.small;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.Future;
 
 import javax.websocket.Endpoint;
@@ -36,20 +39,16 @@ import com.blackrook.small.roles.XMLDriver;
  */
 public abstract class SmallEndpoint extends Endpoint
 {
+	private static final ThreadLocal<DataBuffer> BUFFER = ThreadLocal.withInitial(() -> new DataBuffer());
+	
+	/** Default buffer size. */
+	public static final int DEFAULT_BUFFER_SIZE = 4096;
+	
 	/** This endpoint's session. */
 	private Session session;
 	/** This endpoint's reference to the Small Environment. */
 	private SmallEnvironment environment;
 	
-	/**
-	 * Convenience method for getting this endpoint's ID.
-	 * @return this endpoint's unique id.
-	 */
-	public String getId()
-	{
-		return session.getId();
-	}
-
 	/**
 	 * When this is called, this gets the {@link SmallEnvironment} from the config
 	 * and saves the session on this class. This method is already annotated with {@link OnOpen},
@@ -130,6 +129,76 @@ public abstract class SmallEndpoint extends Endpoint
 		return getEnvironment().getComponent(componentClass);
 	}
 
+	/**
+	 * Convenience method for getting this endpoint's ID.
+	 * <p><code>getSession().getId()</code>
+	 * @return this endpoint's unique id.
+	 */
+	public String getId()
+	{
+		return getSession().getId();
+	}
+
+	/**
+	 * Convenience method for getting the URI that created this endpoint.
+	 * <p><code>getSession().getRequestURI()</code>
+	 * @return this endpoint's constructor URI.
+	 * @since [NOW]
+	 */
+	public URI getURI()
+	{
+		return getSession().getRequestURI();
+	}
+	
+	/**
+	 * Convenience method for getting a path variable from the endpoint URI.
+	 * <p><code>getSession().getPathParameters().get(variableName)</code>
+	 * @param variableName the variable name.
+	 * @return the corresponding value, or null if no value.
+	 * @since [NOW]
+	 */
+	public String getPathVariable(String variableName)
+	{
+		return getSession().getPathParameters().get(variableName);
+	}
+	
+	/**
+	 * Convenience method for getting a list of query parameter values from the endpoint URI.
+	 * <p><code>getSession().getRequestParameterMap().get(parameterName)</code>
+	 * @param parameterName the parameter name.
+	 * @return the corresponding list of values, or null if no such parameter.
+	 * @since [NOW]
+	 */
+	public List<String> getParameters(String parameterName)
+	{
+		return getSession().getRequestParameterMap().get(parameterName);
+	}
+	
+	/**
+	 * Convenience method for getting a query parameter from the endpoint URI.
+	 * This only returns the last defined one.
+	 * <p><code>getSession().getRequestParameterMap().get(parameterName)</code>
+	 * @param parameterName the parameter name.
+	 * @return the corresponding value, or null if no such parameter.
+	 * @since [NOW]
+	 */
+	public String getParameter(String parameterName)
+	{
+		List<String> list = getParameters(parameterName);
+		return list != null && !list.isEmpty() ? list.get(list.size() - 1) : null;
+	}
+	
+	/**
+	 * Convenience method for getting the query string from the request that created this.
+	 * <p><code>getSession().getQueryString()</code>
+	 * @return the query string.
+	 * @since [NOW]
+	 */
+	public String getQueryString()
+	{
+		return getSession().getQueryString();
+	}
+	
 	/**
 	 * Sends a message string, synchronously, to the client.
 	 * Execution halts until the client socket acknowledges receipt. 
@@ -234,11 +303,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 */
 	public void sendBinary(byte[] buffer)
 	{
-		try {
-			sendBinary(ByteBuffer.wrap(buffer));
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
+		sendData(new ByteArrayInputStream(buffer));
 	}
 
 	/**
@@ -253,11 +318,22 @@ public abstract class SmallEndpoint extends Endpoint
 	 */
 	public void sendBinaryPartial(byte[] buffer, boolean isLast)
 	{
-		try {
-			sendBinaryPartial(ByteBuffer.wrap(buffer), isLast);
-		} catch (Exception e) {
-			throw new SmallFrameworkException(e);
-		}
+		sendBinaryPartial(ByteBuffer.wrap(buffer), isLast);
+	}
+
+	/**
+	 * Sends a stream of data, synchronously, until the end of the stream.
+	 * The stream is not closed after this completes.
+	 * Execution halts until the client socket acknowledges receipt.
+	 * <p>
+	 * The buffer size used for this socket is {@link #DEFAULT_BUFFER_SIZE}.
+	 * @param in the input stream to read from.
+	 * @throws SmallFrameworkException on a send or read error.
+	 * @since [NOW]
+	 */
+	public void sendData(InputStream in)
+	{
+		sendData(in, DEFAULT_BUFFER_SIZE);
 	}
 
 	/**
@@ -266,20 +342,23 @@ public abstract class SmallEndpoint extends Endpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param in the input stream to read from.
 	 * @param bufferSize the size of the buffer to use during the send.
+	 * @throws IllegalArgumentException if bufferSize is 0 or less.
 	 * @throws SmallFrameworkException on a send or read error.
 	 */
 	public void sendData(InputStream in, int bufferSize)
 	{
 		try {
-			ByteBuffer bb = ByteBuffer.allocate(bufferSize);
-			byte[] buffer = new byte[bufferSize];
+			DataBuffer db = BUFFER.get().setCapacity(bufferSize);
+			ByteBuffer bb = db.buffer;
+			byte[] buffer = db.array;
+			
 			int buf = 0;
 			while ((buf = in.read(buffer)) >= 0)
 			{
 				bb.put(buffer);
-				bb.rewind();
-				sendBinaryPartial(buffer, buf < bufferSize);
-				bb.rewind();
+				bb.flip();
+				sendBinaryPartial(bb, buf < bufferSize);
+				bb.clear();
 			}
 		} catch (Exception e) {
 			throw new SmallFrameworkException(e);
@@ -290,7 +369,20 @@ public abstract class SmallEndpoint extends Endpoint
 	 * Sends the contents of a file as a stream of data, synchronously, until the end of the file.
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param file the file to read.
+	 * @throws SmallFrameworkException on a send or read error.
+	 * @since [NOW]
+	 */
+	public void sendFileContents(File file)
+	{
+		sendFileContents(file, DEFAULT_BUFFER_SIZE);
+	}
+
+	/**
+	 * Sends the contents of a file as a stream of data, synchronously, until the end of the file.
+	 * Execution halts until the client socket acknowledges receipt. 
+	 * @param file the file to read.
 	 * @param bufferSize the size of the buffer to use during the send.
+	 * @throws IllegalArgumentException if bufferSize is 0 or less.
 	 * @throws SmallFrameworkException on a send or read error.
 	 */
 	public void sendFileContents(File file, int bufferSize)
@@ -367,4 +459,34 @@ public abstract class SmallEndpoint extends Endpoint
 		return sendAsyncBinary(ByteBuffer.wrap(buffer));
 	}
 
+	private static class DataBuffer
+	{
+		private ByteBuffer buffer;
+		private byte[] array;
+		
+		public DataBuffer()
+		{
+			this.buffer = null;
+			this.array = null;
+			setCapacity(DEFAULT_BUFFER_SIZE);
+		}
+		
+		private DataBuffer setCapacity(int cap)
+		{
+			if (cap <= 0)
+			{
+				throw new IllegalArgumentException("buffer size cannot be 0 or less.");
+			}
+			
+			if (array == null || array.length != cap)
+			{
+				this.buffer = ByteBuffer.allocate(cap);
+				this.array = new byte[cap];
+			}
+			
+			return this;
+		}
+		
+	}
+	
 }
