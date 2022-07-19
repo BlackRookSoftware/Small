@@ -237,7 +237,7 @@ public final class SmallResponseUtils
 	 * @param attachmentFileName the name of the data to send (file name). If null, not sent as an attachment.
 	 * @param encoding if not null, adds a "Content-Encoding" header (not to be confused with charset - that should be set on the MIME-Type).
 	 * @param inStream the input stream to read.
-	 * @param length the length of data in bytes to send, or null to not specify.
+	 * @param length the length of data in bytes to send, or null to not specify (response may be chunked).
 	 */
 	public static void sendData(HttpServletResponse response, String mimeType, String attachmentFileName, String encoding, InputStream inStream, Long length)
 	{
@@ -247,8 +247,11 @@ public final class SmallResponseUtils
 			response.setHeader("Content-Encoding", encoding);
 		if (!Utils.isEmpty(attachmentFileName))
 			response.setHeader("Content-Disposition", "attachment; filename=\"" + attachmentFileName + "\"");
+		
 		if (length != null && length >= 0)
 			response.setHeader("Content-Length", String.valueOf(length));
+		else
+			response.setBufferSize(32768);
 		
 		try {
 			

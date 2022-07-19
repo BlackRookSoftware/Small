@@ -32,6 +32,8 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import com.blackrook.small.SmallConstants;
+import com.blackrook.small.SmallResponse;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.exception.request.BeanCreationException;
 import com.blackrook.small.multipart.MultipartFormDataParser;
@@ -168,6 +170,17 @@ public final class SmallRequestUtils
 		return session != null ? session.getId() : null;	
 	}
 
+	/**
+	 * Convenience method that gets the SmallResponse on the request.
+	 * @param request servlet request object.
+	 * @return the SmallResponse, if any. Can be null.
+	 * @since [NOW]
+	 */
+	public static SmallResponse getSmallResponse(HttpServletRequest request)
+	{
+		return (SmallResponse)request.getAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_RESPONSE_OBJECT);
+	}
+	
 	/**
 	 * Gets and auto-casts an object bean stored at the request level.
 	 * The bean is created and stored if it doesn't exist.

@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.blackrook.small.SmallConstants;
+import com.blackrook.small.SmallResponse;
 import com.blackrook.small.annotation.controller.Content;
 import com.blackrook.small.annotation.dispatch.Attribute;
 import com.blackrook.small.annotation.dispatch.Model;
@@ -84,7 +85,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 		PARAMETER,
 		PARAMETER_MAP,
 		CONTENT,
-		MODEL;
+		MODEL,
+		/** @since [NOW] */
+		SMALLRESPONSE;
 	}
 	
 	/**
@@ -175,6 +178,8 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				source = Source.SERVLET_REQUEST;
 			else if (paramType == HttpServletResponse.class)
 				source = Source.SERVLET_RESPONSE;
+			else if (paramType == SmallResponse.class)
+				source = Source.SMALLRESPONSE;
 			else for (int a = 0; a < pannotations[i].length; a++)
 			{
 				Annotation annotation = pannotations[i][a];
@@ -182,7 +187,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 				if (annotation.annotationType() == AutoTrim.class)
 					trim = true;
 				
-				if (annotation.annotationType() == Path.class)
+				else if (annotation.annotationType() == Path.class)
 					source = Source.PATH;
 				else if (annotation.annotationType() == PathFile.class)
 					source = Source.PATH_FILE;
@@ -326,6 +331,9 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 					break;
 				case PATH_VARIABLE:
 					invokeParams[i] = Utils.createForType("Parameter " + i, pathVariableMap.get(pinfo.name), pinfo.getType());
+					break;
+				case SMALLRESPONSE:
+					invokeParams[i] = SmallRequestUtils.getSmallResponse(request);
 					break;
 				case SERVLET_REQUEST:
 					invokeParams[i] = request;

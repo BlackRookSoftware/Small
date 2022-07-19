@@ -25,6 +25,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.websocket.EndpointConfig;
 import javax.websocket.server.ServerContainer;
 
 import com.blackrook.small.SmallConfiguration;
@@ -801,7 +802,18 @@ public final class SmallUtils
 	}
 
 	/**
-	 * Convenience method that gets the Small Application Environment.
+	 * Convenience method that gets the Small Application Environment from WebSocket EndpointConfig.
+	 * @param config the endpoint config context.
+	 * @return the Small environment.
+	 * @since [NOW]
+	 */
+	public static SmallEnvironment getEnvironment(EndpointConfig config)
+	{
+		return (SmallEnvironment)config.getUserProperties().get(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
+	}
+
+	/**
+	 * Convenience method that gets the Small Application Environment from the servlet context.
 	 * @param context the servlet context.
 	 * @return the Small environment.
 	 */

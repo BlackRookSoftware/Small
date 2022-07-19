@@ -8,6 +8,7 @@ Changed in [NOW]
 
 - `Added` SmallEndpoint data transfer methods.
 - `Added` SmallEndpoint session convenience methods.
+- `Changed` Small controllers and filters can now fetch the current SmallResponse, passing it through a filter chain or controller return.
 
 
 Changed in 1.5.4

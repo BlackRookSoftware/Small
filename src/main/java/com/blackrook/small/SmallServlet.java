@@ -434,6 +434,12 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 					HttpServletResponse newResponse = filterResult.getResponse();
 					if (newResponse != null)
 						response = newResponse;
+					
+					if (filterResult.getSmallResponse() != null)
+					{
+						request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_RESPONSE_OBJECT, filterResult.getSmallResponse());
+						smallResponse = filterResult.getSmallResponse();
+					}
 				}
 			}
 		} catch (InvocationTargetException e) {
@@ -444,11 +450,16 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 			exception = accumExceptions(exception, e);
 		}
 	
-		// Call Entry if all filters passed.
+		// Call controller entry if all filters passed.
 		if (f == filterChain.length)
 		{
 			try {
-				smallResponse = entryPoint.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+				SmallResponse controllerResponse = entryPoint.handleCall(requestMethod, request, response, pathVariables, cookieMap, multiformPartMap);
+				if (controllerResponse != null)
+				{
+					request.setAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_RESPONSE_OBJECT, controllerResponse);
+					smallResponse = controllerResponse;
+				}
 			} catch (InvocationTargetException e) {
 				exception = accumExceptions(exception, e.getCause());
 			} catch (ServletException e) {

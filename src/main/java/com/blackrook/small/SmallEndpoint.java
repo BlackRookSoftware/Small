@@ -28,6 +28,7 @@ import com.blackrook.small.annotation.Component;
 import com.blackrook.small.exception.SmallFrameworkException;
 import com.blackrook.small.roles.JSONDriver;
 import com.blackrook.small.roles.XMLDriver;
+import com.blackrook.small.util.SmallUtils;
 
 /**
  * A base websocket endpoint that automatically has a connection to the Small application environment.
@@ -59,7 +60,7 @@ public abstract class SmallEndpoint extends Endpoint
 	public final void onOpen(Session session, EndpointConfig config)
 	{
 		this.session = session;
-		this.environment = (SmallEnvironment)config.getUserProperties().get(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE);
+		this.environment = SmallUtils.getEnvironment(config);
 		afterOpen(config);
 	}
 	

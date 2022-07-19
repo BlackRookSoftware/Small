@@ -29,6 +29,8 @@ public class SmallFilterResult
 	private HttpServletRequest request;
 	/** The response. */
 	private HttpServletResponse response;
+	/** The SmallResponse, if any. */
+	private SmallResponse smallResponse;
 	/** Continue flag. */
 	private boolean passing;
 	
@@ -36,6 +38,7 @@ public class SmallFilterResult
 	{
 		this.request = null;
 		this.response = null;
+		this.smallResponse = null;
 		this.passing = passing;
 	}
 	
@@ -45,6 +48,19 @@ public class SmallFilterResult
 	public static SmallFilterResult fail()
 	{
 		return FAIL;
+	}
+	
+	/**
+	 * Returns a failing result with a SmallResponse.
+	 * This object gets attached to the servlet request to be potentially decorated later by a filter exit.
+	 * @param smallResponse the SmallResponse to attach to the request.
+	 * @return a result that signifies that this filter chain must not continue.
+	 */
+	public static SmallFilterResult fail(SmallResponse smallResponse)
+	{
+		SmallFilterResult out = new SmallFilterResult(false);
+		out.smallResponse = smallResponse;
+		return out;
 	}
 	
 	/**
@@ -90,6 +106,19 @@ public class SmallFilterResult
 	}
 
 	/**
+	 * Returns a passing result with a SmallResponse.
+	 * This object gets attached to the servlet request to be potentially decorated later by a controller or filter entry (enter or exit).
+	 * @param smallResponse the SmallResponse to attach to the request.
+	 * @return a result that signifies that this filter chain must not continue.
+	 */
+	public static SmallFilterResult pass(SmallResponse smallResponse)
+	{
+		SmallFilterResult out = new SmallFilterResult(true);
+		out.smallResponse = smallResponse;
+		return out;
+	}
+	
+	/**
 	 * Gets the replacement servlet request object.
 	 * If null, the incoming request does not change.
 	 * @return the replacement request object, if any.
@@ -107,6 +136,15 @@ public class SmallFilterResult
 	public HttpServletResponse getResponse()
 	{
 		return response;
+	}
+	
+	/**
+	 * Gets the SmallResponse object.
+	 * @return the attached SmallResponse object, if any.
+	 */
+	public SmallResponse getSmallResponse()
+	{
+		return smallResponse;
 	}
 	
 	/**

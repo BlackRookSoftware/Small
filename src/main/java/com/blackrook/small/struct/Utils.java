@@ -368,6 +368,7 @@ public final class Utils
 		while ((buf = in.read(RELAY_BUFFER, 0, Math.min(maxLength < 0 ? Integer.MAX_VALUE : maxLength, bufferSize))) > 0)
 		{
 			out.write(RELAY_BUFFER, 0, buf);
+			out.flush();
 			total += buf;
 			if (maxLength >= 0)
 				maxLength -= buf;
