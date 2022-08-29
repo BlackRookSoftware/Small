@@ -90,9 +90,9 @@ public abstract class MultipartParser implements Iterable<Part>
 		{
 			String piece = parser.nextToken();
 			if (piece.startsWith(PIECE_BOUNDARY))
-				boundary = piece.substring(PIECE_BOUNDARY.length());
+				boundary = unquote(piece.substring(PIECE_BOUNDARY.length()));
 			else if (piece.startsWith(PIECE_CHARSET))
-				charset = piece.substring(PIECE_CHARSET.length());
+				charset = unquote(piece.substring(PIECE_CHARSET.length()));
 		}
 		
 		String startBoundary = "--" + boundary;
@@ -288,4 +288,11 @@ public abstract class MultipartParser implements Iterable<Part>
 		return partList.iterator();
 	}
 
+	private static String unquote(String value)
+	{
+		if (value.charAt(0) == '"')
+			return value.substring(1, value.length() - 1);
+		return value;
+	}
+	
 }

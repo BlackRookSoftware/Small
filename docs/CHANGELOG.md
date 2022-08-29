@@ -6,6 +6,7 @@ by Matt Tropiano et al. (see AUTHORS.txt)
 Changed in [NOW]
 ----------------
 
+- `Fixed` Fixed reading multipart boundaries that are quoted on read.
 - `Added` SmallEndpoint data transfer methods.
 - `Added` SmallEndpoint session convenience methods.
 - `Changed` Small controllers and filters can now fetch the current SmallResponse, passing it through a filter chain or controller return.
