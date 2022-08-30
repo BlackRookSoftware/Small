@@ -3,7 +3,7 @@ Small (C) Black Rook Software 2021
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
-Changed in [NOW]
+Changed in 1.6.0
 ----------------
 
 - `Fixed` Fixed reading multipart boundaries that are quoted on read.

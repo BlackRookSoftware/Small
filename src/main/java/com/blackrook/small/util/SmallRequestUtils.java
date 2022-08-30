@@ -174,7 +174,7 @@ public final class SmallRequestUtils
 	 * Convenience method that gets the SmallResponse on the request.
 	 * @param request servlet request object.
 	 * @return the SmallResponse, if any. Can be null.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public static SmallResponse getSmallResponse(HttpServletRequest request)
 	{

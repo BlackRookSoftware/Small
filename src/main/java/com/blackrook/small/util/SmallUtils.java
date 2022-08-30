@@ -805,7 +805,7 @@ public final class SmallUtils
 	 * Convenience method that gets the Small Application Environment from WebSocket EndpointConfig.
 	 * @param config the endpoint config context.
 	 * @return the Small environment.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public static SmallEnvironment getEnvironment(EndpointConfig config)
 	{

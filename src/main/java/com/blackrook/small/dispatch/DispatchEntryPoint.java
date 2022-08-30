@@ -86,7 +86,7 @@ public class DispatchEntryPoint<S extends DispatchComponent>
 		PARAMETER_MAP,
 		CONTENT,
 		MODEL,
-		/** @since [NOW] */
+		/** @since 1.6.0 */
 		SMALLRESPONSE;
 	}
 	

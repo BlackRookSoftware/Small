@@ -144,7 +144,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * Convenience method for getting the URI that created this endpoint.
 	 * <p><code>getSession().getRequestURI()</code>
 	 * @return this endpoint's constructor URI.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public URI getURI()
 	{
@@ -156,7 +156,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * <p><code>getSession().getPathParameters().get(variableName)</code>
 	 * @param variableName the variable name.
 	 * @return the corresponding value, or null if no value.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public String getPathVariable(String variableName)
 	{
@@ -168,7 +168,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * <p><code>getSession().getRequestParameterMap().get(parameterName)</code>
 	 * @param parameterName the parameter name.
 	 * @return the corresponding list of values, or null if no such parameter.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public List<String> getParameters(String parameterName)
 	{
@@ -181,7 +181,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * <p><code>getSession().getRequestParameterMap().get(parameterName)</code>
 	 * @param parameterName the parameter name.
 	 * @return the corresponding value, or null if no such parameter.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public String getParameter(String parameterName)
 	{
@@ -193,7 +193,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * Convenience method for getting the query string from the request that created this.
 	 * <p><code>getSession().getQueryString()</code>
 	 * @return the query string.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public String getQueryString()
 	{
@@ -330,7 +330,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * The buffer size used for this socket is {@link #DEFAULT_BUFFER_SIZE}.
 	 * @param in the input stream to read from.
 	 * @throws SmallFrameworkException on a send or read error.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public void sendData(InputStream in)
 	{
@@ -371,7 +371,7 @@ public abstract class SmallEndpoint extends Endpoint
 	 * Execution halts until the client socket acknowledges receipt. 
 	 * @param file the file to read.
 	 * @throws SmallFrameworkException on a send or read error.
-	 * @since [NOW]
+	 * @since 1.6.0
 	 */
 	public void sendFileContents(File file)
 	{
