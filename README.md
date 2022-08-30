@@ -1,6 +1,6 @@
 # Black Rook Small
 
-Copyright (c) 2020 Black Rook Software.  
+Copyright (c) 2020-2022 Black Rook Software.  
 [https://github.com/BlackRookSoftware/Small](https://github.com/BlackRookSoftware/Small)
 
 [Latest Release](https://github.com/BlackRookSoftware/Small/releases/latest)    
