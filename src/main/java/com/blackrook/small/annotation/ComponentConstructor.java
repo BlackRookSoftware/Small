@@ -15,6 +15,7 @@ import java.lang.annotation.Target;
 import javax.servlet.ServletContext;
 
 import com.blackrook.small.SmallConfiguration;
+import com.blackrook.small.annotation.component.AfterInitialize;
 
 /**
  * This annotation specifies that the annotated constructor contains parameters
@@ -28,8 +29,10 @@ import com.blackrook.small.SmallConfiguration;
  * <p>
  * One of the parameters of the constructor can be {@link ServletContext}, which passes
  * in the application's Servlet Context. Another can be {@link SmallConfiguration}, which passes
- * in the configuration for bootstrapping/configuring the application. All other kinds of
- * interface-based searching for components will fail, here.
+ * in the configuration for bootstrapping/configuring the application. 
+ * <p> 
+ * <strong>NOTE:</strong> All other kinds of interface-based searching for components will <em>fail</em>, here.
+ * You can safely add those kinds of components via a method annotated with {@link AfterInitialize}.
  *  
  * @author Matthew Tropiano
  * @see Filter

@@ -1,5 +1,5 @@
-Small (C) Black Rook Software 2021
-==================================
+Small (C) Black Rook Software
+=============================
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
