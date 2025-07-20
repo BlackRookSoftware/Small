@@ -64,14 +64,14 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	private static final long serialVersionUID = 438331119650683748L;
 	
 	private static final String METHOD_DELETE = "DELETE";
-    private static final String METHOD_HEAD = "HEAD";
-    private static final String METHOD_GET = "GET";
-    private static final String METHOD_OPTIONS = "OPTIONS";
-    private static final String METHOD_POST = "POST";
-    private static final String METHOD_PUT = "PUT";
-    private static final String METHOD_PATCH = "PATCH";
-    private static final String METHOD_TRACE = "TRACE";
-    private static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
+	private static final String METHOD_HEAD = "HEAD";
+	private static final String METHOD_GET = "GET";
+	private static final String METHOD_OPTIONS = "OPTIONS";
+	private static final String METHOD_POST = "POST";
+	private static final String METHOD_PUT = "PUT";
+	private static final String METHOD_PATCH = "PATCH";
+	private static final String METHOD_TRACE = "TRACE";
+	private static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
 	private static final Map<String, Cookie> EMPTY_COOKIE_MAP = Collections.unmodifiableMap(new HashMap<>(2));
 	private static final Map<String, String> EMPTY_PATH_VAR_MAP = Collections.unmodifiableMap(new HashMap<>(2));
 
@@ -155,80 +155,80 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 	}
 
 	@Override
-    protected void service(HttpServletRequest request, HttpServletResponse response)
-    {
-    	SmallResponse smallResponse = null;
-        try
-        {
-    		if ((smallResponse = callMethod(request, response)) != null)
-    			SmallUtils.sendContent(request, response, null, smallResponse);
-    		// if null, nothing is written to the response (in this method).
-        }
-        // Servlet Exceptions
-        catch (NotFoundException e) 
-        {
+	protected void service(HttpServletRequest request, HttpServletResponse response)
+	{
+		SmallResponse smallResponse = null;
+		try
+		{
+			if ((smallResponse = callMethod(request, response)) != null)
+				SmallUtils.sendContent(request, response, null, smallResponse);
+			// if null, nothing is written to the response (in this method).
+		}
+		// Servlet Exceptions
+		catch (NotFoundException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 404, e.getLocalizedMessage());
-        }
-        catch (MethodNotAllowedException e) 
-        {
+			SmallResponseUtils.sendError(response, 404, e.getLocalizedMessage());
+		}
+		catch (MethodNotAllowedException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 405, e.getLocalizedMessage());
-        }
-        catch (BeanCreationException e) 
-        {
+			SmallResponseUtils.sendError(response, 405, e.getLocalizedMessage());
+		}
+		catch (BeanCreationException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
-        }
-        catch (MultipartParserException e) 
-        {
+			SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
+		}
+		catch (MultipartParserException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 400, e.getLocalizedMessage());
-        }
-        catch (NoConverterException e) 
-        {
+			SmallResponseUtils.sendError(response, 400, e.getLocalizedMessage());
+		}
+		catch (NoConverterException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
-        }
-        catch (UnsupportedMediaTypeException e) 
-        {
+			SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
+		}
+		catch (UnsupportedMediaTypeException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 415, e.getLocalizedMessage());
-        }
-        catch (NoViewDriverException e) 
-        {
+			SmallResponseUtils.sendError(response, 415, e.getLocalizedMessage());
+		}
+		catch (NoViewDriverException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
-        }
-        catch (ViewProcessingException e) 
-        {
+			SmallResponseUtils.sendError(response, 501, e.getLocalizedMessage());
+		}
+		catch (ViewProcessingException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
-        }
-        catch (ManyRequestExceptionsException e) 
-        {
+			SmallResponseUtils.sendError(response, 500, e.getLocalizedMessage());
+		}
+		catch (ManyRequestExceptionsException e) 
+		{
 			getServletContext().log("Many exceptions were uncaught:");
 			for (Throwable t : e.getCauses())
 				getServletContext().log("From ManyRequestExceptionsException:", t);
-            SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
-        }
-        // I/O Exceptions
-        catch (IOException e) 
-        {
+			SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+		}
+		// I/O Exceptions
+		catch (IOException e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
-        }
-        // Other Exceptions
-        catch (Throwable e) 
-        {
+			SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+		}
+		// Other Exceptions
+		catch (Throwable e) 
+		{
 			getServletContext().log("An exception was uncaught: ", e);
-            SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+			SmallResponseUtils.sendError(response, 500, e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
 		} 
-        finally 
-        {
-        	// Close anything still open that the response may encapsulate.
-        	Utils.close(smallResponse);
-        	
+		finally 
+		{
+			// Close anything still open that the response may encapsulate.
+			Utils.close(smallResponse);
+			
 			// clean up files read in multipart parts.
 			@SuppressWarnings("unchecked")
 			List<Part> parts = (List<Part>)request.getAttribute(SmallConstants.SMALL_REQUEST_ATTRIBUTE_MULTIPART_LIST);
@@ -237,7 +237,7 @@ public final class SmallServlet extends HttpServlet implements HttpSessionAttrib
 				part.getFile().delete();
 			}
 		}
-    }
+	}
 
 	private Set<RequestMethod> getMethodsForPath(String path)
 	{
