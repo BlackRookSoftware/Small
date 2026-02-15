@@ -252,18 +252,18 @@ public class SmallEnvironment implements HttpSessionAttributeListener, HttpSessi
 					{
 						ServerContainer websocketServerContainer = SmallUtils.getWebsocketServerContainer(context);
 						if (websocketServerContainer == null)
-							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
+							throw new SmallFrameworkException("Could not add SmallEndpoint class "+componentClass.getName()+"! The WebSocket server container may not be enabled or initialized.");
 						
 						ServerEndpoint anno = componentClass.getAnnotation(ServerEndpoint.class);
 						if (anno == null)
-							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"! No @ServerEndpoint path annotation.");
+							throw new SmallFrameworkException("Could not add SmallEndpoint class "+componentClass.getName()+"! No @ServerEndpoint path annotation.");
 							
 						ServerEndpointConfig config = ServerEndpointConfig.Builder.create(componentClass, anno.value()).build();
 						config.getUserProperties().put(SmallConstants.SMALL_APPLICATION_ENVIRONMENT_ATTRIBUTE, this);
 						try {
 							websocketServerContainer.addEndpoint(config);
 						} catch (DeploymentException e) {
-							throw new SmallFrameworkException("Could not add ServerEndpoint class "+componentClass.getName()+"!", e);
+							throw new SmallFrameworkException("Could not add SmallEndpoint class "+componentClass.getName()+"!", e);
 						}
 					}
 					else if (Endpoint.class.isAssignableFrom(componentClass))

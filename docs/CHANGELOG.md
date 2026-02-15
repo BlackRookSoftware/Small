@@ -3,6 +3,12 @@ Small (C) Black Rook Software
 by Matt Tropiano et al. (see AUTHORS.txt)
 
 
+Changed in 1.6.1
+----------------
+
+- `Changed` Error message change on failed SmallEndpoint initialization.
+
+
 Changed in 1.6.0
 ----------------
 
