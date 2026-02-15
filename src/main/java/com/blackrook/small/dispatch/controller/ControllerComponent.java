@@ -129,7 +129,7 @@ public class ControllerComponent extends DispatchComponent
 	}
 
 	/** Checks if a method is a valid request entry. */
-	private boolean isValidEntryMethod(Method method)
+	private static boolean isValidEntryMethod(Method method)
 	{
 		return
 			method.isAnnotationPresent(EntryPath.class) 

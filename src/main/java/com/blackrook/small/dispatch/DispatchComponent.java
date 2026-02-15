@@ -103,7 +103,7 @@ public abstract class DispatchComponent extends SmallComponent
 	}
 
 	/** Checks if a method is a Model constructor. */
-	private boolean isValidModelConstructorMethod(Method method)
+	private static boolean isValidModelConstructorMethod(Method method)
 	{
 		return
 			method.isAnnotationPresent(Model.class)
@@ -114,7 +114,7 @@ public abstract class DispatchComponent extends SmallComponent
 	}
 
 	/** Checks if a method is an Attribute constructor. */
-	private boolean isValidAttributeConstructorMethod(Method method)
+	private static boolean isValidAttributeConstructorMethod(Method method)
 	{
 		return
 			method.isAnnotationPresent(Attribute.class)

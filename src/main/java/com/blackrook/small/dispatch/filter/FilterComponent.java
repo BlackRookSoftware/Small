@@ -83,7 +83,7 @@ public class FilterComponent extends DispatchComponent
 	/** 
 	 * Checks if a method is a valid filter entry. 
 	 */
-	private boolean isValidEntryMethod(Method method)
+	private static boolean isValidEntryMethod(Method method)
 	{
 		return
 			(method.getModifiers() & Modifier.PUBLIC) != 0
@@ -94,7 +94,7 @@ public class FilterComponent extends DispatchComponent
 	/** 
 	 * Checks if a method is a valid filter exit. 
 	 */
-	private boolean isValidExitMethod(Method method)
+	private static boolean isValidExitMethod(Method method)
 	{
 		return
 			(method.getModifiers() & Modifier.PUBLIC) != 0
