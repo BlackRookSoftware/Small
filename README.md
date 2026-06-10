@@ -9,15 +9,22 @@ Copyright (c) 2020-2022 Black Rook Software.
 
 ### Required Libraries
 
-Any servlet 2.X+ container implementation (javax.servlet-api.jar).  
+Any servlet 3.X+ container implementation (javax.servlet-api.jar).  
 Any Websocket container implementation (javax.websocket-api.jar).  
 
 Most servlet container servers will provide implementations of these.
+
 
 ### Required Java Modules
 
 [java.xml](https://docs.oracle.com/en/java/javase/11/docs/api/java.xml/module-summary.html)  
 * [java.base](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/module-summary.html)  
+
+
+### Where to Get
+
+* [Maven Central](https://central.sonatype.com/artifact/com.blackrooksoftware/small)  
+* [GitHub Releases](https://github.com/BlackRookSoftware/Small/releases/latest)
 
 
 ### Introduction
@@ -37,39 +44,35 @@ Lots of flexible stubs, but enforces rigidity where it counts.
 Contained in this release is a series of classes that route HTTP requests and fulfill them.
 
 
-### Compiling with Ant
+### Compiling with Maven
 
-To download dependencies for this project, type (`build.properties` will also be altered/created):
+To install/compile this library and make all artifacts with Apache Maven, type:
 
-	ant dependencies
+	mvn install
 
-To compile this library with Apache Ant, type:
+To compile this library, type:
 
-	ant compile
+	mvn compile
 
-To make Maven-compatible JARs of this library (placed in the *build/jar* directory), type:
+To make Maven-compatible JARs of this library, type:
 
-	ant jar
+	mvn jar:jar
 
-To make Javadocs (placed in the *build/docs* directory):
+To make Javadocs:
 
-	ant javadoc
+	mvn javadoc:javadoc
 
-To compile main and test code and run tests (if any):
+To run tests, type:
 
-	ant test
+	mvn test
 
-To make Zip archives of everything (main src/resources, bin, javadocs, placed in the *build/zip* directory):
+To generate a coverage report, type:
 
-	ant zip
-
-To compile, JAR, test, and Zip up everything:
-
-	ant release
+	mvn test jacoco:report
 
 To clean up everything:
 
-	ant clean
+	mvn clean
 	
 
 ### Javadocs
